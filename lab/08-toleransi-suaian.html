@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Virtual Lab — Toleransi & Suaian: Fits & Surface Finish</title>
+<style>
+:root{--bg:#07111f;--panel:#0d1b2a;--panel2:#11243a;--line:#29445f;--text:#e9f2fb;--muted:#9fb4c8;--cyan:#36c9d8;--blue:#58a6ff;--orange:#ffb454;--red:#ff6b6b;--green:#5dd39e}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#06101d,#0a1727);color:var(--text);font:14px/1.4 Arial,sans-serif}
+button,input,select,textarea{font:inherit}.app{min-height:100vh}.top{position:sticky;top:0;z-index:10;display:flex;gap:14px;align-items:center;padding:12px 16px;background:#081522ee;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{font-weight:800;letter-spacing:.4px;flex:1}.brand small{display:block;color:var(--muted);font-weight:400}.top select,.top button,.btn{background:#12263b;color:var(--text);border:1px solid #365470;border-radius:7px;padding:7px 9px;cursor:pointer}.btn:hover,.top button:hover{border-color:var(--cyan)}
+.grid{display:grid;grid-template-columns:290px minmax(430px,1fr) 300px;gap:10px;padding:10px 10px 68px}.panel{background:var(--panel);border:1px solid #1e3850;border-radius:10px;overflow:hidden}.ph{padding:9px 11px;background:#102238;border-bottom:1px solid #25435d;font-weight:700}.pb{padding:10px}
+.group{border-bottom:1px solid #1d344a;padding:9px 0}.group:last-child{border:0}.row{display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;margin:7px 0}.row label{color:#c7d7e6}.row input,.row select{width:100%;background:#081522;color:var(--text);border:1px solid #35516a;border-radius:5px;padding:5px}
+.stagebar,.controls,.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border-bottom:1px solid #25435d}.stagebar button,.controls button,.tabs button{background:#0b1b2c;color:#bdd0e2;border:1px solid #31516d;border-radius:6px;padding:6px 8px;cursor:pointer}.stagebar button.active,.tabs button.active,.controls button.active{background:#153d50;color:white;border-color:var(--cyan);box-shadow:0 0 0 1px #36c9d855 inset}.controls button.off{opacity:.68;border-style:dashed}.controls button:disabled{opacity:.35;cursor:not-allowed}
+canvas{display:block;width:100%;height:auto;background:#081522}.canvasWrap{padding:8px}.canvasBox{border:1px solid #27445e;border-radius:8px;overflow:hidden}.controlFeedback{margin:0 8px 8px;padding:7px 10px;border:1px solid #27445e;border-radius:7px;background:#091827;color:#cfe7f4;min-height:34px}.controlFeedback b{color:#36c9d8}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:7px}.card{background:#091827;border:1px solid #27445e;border-radius:8px;padding:9px}.card b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase}.card span{font-size:18px;font-weight:800}.ok{color:var(--green)}.warn{color:var(--orange)}.bad{color:var(--red)}
+.bottom{margin-top:10px}.tabpane{display:none;padding:10px}.tabpane.active{display:block}.calc{white-space:pre-wrap;background:#07121e;border:1px solid #243f57;border-radius:7px;padding:10px;min-height:180px;font-family:Consolas,monospace;color:#d6e8f7}
+.info{color:#c4d6e6}.info h3{margin:8px 0;color:white}.info p{margin:5px 0}.badge{display:inline-block;border:1px solid #35516a;border-radius:999px;padding:2px 7px;font-size:11px;color:#bcd0e3}
+textarea{width:100%;min-height:70px;background:#081522;color:white;border:1px solid #35516a;border-radius:6px;padding:7px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #27445e;padding:6px;text-align:left}th{color:#9fb4c8}
+.status{position:fixed;bottom:0;left:0;right:0;z-index:12;display:flex;gap:15px;align-items:center;padding:8px 14px;background:#06101df2;border-top:1px solid #29445f;font-size:12px;overflow:auto;white-space:nowrap}.status b{color:white}
+.flex{display:flex;gap:6px;flex-wrap:wrap}.tiny{font-size:11px;color:var(--muted)}.hidden{display:none!important}
+@media(max-width:1050px){.grid{grid-template-columns:260px 1fr}.right{grid-column:1/-1}.right .pb{display:grid;grid-template-columns:1fr 1fr;gap:10px}}
+@media(max-width:760px){.grid{display:block}.panel{margin-bottom:10px}.top{flex-wrap:wrap}.brand{flex-basis:100%}.right .pb{display:block}}
+@media print{body{background:white;color:black}.top,.left,.controls,.stagebar,.tabs,.status{display:none!important}.grid{display:block;padding:0}.panel{border:0;background:white}.right{page-break-before:always}canvas{border:1px solid #999}.tabpane{display:block!important}.btn{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand">VIRTUAL LAB — TOLERANSI & SUAIAN <small>Fits & Surface Finish • Engineering Metrology Dashboard</small></div>
+  <select id="preset">
+    <option value="clearance">Custom Clearance Fit</option><option value="bearing">Bearing Seat</option>
+    <option value="bushing">Sliding Shaft & Bushing</option><option value="hub">Gear/Pulley Hub</option>
+    <option value="press">Press-Fit Bushing</option><option value="dowel">Locating Dowel Pin</option>
+    <option value="surface">Sealing/Sliding Surface</option>
+  </select>
+  <button id="lang">ID | EN</button><button id="level">BEGINNER</button>
+</header>
+
+<main class="grid">
+<section class="panel left">
+<div class="ph" data-i18n="specControls">Specification Controls / Kontrol Spesifikasi</div>
+<div class="pb">
+ <div class="group">
+  <div class="row"><label>Model Mode</label><select id="mode"><option value="fit">Fits / Suaian</option><option value="surface">Surface Finish</option><option value="process">Process & Inspection</option></select></div>
+  <div class="row"><label>Basic Size D (mm)</label><input id="D" type="number" step=".001" value="25"></div>
+  <div class="row"><label>Basis System</label><select id="basis"><option>Custom</option><option>Hole Basis</option><option>Shaft Basis</option></select></div>
+ </div>
+ <div class="group fitInputs">
+  <b>Hole / Lubang</b>
+  <div class="row"><label>Lower limit Hmin</label><input id="hmin" type="number" step=".001" value="25.000"></div>
+  <div class="row"><label>Upper limit Hmax</label><input id="hmax" type="number" step=".001" value="25.021"></div>
+  <b>Shaft / Poros</b>
+  <div class="row"><label>Lower limit Smin</label><input id="smin" type="number" step=".001" value="24.980"></div>
+  <div class="row"><label>Upper limit Smax</label><input id="smax" type="number" step=".001" value="24.993"></div>
+  <div class="tiny">ISO designation values are not invented. This lab uses educational/custom tolerance zones unless verified standard data are supplied.</div>
+ </div>
+ <div class="group surfaceInputs">
+  <b>Surface Profile</b>
+  <div class="row"><label>Profile type</label><select id="profileType"><option value="turning">Turning-like</option><option value="grinding">Grinding-like</option><option value="honing">Honing-like</option><option value="custom">Custom synthetic</option></select></div>
+  <div class="row"><label>Amplitude (µm)</label><input id="amp" type="number" min=".05" step=".05" value="2.5"></div>
+  <div class="row"><label>Sampling length (mm)</label><input id="sampLen" type="number" min=".1" step=".1" value="4"></div>
+  <div class="row"><label>Points</label><input id="points" type="number" min="20" max="800" step="10" value="240"></div>
+  <div class="row"><label>Resolution (µm)</label><input id="resolution" type="number" min=".001" step=".001" value=".01"></div>
+ </div>
+ <div class="group processInputs">
+  <b>Process / Inspection</b>
+  <div class="row"><label>LSL (mm)</label><input id="lsl" type="number" step=".001" value="25.000"></div>
+  <div class="row"><label>USL (mm)</label><input id="usl" type="number" step=".001" value="25.021"></div>
+  <div class="row"><label>Process mean (mm)</label><input id="pmean" type="number" step=".001" value="25.010"></div>
+  <div class="row"><label>σ (mm)</label><input id="sigma" type="number" min=".0001" step=".0001" value=".003"></div>
+  <div class="row"><label>Samples</label><input id="samples" type="number" min="5" max="200" value="40"></div>
+ </div>
+ <div class="group flex">
+  <button class="btn" id="reset">RESET</button><button class="btn" id="compare">COMPARE</button>
+  <button class="btn" id="nextSample">NEXT SAMPLE</button><button class="btn" id="record">RECORD DATA</button>
+ </div>
+</div></section>
+
+<section>
+ <div class="panel">
+  <div class="stagebar">
+   <button data-stage="0" class="active">1. FUNCTION</button><button data-stage="1">2. SPECIFICATION</button>
+   <button data-stage="2">3. MANUFACTURING</button><button data-stage="3">4. INSPECTION</button>
+   <button id="auto">AUTO CONVERT</button>
+  </div>
+  <div class="canvasWrap"><div class="canvasBox"><canvas id="mainCanvas" width="980" height="500"></canvas></div></div>
+  <div class="controls">
+   <button id="play" title="Run continuous animation">▶ PLAY</button><button id="pause" title="Pause animation">⏸ PAUSE</button><button id="step" title="Advance one simulation step">STEP +1</button>
+   <button id="assemble" title="Animate shaft into hole">ASSEMBLE</button><button id="separate" title="Animate shaft away from hole">SEPARATE</button>
+   <button id="showZero" title="Show/hide zero line">ZERO LINE: ON</button><button id="showLimits" title="Show/hide limit labels">LIMITS: ON</button>
+   <button id="showEq" title="Show/hide governing equations">EQUATIONS: OFF</button>
+  </div>
+  <div id="controlFeedback" class="controlFeedback"><b>READY</b> — controls are interactive. Use PLAY, STEP, ASSEMBLE, or toggle overlays.</div>
+ </div>
+
+ <div class="panel bottom">
+  <div class="tabs"><button class="active" data-tab="graphs">Graphs</button><button data-tab="calc">Calculation</button><button data-tab="worksheet">Worksheet</button><button data-tab="challenge">Challenge</button><button data-tab="data">Experiment Data</button></div>
+  <div id="graphs" class="tabpane active"><canvas id="graphCanvas" width="980" height="300"></canvas></div>
+  <div id="calc" class="tabpane"><div id="calcText" class="calc"></div></div>
+  <div id="worksheet" class="tabpane">
+    <p>Tujuan / Objective</p><textarea id="wObj"></textarea><p>Prediksi / Prediction</p><textarea id="wPred"></textarea>
+    <p>Analisis / Analysis</p><textarea id="wAna"></textarea><p>Kesimpulan / Conclusion</p><textarea id="wCon"></textarea>
+    <button class="btn" onclick="window.print()">PRINT LAB REPORT</button>
+  </div>
+  <div id="challenge" class="tabpane"><div id="challengeBox"></div></div>
+  <div id="data" class="tabpane"><div class="flex"><button class="btn" id="clearData">CLEAR DATA</button><button class="btn" id="csv">EXPORT CSV</button></div><div style="overflow:auto"><table><thead><tr><th>ID</th><th>Mode</th><th>D</th><th>Fit</th><th>Cmin</th><th>Cmax</th><th>Ra</th><th>Rq</th><th>Cp</th><th>Cpk</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+ </div>
+</section>
+
+<section class="panel right">
+<div class="ph">Engineering Results</div>
+<div class="pb">
+ <div class="cards">
+  <div class="card"><b>Fit Class</b><span id="fitClass">—</span></div>
+  <div class="card"><b>Specification</b><span id="specStatus">—</span></div>
+  <div class="card"><b>Cmin</b><span id="cminCard">—</span></div>
+  <div class="card"><b>Cmax</b><span id="cmaxCard">—</span></div>
+  <div class="card"><b>Ra</b><span id="raCard">—</span></div>
+  <div class="card"><b>Rq</b><span id="rqCard">—</span></div>
+  <div class="card"><b>Cp</b><span id="cpCard">—</span></div>
+  <div class="card"><b>Cpk</b><span id="cpkCard">—</span></div>
+ </div>
+ <div class="info" id="info"></div>
+ <hr style="border-color:#27445e">
+ <h3>Assumptions / Asumsi</h3>
+ <div class="tiny">Scalar size limits; ideal cylindrical mating features; thermal expansion excluded; synthetic surface data; simplified discrete mean-line roughness; Cp/Cpk only under stated process assumptions; uncertainty is qualitative unless a full uncertainty budget is provided.</div>
+</div></section>
+</main>
+
+<footer class="status">
+ <span>MODE: <b id="stMode">FIT</b></span><span>FIT: <b id="stFit">—</b></span><span>SPEC: <b id="stSpec">—</b></span>
+ <span>Cmin/Cmax: <b id="stClear">—</b></span><span>SURFACE: <b id="stSurf">—</b></span><span>PROCESS: <b id="stProc">—</b></span><span>TRIAL: <b id="stTrial">0</b></span>
+</footer>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const state={stage:0,lang:"ID",level:0,playing:false,assembly:0,assemblyTarget:0,showZero:true,showLimits:true,showEq:false,t:0,stepCount:0,trial:0,records:[],seed:123456,lastAction:"READY"};
+const presets={
+ clearance:{D:25,hmin:25,hmax:25.021,smin:24.980,smax:24.993,mode:"fit"},
+ bearing:{D:35,hmin:35,hmax:35.018,smin:34.995,smax:35.008,mode:"fit"},
+ bushing:{D:30,hmin:30.010,hmax:30.035,smin:29.980,smax:29.995,mode:"fit"},
+ hub:{D:40,hmin:40,hmax:40.025,smin:39.990,smax:40.010,mode:"fit"},
+ press:{D:25,hmin:25,hmax:25.015,smin:25.020,smax:25.040,mode:"fit"},
+ dowel:{D:12,hmin:12,hmax:12.012,smin:12.006,smax:12.016,mode:"fit"},
+ surface:{D:25,hmin:25,hmax:25.021,smin:24.98,smax:24.993,mode:"surface"}
+};
+function num(id){return Number($(id).value)}
+function validateInputs(){
+ const a={D:num("D"),hmin:num("hmin"),hmax:num("hmax"),smin:num("smin"),smax:num("smax")};
+ a.valid=Object.values(a).slice(0,5).every(Number.isFinite)&&a.D>0&&a.hmin<=a.hmax&&a.smin<=a.smax;
+ return a;
+}
+function calculateLimitDimensions(){
+ const a=validateInputs(); if(!a.valid)return {...a,valid:false};
+ const TH=a.hmax-a.hmin,TS=a.smax-a.smin;
+ const ES=a.hmax-a.D,EI=a.hmin-a.D,es=a.smax-a.D,ei=a.smin-a.D;
+ return {...a,TH,TS,ES,EI,es,ei,valid:true};
+}
+function classifyFit(cmin,cmax){
+ const eps=1e-12;
+ if(Math.abs(cmin)<eps||Math.abs(cmax)<eps)return "BOUNDARY";
+ if(cmin>0)return "CLEARANCE";
+ if(cmax<0)return "INTERFERENCE";
+ return "TRANSITION";
+}
+function calculateClearanceInterference(){
+ const x=calculateLimitDimensions(); if(!x.valid)return {...x,fit:"INVALID"};
+ const cmax=x.hmax-x.smin,cmin=x.hmin-x.smax;
+ const fit=classifyFit(cmin,cmax);
+ const imin=x.smin-x.hmax,imax=x.smax-x.hmin;
+ return {...x,cmin,cmax,imin,imax,fit};
+}
+function seeded(seed){let x=seed>>>0;return()=>{x=(1664525*x+1013904223)>>>0;return x/4294967296}}
+function generateSyntheticSurfaceProfile(){
+ const n=Math.max(20,Math.min(800,Math.round(num("points")))), L=Math.max(.1,num("sampLen")), A=Math.max(.001,num("amp")), type=$("profileType").value,res=Math.max(.001,num("resolution"));
+ const r=seeded(state.seed),z=[];
+ for(let i=0;i<n;i++){let x=i/(n-1)*L,u=x/L,y;
+   if(type==="turning") y=A*(0.72*Math.sin(2*Math.PI*u*18)+0.20*Math.sin(2*Math.PI*u*36));
+   else if(type==="grinding") y=A*(0.35*Math.sin(2*Math.PI*u*42)+0.20*Math.sin(2*Math.PI*u*71)+0.12*(r()-.5));
+   else if(type==="honing") y=A*(0.38*Math.sin(2*Math.PI*u*28)+0.30*Math.sin(2*Math.PI*u*31+1.2));
+   else y=A*(0.55*Math.sin(2*Math.PI*u*12)+0.25*Math.sin(2*Math.PI*u*3)+0.15*(r()-.5));
+   y=Math.round(y/res)*res; z.push({x,y});
+ }
+ return z;
+}
+function calculateRaRqRz(profile){
+ if(!profile.length)return {ra:NaN,rq:NaN,rz:NaN,mean:NaN};
+ const mean=profile.reduce((s,p)=>s+p.y,0)/profile.length;
+ const d=profile.map(p=>p.y-mean);
+ const ra=d.reduce((s,v)=>s+Math.abs(v),0)/d.length;
+ const rq=Math.sqrt(d.reduce((s,v)=>s+v*v,0)/d.length);
+ const sorted=[...d].sort((a,b)=>a-b),k=Math.max(1,Math.floor(d.length*.05));
+ const rz=sorted.slice(-k).reduce((a,b)=>a+b,0)/k - sorted.slice(0,k).reduce((a,b)=>a+b,0)/k;
+ return {ra,rq,rz,mean,def:"Rz educational: mean top 5% − mean bottom 5% profile deviations"};
+}
+function normalRand(r){let u=Math.max(1e-9,r()),v=Math.max(1e-9,r());return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function generateProcessSamplesSeeded(){
+ const n=Math.max(5,Math.min(200,Math.round(num("samples")))),m=num("pmean"),s=num("sigma"),r=seeded(state.seed+77),arr=[];
+ for(let i=0;i<n;i++)arr.push(m+s*normalRand(r)); return arr;
+}
+function calculateProcessStatistics(){
+ const L=num("lsl"),U=num("usl"),m=num("pmean"),s=num("sigma"),arr=generateProcessSamplesSeeded();
+ if(!(Number.isFinite(L)&&Number.isFinite(U)&&L<U&&s>0))return {valid:false,arr};
+ const mean=arr.reduce((a,b)=>a+b,0)/arr.length;
+ const sd=Math.sqrt(arr.reduce((a,b)=>a+(b-mean)**2,0)/(arr.length-1));
+ const cp=(U-L)/(6*s),cpk=Math.min((U-m)/(3*s),(m-L)/(3*s));
+ const pass=arr.filter(v=>v>=L&&v<=U).length;
+ return {valid:true,L,U,m,s,arr,mean,sd,cp,cpk,pass,fail:arr.length-pass};
+}
+function getAll(){
+ const fit=calculateClearanceInterference(), profile=generateSyntheticSurfaceProfile(),surf=calculateRaRqRz(profile),proc=calculateProcessStatistics();
+ return {fit,profile,surf,proc};
+}
+function fmt(v,d=3){return Number.isFinite(v)?v.toFixed(d):"N/A"} function um(mm){return fmt(mm*1000,1)+" µm"}
+function updateCards(d){
+ const f=d.fit;
+ $("fitClass").textContent=f.fit||"—"; $("fitClass").className=f.fit==="CLEARANCE"?"ok":f.fit==="INTERFERENCE"?"bad":"warn";
+ $("specStatus").textContent=f.valid?"VALID":"INVALID"; $("specStatus").className=f.valid?"ok":"bad";
+ $("cminCard").textContent=f.valid?um(f.cmin):"N/A"; $("cmaxCard").textContent=f.valid?um(f.cmax):"N/A";
+ $("raCard").textContent=fmt(d.surf.ra,3)+" µm"; $("rqCard").textContent=fmt(d.surf.rq,3)+" µm";
+ $("cpCard").textContent=d.proc.valid?fmt(d.proc.cp,2):"N/A"; $("cpkCard").textContent=d.proc.valid?fmt(d.proc.cpk,2):"N/A";
+ $("stMode").textContent=$("mode").value.toUpperCase();$("stFit").textContent=f.fit;$("stSpec").textContent=f.valid?"VALID":"INVALID";
+ $("stClear").textContent=f.valid?um(f.cmin)+" / "+um(f.cmax):"N/A";$("stSurf").textContent="Ra "+fmt(d.surf.ra,2)+" µm";
+ $("stProc").textContent=d.proc.valid?"Cpk "+fmt(d.proc.cpk,2):"N/A";$("stTrial").textContent=state.trial;
+}
+function updateCalc(d){
+ const f=d.fit,s=d.surf,p=d.proc;
+ $("calcText").textContent = !f.valid ? "INVALID INPUT: lower limit must be ≤ upper limit and basic size > 0." :
+`FIT / SUAIAN
+Basic size D = ${fmt(f.D,3)} mm
+Hole: Hmin=${fmt(f.hmin,3)} mm, Hmax=${fmt(f.hmax,3)} mm
+Shaft: Smin=${fmt(f.smin,3)} mm, Smax=${fmt(f.smax,3)} mm
+
+TH = Hmax − Hmin = ${fmt(f.TH*1000,1)} µm
+TS = Smax − Smin = ${fmt(f.TS*1000,1)} µm
+Cmin = Hmin − Smax = ${fmt(f.cmin*1000,1)} µm
+Cmax = Hmax − Smin = ${fmt(f.cmax*1000,1)} µm
+Classification = ${f.fit}
+Imin = Smin − Hmax = ${fmt(f.imin*1000,1)} µm
+Imax = Smax − Hmin = ${fmt(f.imax*1000,1)} µm
+
+SURFACE / PERMUKAAN
+Mean line = ${fmt(s.mean,4)} µm
+Ra = mean(|zi − zmean|) = ${fmt(s.ra,4)} µm
+Rq = sqrt(mean((zi − zmean)²)) = ${fmt(s.rq,4)} µm
+Rz = ${fmt(s.rz,4)} µm
+Active Rz definition: ${s.def}
+
+PROCESS CAPABILITY / KAPABILITAS PROSES
+Cp = (USL−LSL)/(6σ) = ${p.valid?fmt(p.cp,3):"N/A"}
+Cpk = min[(USL−μ)/(3σ),(μ−LSL)/(3σ)] = ${p.valid?fmt(p.cpk,3):"N/A"}
+Pass/Fail samples = ${p.valid?p.pass+"/"+p.fail:"N/A"}
+
+NOTE: ISO 286 designation values are not inferred. Surface profile and process samples are synthetic educational data.`;
+}
+function line(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+function drawMain(d){
+ const c=$("mainCanvas"),ctx=c.getContext("2d"),W=c.width,H=c.height;ctx.clearRect(0,0,W,H);ctx.fillStyle="#081522";ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="#17334a";ctx.lineWidth=1;for(let x=0;x<W;x+=40)line(ctx,x,0,x,H);for(let y=0;y<H;y+=40)line(ctx,0,y,W,y);
+ ctx.fillStyle="#e9f2fb";ctx.font="bold 18px Arial";ctx.fillText(["FUNCTIONAL REQUIREMENT","TOLERANCE / FIT SPECIFICATION","MANUFACTURING VARIATION","INSPECTION & ASSEMBLY DECISION"][state.stage],24,30);
+ const mode=$("mode").value;
+ if(mode==="surface")drawSurface(ctx,d,W,H); else if(mode==="process")drawProcess(ctx,d,W,H); else drawFit(ctx,d,W,H);
+ if(state.showEq){ctx.fillStyle="#0b2134e8";ctx.fillRect(18,H-88,W-36,68);ctx.strokeStyle="#36c9d8";ctx.strokeRect(18,H-88,W-36,68);ctx.fillStyle="#d8e8f5";ctx.font="15px Consolas";ctx.fillText("Cmin = Hmin − Smax     Cmax = Hmax − Smin",34,H-58);ctx.fillText("TH = Hmax − Hmin       TS = Smax − Smin",34,H-34)}
+}
+function drawFit(ctx,d,W,H){
+ const f=d.fit;if(!f.valid){ctx.fillStyle="#ff6b6b";ctx.fillText("INVALID LIMITS",30,80);return}
+ ctx.fillStyle="#9fb4c8";ctx.font="13px Arial";ctx.fillText("Tolerance zones relative to zero line (deviation, µm)",35,65);
+ const vals=[f.EI,f.ES,f.ei,f.es].map(v=>v*1000),mn=Math.min(-10,...vals)-10,mx=Math.max(10,...vals)+10;
+ const y0=230,scale=260/(mx-mn),Y=v=>y0-v*scale;
+ if(state.showZero){ctx.strokeStyle="#fff";ctx.setLineDash([6,5]);line(ctx,90,Y(0),500,Y(0));ctx.setLineDash([]);ctx.fillStyle="#fff";ctx.fillText("ZERO LINE / BASIC SIZE",95,Y(0)-7)}
+ ctx.fillStyle="#2d8bc9";ctx.fillRect(150,Y(f.ES*1000),120,Math.max(4,Y(f.EI*1000)-Y(f.ES*1000)));ctx.fillStyle="white";ctx.fillText("HOLE",185,Y((f.ES+f.EI)*500)+4);
+ ctx.fillStyle="#d38a32";ctx.fillRect(320,Y(f.es*1000),120,Math.max(4,Y(f.ei*1000)-Y(f.es*1000)));ctx.fillStyle="white";ctx.fillText("SHAFT",350,Y((f.es+f.ei)*500)+4);
+ if(state.showLimits){ctx.fillStyle="#b9ccdc";ctx.fillText("ES "+fmt(f.ES*1000,1),150,Y(f.ES*1000)-5);ctx.fillText("EI "+fmt(f.EI*1000,1),150,Y(f.EI*1000)+15);ctx.fillText("es "+fmt(f.es*1000,1),320,Y(f.es*1000)-5);ctx.fillText("ei "+fmt(f.ei*1000,1),320,Y(f.ei*1000)+15);ctx.strokeStyle="#6c8aa5";ctx.setLineDash([3,4]);[f.ES,f.EI,f.es,f.ei].forEach(v=>line(ctx,90,Y(v*1000),500,Y(v*1000)));ctx.setLineDash([])}
+ // assembly
+ const cx=730,cy=255,R=105,shaftR= f.fit==="INTERFERENCE"?83:76;ctx.strokeStyle="#58a6ff";ctx.lineWidth=18;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
+ let off=(1-state.assembly)*145;ctx.fillStyle="#d38a32";ctx.beginPath();ctx.arc(cx+off,cy,shaftR,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#e9f2fb";ctx.font="bold 15px Arial";ctx.fillText("SHAFT–HOLE ASSEMBLY",620,75);ctx.font="12px Arial";ctx.fillStyle="#ffb454";ctx.fillText("CLEARANCE / INTERFERENCE VISUAL EXAGGERATED — NOT TO SCALE",555,420);
+ ctx.font="bold 22px Arial";ctx.fillStyle=f.fit==="CLEARANCE"?"#5dd39e":f.fit==="INTERFERENCE"?"#ff6b6b":"#ffb454";ctx.fillText(f.fit,670,455);
+}
+function drawSurface(ctx,d,W,H){
+ const p=d.profile,s=d.surf,left=60,right=W-40,top=90,bottom=390,mid=(top+bottom)/2,A=Math.max(...p.map(q=>Math.abs(q.y-s.mean)),1),sx=(right-left)/(p.length-1),sy=(bottom-top)/(2*A*1.2);
+ ctx.strokeStyle="#29445f";for(let y=top;y<=bottom;y+=50)line(ctx,left,y,right,y);
+ ctx.strokeStyle="#9fb4c8";ctx.setLineDash([7,5]);line(ctx,left,mid,right,mid);ctx.setLineDash([]);ctx.fillStyle="#9fb4c8";ctx.fillText("MEAN LINE",left+5,mid-7);
+ ctx.strokeStyle="#36c9d8";ctx.lineWidth=2;ctx.beginPath();p.forEach((q,i)=>{let x=left+i*sx,y=mid-(q.y-s.mean)*sy;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ const idx=Math.min(p.length-1,Math.floor((state.t%1)*p.length)),x=left+idx*sx;ctx.strokeStyle="#ffb454";line(ctx,x,top,x,bottom);
+ ctx.fillStyle="#e9f2fb";ctx.font="bold 18px Arial";ctx.fillText(`Ra ${fmt(s.ra,3)} µm   Rq ${fmt(s.rq,3)} µm   Rz* ${fmt(s.rz,3)} µm`,60,445);ctx.font="11px Arial";ctx.fillStyle="#9fb4c8";ctx.fillText("* educational active definition shown in Calculation panel",60,466);
+}
+function drawProcess(ctx,d,W,H){
+ const p=d.proc;if(!p.valid){ctx.fillStyle="#ff6b6b";ctx.fillText("INVALID PROCESS INPUT",30,80);return}
+ const left=70,right=W-50,top=90,bottom=400,min=Math.min(p.L,...p.arr),max=Math.max(p.U,...p.arr),bins=16,count=Array(bins).fill(0);
+ p.arr.forEach(v=>count[Math.min(bins-1,Math.floor((v-min)/(max-min+1e-12)*bins))]++);
+ const bw=(right-left)/bins,peak=Math.max(...count);ctx.fillStyle="#2d8bc9";count.forEach((n,i)=>ctx.fillRect(left+i*bw,bottom-(n/peak)*(bottom-top),bw-3,(n/peak)*(bottom-top)));
+ const X=v=>left+(v-min)/(max-min)*(right-left);ctx.strokeStyle="#5dd39e";ctx.lineWidth=2;line(ctx,X(p.L),top,X(p.L),bottom);line(ctx,X(p.U),top,X(p.U),bottom);
+ ctx.fillStyle="#e9f2fb";ctx.fillText("LSL",X(p.L)-10,top-8);ctx.fillText("USL",X(p.U)-10,top-8);ctx.font="bold 20px Arial";ctx.fillText(`Cp ${fmt(p.cp,2)}   Cpk ${fmt(p.cpk,2)}   PASS ${p.pass}/${p.arr.length}`,70,450);
+}
+function drawGraph(d){
+ const c=$("graphCanvas"),ctx=c.getContext("2d"),W=c.width,H=c.height;ctx.clearRect(0,0,W,H);ctx.fillStyle="#081522";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#29445f";for(let x=50;x<W;x+=80)line(ctx,x,25,x,H-35);for(let y=30;y<H;y+=50)line(ctx,50,y,W-20,y);
+ if($("mode").value==="surface"){const p=d.profile,s=d.surf,A=Math.max(...p.map(q=>Math.abs(q.y-s.mean)),1);ctx.strokeStyle="#36c9d8";ctx.beginPath();p.forEach((q,i)=>{let x=50+i/(p.length-1)*(W-80),y=H/2-(q.y-s.mean)/A*90;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle="white";ctx.fillText("Surface z(x) relative to mean line",55,20)}
+ else {const f=d.fit;ctx.fillStyle="#e9f2fb";ctx.fillText("Tolerance-zone deviation graph (µm)",55,20);if(f.valid){let base=H/2,sc=3;ctx.fillStyle="#2d8bc9";ctx.fillRect(180,base-f.ES*1000*sc,130,(f.ES-f.EI)*1000*sc||4);ctx.fillStyle="#d38a32";ctx.fillRect(390,base-f.es*1000*sc,130,(f.es-f.ei)*1000*sc||4);ctx.strokeStyle="white";line(ctx,50,base,W-20,base)}}
+}
+function updateInfo(d){
+ const mode=$("mode").value;
+ $("info").innerHTML= mode==="fit"?`<h3>Fit Interpretation</h3><p><span class="badge">${d.fit.fit}</span></p><p>Classification is calculated directly from limit arithmetic. Dimensional tolerance and surface finish are separate requirements.</p>`:
+ mode==="surface"?`<h3>Surface Metrology</h3><p>Profile is synthetic and reproducible. Ra and Rq use the same active mean line and sampled points. Visual vertical exaggeration does not change calculated values.</p>`:
+ `<h3>Process & Inspection</h3><p>Cp/Cpk are educational capability indicators under a simple stable-process assumption. They are not individual-part acceptance criteria.</p>`;
+}
+function updateVisibility(){let m=$("mode").value;document.querySelectorAll(".fitInputs").forEach(e=>e.classList.toggle("hidden",m==="surface"));document.querySelectorAll(".surfaceInputs").forEach(e=>e.classList.toggle("hidden",m==="fit"));document.querySelectorAll(".processInputs").forEach(e=>e.classList.toggle("hidden",m!=="process"))}
+function setAction(msg){state.lastAction=msg;$("controlFeedback").innerHTML=`<b>${state.playing?"RUNNING":"CONTROL"}</b> — ${msg}`;}
+function updateControlStates(){
+ $("play").classList.toggle("active",state.playing); $("pause").classList.toggle("active",!state.playing);
+ $("assemble").classList.toggle("active",state.assemblyTarget===1); $("separate").classList.toggle("active",state.assemblyTarget===0);
+ $("showZero").classList.toggle("active",state.showZero); $("showZero").classList.toggle("off",!state.showZero); $("showZero").textContent=`ZERO LINE: ${state.showZero?"ON":"OFF"}`;
+ $("showLimits").classList.toggle("active",state.showLimits); $("showLimits").classList.toggle("off",!state.showLimits); $("showLimits").textContent=`LIMITS: ${state.showLimits?"ON":"OFF"}`;
+ $("showEq").classList.toggle("active",state.showEq); $("showEq").classList.toggle("off",!state.showEq); $("showEq").textContent=`EQUATIONS: ${state.showEq?"ON":"OFF"}`;
+}
+function update(){updateVisibility();const d=getAll();updateCards(d);updateCalc(d);updateInfo(d);drawMain(d);drawGraph(d);renderChallenge(d);updateControlStates()}
+function applyPreset(k){const p=presets[k];["D","hmin","hmax","smin","smax"].forEach(x=>$(x).value=p[x]);$("mode").value=p.mode;update()}
+function renderChallenge(d){
+ const box=$("challengeBox"); if(box.dataset.ready)return;
+ box.dataset.ready="1";box.innerHTML=`<h3>TRY TO SOLVE / COBA SELESAIKAN</h3><p>Hole 25.000–25.021 mm dan shaft 24.980–24.993 mm. Berapa Cmin (µm)?</p><input id="ans" type="number" style="padding:6px;background:#081522;color:white;border:1px solid #35516a"><button class="btn" id="checkAns">CHECK</button><span id="fb"></span><p class="tiny">Hint: Cmin = Hmin − Smax.</p>`;
+ $("checkAns").onclick=()=>{$("fb").textContent=Math.abs(Number($("ans").value)-7)<.05?" ✓ Correct / Benar":" ✗ Recheck limit arithmetic."}
+}
+function record(){
+ const d=getAll();state.trial++;state.records.push({id:state.trial,mode:$("mode").value,D:num("D"),fit:d.fit.fit,cmin:d.fit.cmin,cmax:d.fit.cmax,ra:d.surf.ra,rq:d.surf.rq,cp:d.proc.cp,cpk:d.proc.cpk});renderTable();update()
+}
+function renderTable(){$("tbody").innerHTML=state.records.map(r=>`<tr><td>${r.id}</td><td>${r.mode}</td><td>${fmt(r.D,3)}</td><td>${r.fit}</td><td>${fmt(r.cmin*1000,1)}</td><td>${fmt(r.cmax*1000,1)}</td><td>${fmt(r.ra,3)}</td><td>${fmt(r.rq,3)}</td><td>${fmt(r.cp,2)}</td><td>${fmt(r.cpk,2)}</td></tr>`).join("")}
+function exportCSV(){let rows=[["ID","Mode","D_mm","Fit","Cmin_um","Cmax_um","Ra_um","Rq_um","Cp","Cpk"],...state.records.map(r=>[r.id,r.mode,r.D,r.fit,r.cmin*1000,r.cmax*1000,r.ra,r.rq,r.cp,r.cpk])];let blob=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tolerance_fit_experiment.csv";a.click();URL.revokeObjectURL(a.href)}
+document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",update));
+$("preset").onchange=e=>applyPreset(e.target.value);$("mode").onchange=update;$("reset").onclick=()=>applyPreset("clearance");
+document.querySelectorAll(".stagebar button[data-stage]").forEach(b=>b.onclick=()=>{state.stage=+b.dataset.stage;document.querySelectorAll(".stagebar button[data-stage]").forEach(x=>x.classList.toggle("active",x===b));update()});
+$("auto").onclick=()=>{let i=0;const timer=setInterval(()=>{state.stage=i;document.querySelectorAll(".stagebar button[data-stage]").forEach((x,j)=>x.classList.toggle("active",j===i));update();if(++i>3)clearInterval(timer)},450)};
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".tabpane").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab))});
+$("assemble").onclick=()=>{state.assemblyTarget=1;setAction("ASSEMBLE: shaft is moving into the hole (visual gap/overlap exaggerated). ");update()};
+$("separate").onclick=()=>{state.assemblyTarget=0;setAction("SEPARATE: shaft is moving away from the hole.");update()};
+$("step").onclick=()=>{state.stepCount++;state.t=(state.t+.08)%1;state.assembly += (state.assemblyTarget-state.assembly)*0.35;if(Math.abs(state.assemblyTarget-state.assembly)<.01)state.assembly=state.assemblyTarget;setAction(`STEP ${state.stepCount}: simulation advanced; probe/assembly position updated.`);update()};
+$("play").onclick=()=>{state.playing=true;setAction("PLAY: continuous animation is running.");update()};
+$("pause").onclick=()=>{state.playing=false;setAction("PAUSE: animation stopped at the current state.");update()};
+$("showZero").onclick=()=>{state.showZero=!state.showZero;setAction(`ZERO LINE ${state.showZero?"ON":"OFF"}: basic-size reference ${state.showZero?"shown":"hidden"}.`);update()};
+$("showLimits").onclick=()=>{state.showLimits=!state.showLimits;setAction(`LIMITS ${state.showLimits?"ON":"OFF"}: deviation labels and guide lines ${state.showLimits?"shown":"hidden"}.`);update()};
+$("showEq").onclick=()=>{state.showEq=!state.showEq;setAction(`EQUATIONS ${state.showEq?"ON":"OFF"}: governing fit equations ${state.showEq?"shown on canvas":"hidden"}.`);update()};
+$("record").onclick=record;$("clearData").onclick=()=>{state.records=[];state.trial=0;renderTable();update()};$("csv").onclick=exportCSV;$("nextSample").onclick=()=>{state.seed++;update()};
+$("compare").onclick=()=>{const f=calculateClearanceInterference();alert(`CURRENT FIT: ${f.fit}\nCmin=${um(f.cmin)}\nCmax=${um(f.cmax)}\n\nCompare principle:\nClearance: Cmin>0\nTransition: Cmin≤0≤Cmax\nInterference: Cmax<0`)};
+$("lang").onclick=()=>{state.lang=state.lang==="ID"?"EN":"ID";$("lang").textContent=state.lang==="ID"?"ID | EN":"EN | ID";setAction(state.lang==="ID"?"Bahasa Indonesia aktif. State simulasi dipertahankan.":"English mode active. Simulation state is preserved.");update()};
+$("level").onclick=()=>{state.level=(state.level+1)%3;$("level").textContent=["BEGINNER","INTERMEDIATE","ADVANCED"][state.level]};
+function loop(){let changed=false;if(state.playing){state.t=(state.t+.004)%1;changed=true}if(Math.abs(state.assemblyTarget-state.assembly)>.002){state.assembly += (state.assemblyTarget-state.assembly)*0.08;changed=true}else if(state.assembly!==state.assemblyTarget){state.assembly=state.assemblyTarget;changed=true}if(changed)update();requestAnimationFrame(loop)}
+applyPreset("clearance");setAction("READY: all toolbar controls are wired to visible simulation state changes.");updateControlStates();loop();
+</script>
+</body>
+</html>

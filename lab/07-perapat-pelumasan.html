@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Lab — Perapat &amp; Pelumasan / Sealing &amp; Lubrication</title>
+<style>
+  :root{
+    --bg-0:#0A121C;
+    --bg-1:#0F1B29;
+    --bg-2:#152232;
+    --bg-3:#1B2B3E;
+    --line:#25384D;
+    --line-soft:#1C2C3D;
+    --text-0:#E9F1F8;
+    --text-1:#B7C6D6;
+    --text-2:#7F91A5;
+    --cyan:#4FD6E8;
+    --cyan-dim:#2C8A99;
+    --amber:#F0A63B;
+    --red:#E85D4E;
+    --green:#3FCB8B;
+    --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg-0);color:var(--text-0);font-family:var(--sans);}
+  body{min-height:100vh;}
+  ::selection{background:var(--cyan-dim);color:#fff;}
+  button{font-family:var(--sans);cursor:pointer;}
+  input[type=range]{accent-color:var(--cyan);}
+  a{color:var(--cyan);}
+
+  .app{display:flex;flex-direction:column;min-height:100vh;}
+
+  /* HEADER */
+  header.top{
+    display:flex;align-items:center;gap:16px;
+    padding:10px 18px;background:var(--bg-1);border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  header.top .brand{display:flex;flex-direction:column;gap:1px;margin-right:auto;}
+  header.top .brand .t1{font-weight:700;font-size:15px;letter-spacing:.2px;}
+  header.top .brand .t2{font-size:11.5px;color:var(--text-2);font-family:var(--mono);}
+  .presetSelect, .langBtns, select, .pill{
+    background:var(--bg-2);border:1px solid var(--line);color:var(--text-0);
+    border-radius:6px;padding:6px 10px;font-size:12.5px;
+  }
+  select{appearance:none;}
+  .langBtns{display:flex;gap:2px;padding:2px;}
+  .langBtns button{background:transparent;border:none;color:var(--text-2);padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;}
+  .langBtns button.active{background:var(--cyan-dim);color:#fff;}
+  .statusPills{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);white-space:nowrap;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-2);flex:none;}
+  .dot.safe{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+  .dot.crit{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .dot.na{background:var(--text-2);}
+
+  /* MAIN GRID */
+  .main{display:grid;grid-template-columns:290px 1fr 320px;gap:1px;background:var(--line);flex:1;}
+  .panel{background:var(--bg-1);overflow:auto;}
+  .panel-inner{padding:14px;}
+  h3.ph{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);
+        margin:18px 0 8px;font-weight:700;border-bottom:1px solid var(--line-soft);padding-bottom:6px;}
+  h3.ph:first-child{margin-top:0;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-1);margin-bottom:5px;cursor:help;}
+  .field label b{color:var(--text-0);font-weight:600;}
+  .field .val{font-family:var(--mono);color:var(--cyan);font-size:12px;}
+  .rowInputs{display:flex;gap:6px;align-items:center;}
+  .rowInputs input[type=range]{flex:1;}
+  .rowInputs input[type=number]{
+    width:66px;background:var(--bg-2);border:1px solid var(--line);color:var(--text-0);
+    border-radius:5px;padding:4px 5px;font-family:var(--mono);font-size:11.5px;
+  }
+  select.selSys{width:100%;}
+  .btnRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .btn{
+    background:var(--bg-2);border:1px solid var(--line);color:var(--text-0);
+    border-radius:6px;padding:7px 11px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;
+  }
+  .btn:hover{border-color:var(--cyan-dim);}
+  .btn.primary{background:var(--cyan-dim);border-color:var(--cyan-dim);color:#fff;}
+  .btn.small{padding:5px 8px;font-size:11px;}
+  .btn.active{outline:2px solid var(--cyan);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .assumpt{font-size:11.5px;color:var(--text-2);line-height:1.5;}
+  .assumpt li{margin-bottom:4px;}
+
+  /* CENTER */
+  .center{display:flex;flex-direction:column;}
+  .stageTabs{display:flex;gap:1px;background:var(--line);border-bottom:1px solid var(--line);}
+  .stageTabs button{
+    flex:1;background:var(--bg-2);border:none;color:var(--text-1);padding:10px 8px;font-size:12px;font-weight:600;
+  }
+  .stageTabs button.active{background:var(--bg-1);color:var(--cyan);box-shadow:inset 0 -2px 0 var(--cyan);}
+  .stageToolbar{display:flex;gap:6px;padding:8px 10px;flex-wrap:wrap;background:var(--bg-1);border-bottom:1px solid var(--line-soft);}
+  .canvasWrap{flex:1;position:relative;background:
+      linear-gradient(var(--bg-0),var(--bg-0)) padding-box,
+      repeating-linear-gradient(0deg, var(--line-soft) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--line-soft) 0 1px, transparent 1px 28px);
+    min-height:340px;
+  }
+  svg#stage{width:100%;height:100%;display:block;}
+  .stageCaption{position:absolute;left:10px;bottom:8px;font-size:11px;color:var(--text-2);font-family:var(--mono);
+    background:rgba(10,18,28,.7);padding:3px 8px;border-radius:4px;}
+  .phaseBadge{position:absolute;right:10px;top:10px;font-family:var(--mono);font-size:13px;font-weight:700;
+    background:var(--bg-2);border:1.5px solid var(--cyan);padding:6px 14px;border-radius:20px;color:var(--cyan);
+    box-shadow:0 0 10px rgba(79,214,232,.25);}
+  .phaseBadge.ph-active{color:var(--bg-0);background:var(--amber);border-color:var(--amber);box-shadow:0 0 14px rgba(240,166,59,.5);}
+  .loadBarWrap{position:absolute;left:10px;top:10px;background:rgba(10,18,28,.85);border:1px solid var(--line);
+    border-radius:8px;padding:8px 12px;min-width:190px;}
+  .loadBarLabel{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--text-1);margin-bottom:5px;}
+  .loadBarLabel #loadBarPct{color:var(--cyan);font-weight:700;}
+  .loadBarTrack{height:12px;border-radius:6px;background:var(--bg-3);overflow:hidden;}
+  .loadBarFill{height:100%;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));width:0%;transition:width .12s linear;}
+
+  /* RIGHT PANEL CARDS */
+  .cardGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;}
+  .card .k{font-size:10.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;}
+  .card .v{font-family:var(--mono);font-size:16px;color:var(--text-0);font-weight:600;}
+  .card .u{font-size:10.5px;color:var(--text-2);margin-left:3px;font-weight:400;}
+  .card.wide{grid-column:1/-1;}
+  .safetyMeter{margin-top:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:10px;}
+  .safetyMeter .bar{height:10px;border-radius:6px;background:var(--bg-3);overflow:hidden;margin-top:8px;position:relative;}
+  .safetyMeter .fill{height:100%;background:var(--green);transition:width .2s;}
+  .safetyMeter .label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-1);}
+  .safetyMeter .statusTxt{font-weight:700;font-family:var(--mono);font-size:13px;margin-top:6px;}
+
+  /* BOTTOM */
+  .bottom{background:var(--bg-1);border-top:1px solid var(--line);}
+  .bottomTabs{display:flex;gap:1px;background:var(--line);overflow-x:auto;}
+  .bottomTabs button{background:var(--bg-2);border:none;color:var(--text-1);padding:9px 14px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .bottomTabs button.active{background:var(--bg-1);color:var(--cyan);box-shadow:inset 0 -2px 0 var(--cyan);}
+  .bottomPane{padding:14px 16px;display:none;}
+  .bottomPane.active{display:block;}
+  .chartsRow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .chartBox{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:8px;}
+  .chartBox canvas{width:100%;height:220px;display:block;}
+  .chartTitle{font-size:11.5px;color:var(--text-1);margin-bottom:4px;font-weight:600;}
+
+  table.dataTbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+  table.dataTbl th, table.dataTbl td{border:1px solid var(--line);padding:5px 7px;text-align:right;white-space:nowrap;}
+  table.dataTbl th{background:var(--bg-2);color:var(--text-1);text-align:right;position:sticky;top:0;}
+  table.dataTbl td:first-child, table.dataTbl th:first-child{text-align:left;}
+  .tblWrap{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;}
+
+  .calcSteps{font-family:var(--mono);font-size:12.5px;line-height:1.9;background:var(--bg-2);
+    border:1px solid var(--line);border-radius:8px;padding:12px 14px;white-space:pre-wrap;}
+  .balanceOk{color:var(--green);font-weight:700;}
+  .balanceBad{color:var(--red);font-weight:700;}
+
+  .worksheetGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .wsField label{font-size:11.5px;color:var(--text-1);display:block;margin-bottom:4px;}
+  .wsField textarea{width:100%;min-height:60px;background:var(--bg-2);border:1px solid var(--line);color:var(--text-0);
+    border-radius:6px;padding:8px;font-family:var(--sans);font-size:12.5px;resize:vertical;}
+
+  .quizQ{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .quizQ .qtext{font-size:13px;margin-bottom:8px;}
+  .quizQ .opt{display:block;width:100%;text-align:left;background:var(--bg-3);border:1px solid var(--line);
+    color:var(--text-0);border-radius:6px;padding:7px 10px;margin-bottom:5px;font-size:12.5px;}
+  .quizQ .opt.correct{border-color:var(--green);background:#123526;}
+  .quizQ .opt.wrong{border-color:var(--red);background:#3a1a17;}
+  .quizFb{font-size:12px;color:var(--text-1);margin-top:6px;display:none;}
+
+  .tooltip{
+    position:fixed;background:var(--bg-3);border:1px solid var(--cyan-dim);color:var(--text-0);
+    padding:8px 11px;border-radius:6px;font-size:12px;max-width:260px;z-index:999;pointer-events:none;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+
+  footer.credit{padding:8px 16px;font-size:10.5px;color:var(--text-2);text-align:center;font-family:var(--mono);}
+
+  @media (max-width: 980px){
+    .main{grid-template-columns:1fr;}
+    .cardGrid{grid-template-columns:1fr 1fr;}
+    .chartsRow{grid-template-columns:1fr;}
+    .worksheetGrid{grid-template-columns:1fr;}
+  }
+
+  @media print{
+    header.top, .stageTabs, .stageToolbar, .bottomTabs, .btnRow, footer.credit{display:none !important;}
+    .main{grid-template-columns:1fr;background:#fff;}
+    body{background:#fff;color:#000;}
+    .panel, .bottom{background:#fff;}
+    .card, .chartBox, .calcSteps, .safetyMeter{border-color:#999;background:#fff;color:#000;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * {animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="t1" data-i="app_title">Virtual Lab: Perapat &amp; Pelumasan</div>
+      <div class="t2" data-i="app_sub">SEAL · GASKET · LUBRICATION ENGINEERING SIMULATOR</div>
+    </div>
+    <select id="presetSelect" class="presetSelect"></select>
+    <div class="statusPills" id="statusPills"></div>
+    <div class="langBtns">
+      <button id="btnLangID" class="active">ID</button>
+      <button id="btnLangEN">EN</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- LEFT PANEL -->
+    <div class="panel">
+      <div class="panel-inner">
+        <h3 class="ph" data-i="h_system">Jenis Sistem</h3>
+        <select id="sysType" class="selSys"></select>
+
+        <h3 class="ph" data-i="h_level">Mode Belajar</h3>
+        <select id="learnLevel" class="selSys">
+          <option value="beginner" data-i="lvl_beg">Beginner</option>
+          <option value="intermediate" selected data-i="lvl_int">Intermediate</option>
+          <option value="advanced" data-i="lvl_adv">Advanced</option>
+        </select>
+
+        <h3 class="ph" data-i="h_params">Parameter Input</h3>
+        <div id="paramFields"></div>
+
+        <h3 class="ph" data-i="h_anim">Animasi &amp; Siklus</h3>
+        <div class="btnRow">
+          <button class="btn" id="btnPlay" data-i="b_play">▶ Play</button>
+          <button class="btn" id="btnPause" data-i="b_pause">⏸ Pause</button>
+          <button class="btn" id="btnStep" data-i="b_step">⏭ Step</button>
+          <button class="btn" id="btnReset" data-i="b_reset">↺ Reset</button>
+        </div>
+        <div class="btnRow">
+          <button class="btn" id="btnLoad" data-i="b_load">Compress/Start</button>
+          <button class="btn" id="btnHold" data-i="b_hold">Hold</button>
+          <button class="btn" id="btnUnload" data-i="b_unload">Release/Stop</button>
+          <button class="btn" id="btnPulse" data-i="b_pulse">Overload Pulse</button>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label><span data-i="lbl_animspeed">Animation Speed</span><span class="val" id="valAnimSpeed">1.0×</span></label>
+          <div class="rowInputs"><input type="range" id="animSpeed" min="0.1" max="4" step="0.1" value="1"></div>
+        </div>
+
+        <h3 class="ph" data-i="h_assump">Asumsi / Assumptions</h3>
+        <ul class="assumpt" id="assumptList"></ul>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="panel center">
+      <div class="stageTabs">
+        <button class="stageBtn active" data-stage="real" data-i="stage_real">1. REAL SYSTEM</button>
+        <button class="stageBtn" data-stage="model" data-i="stage_model">2. ENGINEERING MODEL</button>
+        <button class="stageBtn" data-stage="seal" data-i="stage_seal">3. SEAL/LUBRICATION MODEL</button>
+      </div>
+      <div class="stageToolbar">
+        <button class="btn small" id="btnAutoConvert" data-i="b_auto">Auto Convert</button>
+        <button class="btn small" id="btnShowFlow" data-i="b_showflow">Show/Hide Flow</button>
+        <button class="btn small" id="btnShowDim" data-i="b_showdim">Show Dimensions</button>
+        <button class="btn small" id="btnShowEq" data-i="b_showeq">Show Equations</button>
+      </div>
+      <div class="canvasWrap">
+        <svg id="stage" viewBox="0 0 800 420" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="phaseBadge" id="phaseBadge">—</div>
+        <div class="loadBarWrap" id="loadBarWrap">
+          <div class="loadBarLabel"><span data-i="lbl_loadbar">Beban / Load</span> <span id="loadBarPct">0%</span></div>
+          <div class="loadBarTrack"><div class="loadBarFill" id="loadBarFill" style="width:0%"></div></div>
+        </div>
+        <div class="stageCaption" id="stageCaption">Real System</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel">
+      <div class="panel-inner">
+        <h3 class="ph" data-i="h_cards">Engineering Cards</h3>
+        <div class="cardGrid" id="cardGrid"></div>
+
+        <div class="safetyMeter">
+          <div class="label"><span data-i="h_safety">Safety Status</span><span id="utilPct" class="val">0%</span></div>
+          <div class="bar"><div class="fill" id="safetyFill" style="width:0%"></div></div>
+          <div class="statusTxt" id="safetyText">—</div>
+        </div>
+
+        <h3 class="ph" data-i="h_info">Info Objek</h3>
+        <div id="infoPanel" style="font-size:12px;color:var(--text-1);line-height:1.6;">
+          <span data-i="info_hint">Klik komponen pada diagram untuk melihat detail.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom">
+    <div class="bottomTabs">
+      <button class="botBtn active" data-pane="graphs" data-i="tab_graphs">Graphs</button>
+      <button class="botBtn" data-pane="calc" data-i="tab_calc">Calculation</button>
+      <button class="botBtn" data-pane="flow" data-i="tab_flow">Flow Diagram</button>
+      <button class="botBtn" data-pane="compare" data-i="tab_compare">Compare</button>
+      <button class="botBtn" data-pane="data" data-i="tab_data">Data Table</button>
+      <button class="botBtn" data-pane="worksheet" data-i="tab_worksheet">Worksheet</button>
+      <button class="botBtn" data-pane="challenge" data-i="tab_challenge">Challenge</button>
+      <button class="botBtn" data-pane="quiz" data-i="tab_quiz">Quiz</button>
+    </div>
+
+    <div class="bottomPane active" id="pane-graphs">
+      <div class="chartsRow">
+        <div class="chartBox"><div class="chartTitle" id="chartTitle1">Leakage vs Pressure</div><canvas id="chart1"></canvas></div>
+        <div class="chartBox"><div class="chartTitle" id="chartTitle2">Stribeck Curve</div><canvas id="chart2"></canvas></div>
+        <div class="chartBox"><div class="chartTitle" id="chartTitle3">Stress / Contact Pressure vs Time</div><canvas id="chart3"></canvas></div>
+        <div class="chartBox"><div class="chartTitle" id="chartTitle4">Safety Factor vs Time</div><canvas id="chart4"></canvas></div>
+      </div>
+    </div>
+
+    <div class="bottomPane" id="pane-calc">
+      <div class="calcSteps" id="calcSteps"></div>
+    </div>
+
+    <div class="bottomPane" id="pane-flow">
+      <svg id="flowSvg" viewBox="0 0 900 220" style="width:100%;height:240px;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;"></svg>
+    </div>
+
+    <div class="bottomPane" id="pane-compare">
+      <div class="btnRow" style="margin-bottom:10px;">
+        <button class="btn small" id="btnCompareAdd" data-i="b_compareadd">+ Add Current to Comparison</button>
+        <button class="btn small" id="btnCompareClear" data-i="b_compareclear">Clear Comparison</button>
+      </div>
+      <div class="tblWrap"><table class="dataTbl" id="compareTbl"><thead><tr></tr></thead><tbody></tbody></table></div>
+      <div id="compareNote" style="font-size:11.5px;color:var(--text-2);margin-top:8px;"></div>
+    </div>
+
+    <div class="bottomPane" id="pane-data">
+      <div class="btnRow" style="margin-bottom:10px;">
+        <button class="btn small" id="btnRecord" data-i="b_record">Record Data</button>
+        <button class="btn small" id="btnClear" data-i="b_clear">Clear Data</button>
+        <button class="btn small" id="btnExport" data-i="b_export">Export CSV</button>
+        <button class="btn small" id="btnPrint" data-i="b_print">Print Lab Report</button>
+      </div>
+      <div class="tblWrap"><table class="dataTbl" id="dataTbl"><thead><tr></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="bottomPane" id="pane-worksheet">
+      <div class="worksheetGrid">
+        <div class="wsField"><label data-i="ws1">Tujuan eksperimen / Objective</label><textarea id="ws1"></textarea></div>
+        <div class="wsField"><label data-i="ws2">Variabel bebas &amp; terkontrol / Independent &amp; controlled variables</label><textarea id="ws2"></textarea></div>
+        <div class="wsField"><label data-i="ws3">Prediksi hasil / Prediction</label><textarea id="ws3"></textarea></div>
+        <div class="wsField"><label data-i="ws4">Hasil &amp; perbandingan / Result &amp; comparison</label><textarea id="ws4"></textarea></div>
+        <div class="wsField"><label data-i="ws5">Batas model &amp; keamanan / Model &amp; safety limits</label><textarea id="ws5"></textarea></div>
+        <div class="wsField"><label data-i="ws6">Kesimpulan / Conclusion</label><textarea id="ws6"></textarea></div>
+      </div>
+    </div>
+
+    <div class="bottomPane" id="pane-challenge">
+      <div id="challengeBox"></div>
+    </div>
+
+    <div class="bottomPane" id="pane-quiz">
+      <div id="quizBox"></div>
+    </div>
+  </div>
+
+  <footer class="credit">VIRTUAL LAB · SEALING &amp; LUBRICATION ENGINEERING SIMULATOR · SINGLE-FILE HTML · RUNS OFFLINE</footer>
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none;"></div>
+
+<script>
+/* =========================================================================
+   I18N DICTIONARY
+========================================================================= */
+const I18N = {
+id: {
+  app_title:"Virtual Lab: Perapat & Pelumasan",
+  app_sub:"SIMULATOR TEKNIK SEAL · GASKET · PELUMASAN",
+  h_system:"Jenis Sistem", h_level:"Mode Belajar", h_params:"Parameter Input",
+  h_anim:"Animasi & Siklus", h_assump:"Asumsi Teknik", h_cards:"Engineering Cards",
+  h_safety:"Status Keamanan", h_info:"Info Objek",
+  lvl_beg:"Beginner", lvl_int:"Intermediate", lvl_adv:"Advanced",
+  stage_real:"1. SISTEM NYATA", stage_model:"2. MODEL TEKNIK", stage_seal:"3. MODEL SEAL/LUBRIKASI",
+  b_play:"▶ Main", b_pause:"⏸ Jeda", b_step:"⏭ Step", b_reset:"↺ Reset",
+  b_load:"Kompresi/Mulai", b_hold:"Tahan", b_unload:"Lepas/Berhenti", b_pulse:"Pulsa Beban Lebih",
+  lbl_animspeed:"Kecepatan Animasi",
+  lbl_loadbar:"Beban / Load",
+  b_auto:"Konversi Otomatis", b_showflow:"Tampilkan Alur", b_showdim:"Tampilkan Dimensi", b_showeq:"Tampilkan Persamaan",
+  info_hint:"Klik komponen pada diagram untuk melihat detail.",
+  tab_graphs:"Grafik", tab_calc:"Perhitungan", tab_flow:"Diagram Alur", tab_compare:"Perbandingan",
+  tab_data:"Tabel Data", tab_worksheet:"Lembar Kerja", tab_challenge:"Tantangan", tab_quiz:"Kuis",
+  b_compareadd:"+ Tambah ke Perbandingan", b_compareclear:"Bersihkan Perbandingan",
+  b_record:"Rekam Data", b_clear:"Hapus Data", b_export:"Ekspor CSV", b_print:"Cetak Laporan Lab",
+  ws1:"Tujuan eksperimen", ws2:"Variabel bebas & terkontrol", ws3:"Prediksi hasil",
+  ws4:"Hasil & perbandingan", ws5:"Batas model & keamanan", ws6:"Kesimpulan",
+  seated:"SEATED / SESUAI DUDUKAN", notseated:"KEBOCORAN / NOT SEATED",
+  safe:"AMAN / SAFE", warn:"PERINGATAN / WARNING", crit:"KRITIS / CRITICAL", na:"BELUM DIEVALUASI / NOT EVALUATED",
+  phase_idle:"DIAM / IDLE", phase_compress:"KOMPRESI", phase_hold:"DITAHAN", phase_release:"DILEPAS",
+  phase_startup:"STARTUP", phase_steady:"STEADY-STATE", phase_shutdown:"SHUTDOWN",
+  note_illustrative:"Nilai material/pelumas bersifat ilustratif, bukan data tersertifikasi.",
+  disclaimer:"Simulator ini bukan pengganti standar desain (ASME PVC, EN 1591, API 682) atau analisis tribologi bersertifikasi."
+},
+en: {
+  app_title:"Virtual Lab: Sealing & Lubrication",
+  app_sub:"SEAL · GASKET · LUBRICATION ENGINEERING SIMULATOR",
+  h_system:"System Type", h_level:"Learning Mode", h_params:"Input Parameters",
+  h_anim:"Animation & Cycle", h_assump:"Engineering Assumptions", h_cards:"Engineering Cards",
+  h_safety:"Safety Status", h_info:"Object Info",
+  lvl_beg:"Beginner", lvl_int:"Intermediate", lvl_adv:"Advanced",
+  stage_real:"1. REAL SYSTEM", stage_model:"2. ENGINEERING MODEL", stage_seal:"3. SEAL/LUBRICATION MODEL",
+  b_play:"▶ Play", b_pause:"⏸ Pause", b_step:"⏭ Step", b_reset:"↺ Reset",
+  b_load:"Compress/Start", b_hold:"Hold", b_unload:"Release/Stop", b_pulse:"Overload Pulse",
+  lbl_animspeed:"Animation Speed",
+  lbl_loadbar:"Load",
+  b_auto:"Auto Convert", b_showflow:"Show/Hide Flow", b_showdim:"Show Dimensions", b_showeq:"Show Equations",
+  info_hint:"Click a component on the diagram to see details.",
+  tab_graphs:"Graphs", tab_calc:"Calculation", tab_flow:"Flow Diagram", tab_compare:"Compare",
+  tab_data:"Data Table", tab_worksheet:"Worksheet", tab_challenge:"Challenge", tab_quiz:"Quiz",
+  b_compareadd:"+ Add Current to Comparison", b_compareclear:"Clear Comparison",
+  b_record:"Record Data", b_clear:"Clear Data", b_export:"Export CSV", b_print:"Print Lab Report",
+  ws1:"Experiment objective", ws2:"Independent & controlled variables", ws3:"Prediction",
+  ws4:"Result & comparison", ws5:"Model & safety limits", ws6:"Conclusion",
+  seated:"SEATED", notseated:"LEAKAGE RISK / NOT SEATED",
+  safe:"SAFE", warn:"WARNING", crit:"CRITICAL", na:"NOT EVALUATED",
+  phase_idle:"IDLE", phase_compress:"COMPRESSING", phase_hold:"HOLDING", phase_release:"RELEASED",
+  phase_startup:"STARTUP", phase_steady:"STEADY-STATE", phase_shutdown:"SHUTDOWN",
+  note_illustrative:"Material/lubricant values are illustrative, not certified data.",
+  disclaimer:"This simulator is not a substitute for design codes (ASME PVC, EN 1591, API 682) or certified tribology analysis."
+}
+};
+let LANG = 'id';
+function t(key){ return (I18N[LANG] && I18N[LANG][key]) || key; }
+function applyI18nStatic(){
+  document.querySelectorAll('[data-i]').forEach(el=>{
+    const k = el.getAttribute('data-i');
+    el.textContent = t(k);
+  });
+}
+
+/* =========================================================================
+   SYSTEM DEFINITIONS
+========================================================================= */
+const SYS = {
+  gasket:   { id:"Sambungan Gasket Berbaut", en:"Bolted Gasket Joint" },
+  oring:    { id:"O-Ring (Statis/Dinamis)", en:"O-Ring Seal (Static/Dynamic)" },
+  lipseal:  { id:"Seal Bibir Poros", en:"Radial Lip Seal" },
+  mechseal: { id:"Mechanical Seal", en:"Mechanical Seal" },
+  labyrinth:{ id:"Labyrinth Seal", en:"Labyrinth Seal" },
+  bearing:  { id:"Bantalan Luncur (Journal Bearing)", en:"Journal Bearing (Hydrodynamic)" },
+};
+
+const PRESETS = [
+  { key:"p1", id:"Preset 1 — Sambungan Flens Berbaut", en:"Preset 1 — Bolted Flange Gasket Joint", sys:"gasket",
+    params:{ Fi:60000, p:2, boreD:113, OD:122.2, ID:118, C:0.3, y:40, crush:200 } },
+  { key:"p2", id:"Preset 2 — Seal Bibir Poros Berputar", en:"Preset 2 — Rotary Shaft Lip Seal", sys:"lipseal",
+    params:{ p_contact:0.5, shaftD:40, rpm:1450, PVmax:3.0, muSeal:0.15, lipWidth:2 } },
+  { key:"p3", id:"Preset 3 — Mechanical Seal Pompa Sentrifugal", en:"Preset 3 — Mechanical Seal Centrifugal Pump", sys:"mechseal",
+    params:{ p:1.5, B:0.65, ps:0.15, OD:45, ID:35, mu:1.0, h:2, rpm:2900 } },
+  { key:"p4", id:"Preset 4 — O-Ring Silinder Hidrolik", en:"Preset 4 — O-Ring Hydraulic Cylinder", sys:"oring",
+    params:{ p:15, d0:5.33, gh:4.3, kComp:110, muSeal:0.1, rodD:32, V:0.3, sealWidth:4 } },
+  { key:"p5", id:"Preset 5 — Sistem Pelumasan Bantalan Luncur", en:"Preset 5 — Journal Bearing Lubrication", sys:"bearing",
+    params:{ r:50, c:0.05, L:100, W:5000, mu:0.02, rpm:2865, RaSum:2 } },
+  { key:"p6", id:"Preset 6 — Labyrinth Seal Kompresor Gas", en:"Preset 6 — Labyrinth Seal Gas Compressor", sys:"labyrinth",
+    params:{ nTeeth:8, c:0.3, shaftD:80, p1:1.2, p2:0.1, T:320 } },
+];
+
+/* Parameter field metadata per system: key, label id/en, min,max,step,unit, group */
+const FIELD_DEFS = {
+  gasket: [
+    {k:"Fi", id:"Prategang Baut Total Fi", en:"Total Bolt Preload Fi", min:0, max:200000, step:500, unit:"N",
+      tip_id:"Gaya total dari seluruh baut yang menjepit gasket.", tip_en:"Total force from all bolts clamping the gasket."},
+    {k:"p", id:"Tekanan Internal p", en:"Internal Pressure p", min:0, max:10, step:0.05, unit:"MPa",
+      tip_id:"Tekanan desain fluida di dalam sambungan.", tip_en:"Design fluid pressure inside the joint."},
+    {k:"boreD", id:"Diameter Bore d", en:"Bore Diameter d", min:20, max:400, step:1, unit:"mm",
+      tip_id:"Diameter dalam pipa/bore untuk gaya pemisah Fp = p × A.", tip_en:"Bore diameter for separating force Fp = p × A."},
+    {k:"OD", id:"Diameter Luar Gasket OD", en:"Gasket Outer Diameter OD", min:60, max:500, step:1, unit:"mm"},
+    {k:"ID", id:"Diameter Dalam Gasket ID", en:"Gasket Inner Diameter ID", min:20, max:400, step:1, unit:"mm"},
+    {k:"C", id:"Konstanta Kekakuan Sambungan C", en:"Joint Stiffness Constant C", min:0, max:0.8, step:0.01, unit:"",
+      tip_id:"Fraksi tekanan yang mengurangi gaya jepit bersih (0–1).", tip_en:"Fraction of pressure force that reduces net clamp force (0–1)."},
+    {k:"y", id:"Tegangan Seating Minimum y", en:"Minimum Seating Stress y", min:5, max:100, step:1, unit:"MPa"},
+    {k:"crush", id:"Tegangan Crush σ_crush", en:"Crush Stress σ_crush", min:20, max:400, step:5, unit:"MPa"},
+  ],
+  oring: [
+    {k:"p", id:"Tekanan Sistem p", en:"System Pressure p", min:0, max:40, step:0.5, unit:"MPa"},
+    {k:"d0", id:"Diameter Penampang d0", en:"Cross-section Diameter d0", min:1, max:12, step:0.01, unit:"mm"},
+    {k:"gh", id:"Kedalaman Gland gh", en:"Gland Depth gh", min:1, max:12, step:0.01, unit:"mm"},
+    {k:"kComp", id:"Modulus Kompresi k", en:"Compression Modulus k", min:10, max:150, step:1, unit:"MPa",
+      tip_id:"Konstanta elastomer ilustratif: tekanan kontak ≈ k × fraksi squeeze.", tip_en:"Illustrative elastomer constant: contact pressure ≈ k × squeeze fraction."},
+    {k:"muSeal", id:"Koefisien Gesek μ_seal", en:"Friction Coefficient μ_seal", min:0.02, max:0.5, step:0.01, unit:""},
+    {k:"rodD", id:"Diameter Batang", en:"Rod Diameter", min:5, max:150, step:1, unit:"mm"},
+    {k:"V", id:"Kecepatan Batang V", en:"Rod Velocity V", min:0, max:3, step:0.01, unit:"m/s"},
+    {k:"sealWidth", id:"Lebar Kontak Seal", en:"Seal Contact Width", min:1, max:10, step:0.5, unit:"mm"},
+  ],
+  lipseal: [
+    {k:"p_contact", id:"Tekanan Kontak p_contact", en:"Contact Pressure p_contact", min:0.05, max:2, step:0.01, unit:"MPa"},
+    {k:"shaftD", id:"Diameter Poros", en:"Shaft Diameter", min:10, max:200, step:1, unit:"mm"},
+    {k:"rpm", id:"Kecepatan Putar", en:"Rotational Speed", min:0, max:6000, step:10, unit:"rpm"},
+    {k:"PVmax", id:"Batas PV Material", en:"Material PV Rating", min:0.5, max:8, step:0.1, unit:"MPa·m/s"},
+    {k:"muSeal", id:"Koefisien Gesek μ_seal", en:"Friction Coefficient μ_seal", min:0.02, max:0.5, step:0.01, unit:""},
+    {k:"lipWidth", id:"Lebar Kontak Bibir", en:"Lip Contact Width", min:0.5, max:5, step:0.1, unit:"mm"},
+  ],
+  mechseal: [
+    {k:"p", id:"Tekanan Proses p", en:"Process Pressure p", min:0, max:6, step:0.05, unit:"MPa"},
+    {k:"B", id:"Balance Ratio B", en:"Balance Ratio B", min:0.5, max:0.95, step:0.01, unit:""},
+    {k:"ps", id:"Tekanan Pegas ps", en:"Spring Pressure ps", min:0, max:0.5, step:0.01, unit:"MPa"},
+    {k:"OD", id:"Diameter Luar Muka", en:"Face Outer Diameter", min:20, max:200, step:1, unit:"mm"},
+    {k:"ID", id:"Diameter Dalam Muka", en:"Face Inner Diameter", min:10, max:190, step:1, unit:"mm"},
+    {k:"mu", id:"Viskositas Fluida μ", en:"Fluid Viscosity μ", min:0.1, max:50, step:0.1, unit:"mPa·s"},
+    {k:"h", id:"Tebal Film Muka h", en:"Face Film Thickness h", min:0.2, max:10, step:0.1, unit:"µm"},
+    {k:"rpm", id:"Kecepatan Putar", en:"Rotational Speed", min:0, max:6000, step:10, unit:"rpm"},
+  ],
+  labyrinth: [
+    {k:"nTeeth", id:"Jumlah Gigi", en:"Number of Teeth", min:2, max:24, step:1, unit:""},
+    {k:"c", id:"Celah Radial c", en:"Radial Clearance c", min:0.05, max:1.5, step:0.01, unit:"mm"},
+    {k:"shaftD", id:"Diameter Poros", en:"Shaft Diameter", min:20, max:300, step:1, unit:"mm"},
+    {k:"p1", id:"Tekanan Hulu p1", en:"Upstream Pressure p1", min:0.11, max:10, step:0.05, unit:"MPa"},
+    {k:"p2", id:"Tekanan Hilir p2", en:"Downstream Pressure p2", min:0.1, max:9.9, step:0.05, unit:"MPa"},
+    {k:"T", id:"Temperatur Gas T", en:"Gas Temperature T", min:250, max:600, step:5, unit:"K"},
+  ],
+  bearing: [
+    {k:"r", id:"Radius Poros r", en:"Shaft Radius r", min:10, max:150, step:1, unit:"mm"},
+    {k:"c", id:"Celah Radial c", en:"Radial Clearance c", min:0.01, max:0.3, step:0.005, unit:"mm"},
+    {k:"L", id:"Panjang Bantalan L", en:"Bearing Length L", min:20, max:300, step:1, unit:"mm"},
+    {k:"W", id:"Beban Radial W", en:"Radial Load W", min:100, max:50000, step:100, unit:"N"},
+    {k:"mu", id:"Viskositas Oli μ", en:"Oil Viscosity μ", min:0.002, max:0.2, step:0.001, unit:"Pa·s"},
+    {k:"rpm", id:"Kecepatan Putar", en:"Rotational Speed", min:10, max:10000, step:10, unit:"rpm"},
+    {k:"RaSum", id:"Kekasaran Gabungan Ra", en:"Combined Roughness Ra", min:0.2, max:6, step:0.1, unit:"µm"},
+  ],
+};
+
+/* =========================================================================
+   STATE
+========================================================================= */
+const state = {
+  sysType:"gasket",
+  params:{},
+  stage:"real",
+  learnLevel:"intermediate",
+  phase:"idle",     // idle, compress, hold, release  (or startup/steady/shutdown for bearing/labyrinth)
+  phaseT:0,
+  simTime:0,
+  running:false,
+  animSpeed:1,
+  showFlow:true,
+  showDim:true,
+  showEq:false,
+  history:{ t:[], stress:[], nsf:[] },
+  recorded:[],
+  compareList:[],
+  loadFrac:0,  // 0..1 how "loaded" the system currently is (drives animation + derived transient values)
+};
+
+function loadPreset(preset){
+  state.sysType = preset.sys;
+  state.params = Object.assign({}, preset.params);
+  state.phase = "idle"; state.phaseT = 0; state.loadFrac = 0; state.simTime=0;
+  state.history = {t:[],stress:[],nsf:[]};
+  buildParamFields();
+  buildAssumptions();
+  updateAll();
+}
+
+/* =========================================================================
+   CALCULATION ENGINE  (pure functions, SI-consistent as documented)
+========================================================================= */
+function calcGasket(p){
+  const Ab = Math.PI/4*Math.pow(p.boreD,2);           // mm^2
+  const Fp = p.p*Ab;                                   // N  (MPa*mm^2 = N)
+  const Agasket = Math.PI/4*(Math.pow(p.OD,2)-Math.pow(p.ID,2)); // mm^2
+  const Fresidual = p.Fi - (1-p.C)*Fp;                 // N
+  const sigma = Agasket>0 ? Fresidual/Agasket : NaN;   // MPa
+  const nSF = sigma>0 ? p.crush/sigma : Infinity;
+  const seated = sigma >= p.y;
+  const utilSeat = p.y>0 ? Math.min(2, Math.max(0, p.y/Math.max(sigma,1e-6))) : 0; // how far below seating (informative)
+  const utilCrush = p.crush>0 ? sigma/p.crush : 0;
+  return {Ab,Fp,Agasket,Fresidual,sigma,nSF,seated,utilCrush};
+}
+
+function calcOring(p){
+  const squeezeFrac = (p.d0-p.gh)/p.d0;
+  const squeezePct = squeezeFrac*100;
+  const contactP = Math.max(0,p.kComp*squeezeFrac);    // MPa
+  const nSF = p.p>0 ? contactP/p.p : Infinity;
+  const contactArea = Math.PI*p.rodD*p.sealWidth;      // mm^2
+  const frictionForce = p.muSeal*contactP*contactArea; // N
+  const frictionPower = frictionForce*p.V;             // W (N * m/s)
+  const extrusionRisk = squeezePct<8 || squeezePct>30;
+  return {squeezeFrac,squeezePct,contactP,nSF,contactArea,frictionForce,frictionPower,extrusionRisk};
+}
+
+function calcLipSeal(p){
+  const V = Math.PI*(p.shaftD/1000)*(p.rpm/60);        // m/s
+  const PV = p.p_contact*V;                            // MPa*m/s
+  const utilization = p.PVmax>0 ? PV/p.PVmax : 0;
+  const contactArea = Math.PI*p.shaftD*p.lipWidth;     // mm^2
+  const frictionForce = p.muSeal*p.p_contact*contactArea; // N
+  const powerLoss = frictionForce*V;                   // W
+  const nSF = utilization>0 ? 1/utilization : Infinity;
+  return {V,PV,utilization,frictionForce,powerLoss,nSF};
+}
+
+function calcMechSeal(p){
+  const netClosingP = p.p*(2*p.B-1)+p.ps;              // MPa
+  const ro = p.OD/2, ri = p.ID/2;                      // mm
+  const muPa = p.mu/1000;                              // Pa.s
+  const hM = p.h/1e6;                                  // m
+  const dpPa = p.p*1e6;                                // Pa
+  let Q = 0;
+  if (ro>ri && p.h>0){
+    Q = (Math.PI*dpPa*Math.pow(hM,3))/(6*muPa*Math.log(ro/ri)); // m^3/s
+  }
+  const rMean = (ro+ri)/2/1000;                        // m
+  const omega = 2*Math.PI*(p.rpm/60);
+  const Vf = omega*rMean;
+  const tau = p.h>0 ? muPa*Vf/hM : 0;                  // Pa
+  const area = Math.PI*(Math.pow(ro/1000,2)-Math.pow(ri/1000,2)); // m^2
+  const frictionForce = tau*area;                      // N
+  const powerLoss = frictionForce*Vf;                  // W
+  const filmSafe = p.h >= 0.5; // µm floor for hydrodynamic face separation (illustrative)
+  const nSF = p.h>0 ? p.h/0.5 : 0;
+  return {netClosingP,Q,frictionForce,powerLoss,nSF,filmSafe};
+}
+
+function calcLabyrinth(p){
+  const R = 287; // J/kgK air
+  const A = Math.PI*(p.shaftD/1000)*(p.c/1000);        // m^2
+  const p1p = p.p1*1e6, p2p = Math.min(p.p2,p.p1-0.001)*1e6;
+  const Cd = 0.7;
+  const inside = Math.max(0, (Math.pow(p1p,2)-Math.pow(p2p,2)) / (p.nTeeth*R*p.T));
+  const mdot = Cd*A*Math.sqrt(inside);                 // kg/s
+  const dpPerTooth = (p.p1-p.p2)/p.nTeeth;             // MPa (approx uniform stepped drop)
+  return {A,mdot,dpPerTooth};
+}
+
+function calcBearing(p){
+  const r = p.r/1000, c = p.c/1000, L = p.L/1000;      // m
+  const N = p.rpm/60;                                  // rev/s
+  const P = p.W/(2*r*L);                                // Pa
+  const S = Math.pow(r/c,2)*(p.mu*N/P);
+  const f = 2*Math.PI*Math.PI*(r/c)*(p.mu*N/P);
+  const Tf = f*p.W*r;                                   // N.m
+  const omega = 2*Math.PI*N;
+  const Hloss = Tf*omega;                               // W
+  const eps = 1/(1+S);                                  // illustrative eccentricity correlation
+  const h0 = p.c*(1-eps)*1000;                          // convert mm -> µm : c[mm]*1000=µm; *(1-eps)
+  const h0min = p.RaSum*2;                              // µm, illustrative safety multiplier 2x roughness
+  const nSF = h0min>0 ? h0/h0min : Infinity;
+  const regime = S<0.3?'boundary':(S<3?'mixed':'hydrodynamic');
+  return {P,S,f,Tf,Hloss,eps,h0,h0min,nSF,regime};
+}
+
+function stribeckF(He){
+  const fmin=0.01, fboundary=0.20, Hec=3e-6, k=800;
+  return fmin + (fboundary-fmin)*Math.exp(-He/Hec) + k*He;
+}
+
+function runCalc(){
+  const p = state.params, sys = state.sysType;
+  if (sys==='gasket') return calcGasket(p);
+  if (sys==='oring') return calcOring(p);
+  if (sys==='lipseal') return calcLipSeal(p);
+  if (sys==='mechseal') return calcMechSeal(p);
+  if (sys==='labyrinth') return calcLabyrinth(p);
+  if (sys==='bearing') return calcBearing(p);
+}
+
+/* Safety status classification per system, returns {status, util, label} */
+function safetyStatus(){
+  const p = state.params, sys = state.sysType, r = runCalc();
+  let util=0, status='na', primary=0, primaryLabel='', secondary=null;
+  if (sys==='gasket'){
+    util = r.utilCrush;
+    if (!r.seated) status='crit';
+    else if (util>=0.8) status='warn';
+    else status='safe';
+    primary = r.sigma; primaryLabel='σ_gasket';
+  } else if (sys==='oring'){
+    util = r.nSF>0 ? Math.min(2, 1/r.nSF) : 2;
+    if (r.extrusionRisk || r.nSF<1) status='crit';
+    else if (r.nSF<1.25) status='warn';
+    else status='safe';
+    primary=r.nSF; primaryLabel='nSF';
+  } else if (sys==='lipseal'){
+    util = r.utilization;
+    if (util>=1) status='crit'; else if (util>=0.8) status='warn'; else status='safe';
+    primary=r.PV; primaryLabel='PV';
+  } else if (sys==='mechseal'){
+    util = r.filmSafe? Math.min(1, 0.5/Math.max(p.h,0.01)) : 1.2;
+    if (!r.filmSafe) status='crit'; else if (p.h<1.0) status='warn'; else status='safe';
+    primary=r.Q; primaryLabel='Q';
+  } else if (sys==='labyrinth'){
+    util = Math.min(1, r.mdot/ (r.A*400)); // heuristic scaling for display only
+    status = 'safe'; // labyrinth non-contact: mainly informative, flag only invalid pressure order
+    if (p.p2>=p.p1) status='crit';
+    primary=r.mdot; primaryLabel='ṁ';
+  } else if (sys==='bearing'){
+    util = r.nSF>0? Math.min(2,1/r.nSF):2;
+    if (r.h0<=r.h0min) status='crit'; else if (r.nSF<1.5) status='warn'; else status='safe';
+    primary=r.h0; primaryLabel='h0';
+  }
+  return {status, util, primary, primaryLabel, calc:r};
+}
+
+/* =========================================================================
+   UI BUILD: PARAM FIELDS
+========================================================================= */
+function buildParamFields(){
+  const wrap = document.getElementById('paramFields');
+  wrap.innerHTML = '';
+  const defs = FIELD_DEFS[state.sysType];
+  defs.forEach(d=>{
+    const val = state.params[d.k];
+    const div = document.createElement('div');
+    div.className='field';
+    div.innerHTML = `
+      <label title="${LANG==='id'?(d.tip_id||''):(d.tip_en||'')}">
+        <b>${LANG==='id'?d.id:d.en}</b>
+        <span class="val" id="val_${d.k}">${fmt(val)} ${d.unit}</span>
+      </label>
+      <div class="rowInputs">
+        <input type="range" id="rng_${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${val}">
+        <input type="number" id="num_${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${val}">
+      </div>`;
+    wrap.appendChild(div);
+    const rng = div.querySelector('#rng_'+d.k), num = div.querySelector('#num_'+d.k), lbl = div.querySelector('#val_'+d.k);
+    const commit = (v)=>{
+      v = parseFloat(v); if(isNaN(v)) return;
+      state.params[d.k]=v; rng.value=v; num.value=v; lbl.textContent = fmt(v)+' '+d.unit;
+      onParamsChanged();
+    };
+    rng.addEventListener('input', e=>commit(e.target.value));
+    num.addEventListener('input', e=>commit(e.target.value));
+  });
+}
+function fmt(v){
+  if (v===undefined||v===null||isNaN(v)) return '—';
+  if (Math.abs(v)>=1000) return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if (Math.abs(v)>=1) return (Math.round(v*1000)/1000).toString();
+  return (Math.round(v*10000)/10000).toString();
+}
+function fmtSci(v,dec){
+  dec=dec||3;
+  if (v===0) return '0';
+  if (!isFinite(v)) return '∞';
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  if (e>=-2 && e<4) return v.toFixed(Math.max(0,dec-e));
+  return v.toExponential(dec);
+}
+
+function onParamsChanged(){
+  state.phase='idle'; state.loadFrac=0; state.phaseT=0;
+  updateAll();
+}
+
+/* =========================================================================
+   ASSUMPTIONS TEXT
+========================================================================= */
+const ASSUMPTIONS = {
+  gasket: {
+    id:["Material elastis linear dalam rentang tegangan yang diizinkan.","Tekanan terdistribusi merata pada bore; gaya baut terdistribusi merata pada gasket.","Tidak ada relaksasi viskoelastis jangka panjang kecuali dimodelkan.","Nilai y dan σ_crush bersifat ilustratif — rujuk tabel gasket factor (ASME/EN 1591) untuk desain sesungguhnya."],
+    en:["Linear elastic material within allowed stress range.","Pressure acts uniformly on the bore; bolt load is evenly distributed on the gasket.","No long-term viscoelastic relaxation unless modeled.","y and σ_crush values are illustrative — refer to gasket-factor tables (ASME/EN 1591) for real design."]
+  },
+  oring:{
+    id:["Model kompresi elastomer linear sederhana (bukan hiperelastis penuh).","Aliran fluida melalui celah diabaikan pada squeeze normal (seal dianggap rapat).","Nilai modulus kompresi k bersifat ilustratif per jenis elastomer."],
+    en:["Simplified linear elastomer compression model (not full hyperelastic).","Fluid flow through the gap is neglected at normal squeeze (assumed sealed).","Compression modulus k is illustrative per elastomer type."]
+  },
+  lipseal:{
+    id:["Kriteria PV sebagai indikator umur pakai, bukan model keausan kuantitatif penuh.","Kontak dianggap merata sepanjang keliling bibir seal.","Suhu operasi dianggap dalam rentang normal material elastomer."],
+    en:["PV criterion is a life indicator, not a full quantitative wear model.","Contact assumed uniform around the lip circumference.","Operating temperature assumed within the elastomer's normal range."]
+  },
+  mechseal:{
+    id:["Aliran film antarmuka laminar (Poiseuille radial) dan Newtonian.","Balance ratio B dan tekanan pegas ps model gaya penutup yang disederhanakan.","Tidak memodelkan deformasi termal muka seal (thermal coning) secara eksplisit."],
+    en:["Interface film flow is laminar (radial Poiseuille) and Newtonian.","Balance ratio B and spring pressure ps are a simplified closing-force model.","Face thermal deformation (thermal coning) is not explicitly modeled."]
+  },
+  labyrinth:{
+    id:["Aliran gas kompresibel disederhanakan mengikuti pendekatan multi-tahap (Egli-type).","Gas ideal; properti gas tetap sepanjang aliran kecuali dinyatakan lain.","Model bukan pengganti analisis CFD untuk desain akhir."],
+    en:["Compressible gas flow simplified via a multi-stage (Egli-type) approach.","Ideal gas; properties assumed constant along the flow unless stated otherwise.","Model is not a substitute for CFD analysis in final design."]
+  },
+  bearing:{
+    id:["Model Petroff: bantalan konsentris (eksentrisitas diabaikan pada perhitungan gesekan).","Pelumas Newtonian, viskositas konstan pada kondisi operasi tertentu.","Korelasi eksentrisitas ε=1/(1+S) bersifat ilustratif, bukan pengganti grafik Raimondi–Boyd."],
+    en:["Petroff model: concentric bearing (eccentricity neglected in friction calc).","Newtonian lubricant, constant viscosity at a given operating condition.","Eccentricity correlation ε=1/(1+S) is illustrative, not a substitute for Raimondi–Boyd charts."]
+  }
+};
+function buildAssumptions(){
+  const ul = document.getElementById('assumptList');
+  const arr = ASSUMPTIONS[state.sysType][LANG];
+  ul.innerHTML = arr.map(a=>`<li>${a}</li>`).join('') + `<li><em>${t('note_illustrative')}</em></li>`;
+}
+
+/* =========================================================================
+   SVG DIAGRAM RENDERING
+========================================================================= */
+const svgNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, children){
+  const e = document.createElementNS(svgNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  (children||[]).forEach(c=>e.appendChild(c));
+  return e;
+}
+function txt(x,y,s,opts){
+  opts=opts||{};
+  const e = el('text',{x,y,fill:opts.fill||'#B7C6D6',
+    'font-size':opts.size||12,'font-family':opts.mono?"ui-monospace,monospace":"inherit",
+    'text-anchor':opts.anchor||'start','font-weight':opts.weight||400});
+  e.textContent = s;
+  return e;
+}
+
+function drawStage(){
+  const svg = document.getElementById('stage');
+  svg.innerHTML='';
+  const cap = document.getElementById('stageCaption');
+  const stageNames = {real:{id:'Sistem Nyata',en:'Real System'}, model:{id:'Model Teknik',en:'Engineering Model'}, seal:{id:'Model Seal/Lubrikasi',en:'Seal/Lubrication Model'}};
+  cap.textContent = stageNames[state.stage][LANG];
+
+  const drawFn = DRAWERS[state.sysType];
+  if (drawFn) drawFn(svg, state.stage);
+
+  const badge = document.getElementById('phaseBadge');
+  badge.textContent = phaseLabel();
+  const activePhases = ['compress','startup','hold','steady','release','shutdown'];
+  badge.classList.toggle('ph-active', activePhases.includes(state.phase));
+
+  const pct = Math.round(state.loadFrac*100);
+  document.getElementById('loadBarFill').style.width = pct+'%';
+  document.getElementById('loadBarPct').textContent = pct+'%';
+}
+
+function phaseLabel(){
+  const map = {idle:'phase_idle',compress:'phase_compress',hold:'phase_hold',release:'phase_release',
+               startup:'phase_startup',steady:'phase_steady',shutdown:'phase_shutdown'};
+  return t(map[state.phase]||'phase_idle') + '  ·  t=' + state.simTime.toFixed(1) + 's';
+}
+
+/* ---- Individual drawers per system: each takes (svg, stage) ---- */
+const DRAWERS = {
+
+  gasket(svg, stage){
+    const r = calcGasket(state.params);
+    const cx=400, cy=210;
+    const util = r.crush>0? Math.min(1.4, r.sigma/state.params.crush):0;
+    // Flange faces visibly move together and the gasket visibly thins as loadFrac (bolt torque) goes 0 -> 1.
+    const gap = 70 - 50*state.loadFrac;         // gasket thickness: 70px unloaded -> 20px fully torqued
+    const leftFaceX = cx-gap/2, rightFaceX = cx+gap/2;
+    const flangeW = 130;
+    const leftX = leftFaceX-flangeW, rightX = rightFaceX;
+    const boltLX = leftX+30, boltRX = rightX+flangeW-30;
+    // Flange bodies
+    svg.appendChild(el('rect',{x:leftX,y:cy-140,width:flangeW,height:280,fill:'#1B2B3E',stroke:'#3A4E63','stroke-width':2}));
+    svg.appendChild(el('rect',{x:rightX,y:cy-140,width:flangeW,height:280,fill:'#1B2B3E',stroke:'#3A4E63','stroke-width':2}));
+    // Gasket (color encodes stress) — fills the shrinking gap between the flange faces
+    const gasketColor = !r.seated ? '#E85D4E' : (util>0.8?'#F0A63B':'#3FCB8B');
+    svg.appendChild(el('rect',{x:leftFaceX,y:cy-90,width:gap,height:180,fill:gasketColor,opacity:0.9}));
+    txt2(svg,400,cy+110,'GASKET',{anchor:'middle',size:11,fill:'#9FB'});
+    // Bolts (top & bottom rows) — bolt shank visibly shortens as flanges close
+    for (let i=0;i<3;i++){
+      const yy = cy-110+i*110;
+      svg.appendChild(el('line',{x1:boltLX,y1:yy,x2:boltRX,y2:yy,stroke:'#5B7089','stroke-width':4,'stroke-dasharray':'2 6'}));
+      svg.appendChild(el('circle',{cx:boltLX,cy:yy,r:9,fill:'#7C93AC'}));
+      svg.appendChild(el('circle',{cx:boltRX,cy:yy,r:9,fill:'#7C93AC'}));
+    }
+    // Bore / pressure indicator
+    svg.appendChild(el('rect',{x:0,y:cy-30,width:Math.max(0,leftX),height:60,fill:'#0F1B29'}));
+    svg.appendChild(el('rect',{x:rightX+flangeW,y:cy-30,width:Math.max(0,800-(rightX+flangeW)),height:60,fill:'#0F1B29'}));
+    if (state.showFlow && (state.loadFrac>0.05 || state.phase!=='idle')){
+      // pressure arrows pushing outward from bore
+      const alpha = Math.min(1, state.params.p/5);
+      svg.appendChild(arrow(leftX,cy,leftX-30,cy,'#4FD6E8', 2+4*alpha));
+      svg.appendChild(arrow(rightX+flangeW,cy,rightX+flangeW+30,cy,'#4FD6E8', 2+4*alpha));
+    }
+    if (stage!=='real'){
+      if (state.showFlow){
+        // Force arrows from bolts, pointing inward (clamping)
+        svg.appendChild(arrow(boltLX,cy-140,boltLX,cy-110,'#F0A63B',3));
+        svg.appendChild(arrow(boltRX,cy-140,boltRX,cy-110,'#F0A63B',3));
+        svg.appendChild(arrow(boltLX,cy+140,boltLX,cy+110,'#F0A63B',3));
+        svg.appendChild(arrow(boltRX,cy+140,boltRX,cy+110,'#F0A63B',3));
+      }
+      if (state.showEq){
+        txt2(svg,400,50,'Fi (bolt preload) ⇒ σ_gasket = F_residual / A_gasket',{anchor:'middle',size:12,fill:'#B7C6D6'});
+      }
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`σ_gasket = ${fmt(r.sigma)} MPa   nSF(crush) = ${fmt(r.nSF)}`,{anchor:'middle',size:13,fill:'#4FD6E8',weight:700});
+    }
+    if (state.showDim){
+      dimLine(svg,20,cy+150,220,cy+150,'OD/ID gasket ~ A='+fmt(r.Agasket)+' mm²');
+    }
+    tagClickable(svg,400,cy,120,180,'gasket_obj');
+  },
+
+  oring(svg, stage){
+    const r = calcOring(state.params);
+    const cx=400, cy=210;
+    // cylinder bore
+    svg.appendChild(el('rect',{x:80,y:cy-90,width:640,height:180,fill:'#101B29',stroke:'#3A4E63','stroke-width':2}));
+    // piston
+    const pistonX = 250 + 220*Math.sin(state.simTime*0.6)*0.0 + 220*state.loadFrac*0.0; // static piston for clarity
+    svg.appendChild(el('rect',{x:300,y:cy-70,width:200,height:140,fill:'#1B2B3E',stroke:'#5B7089','stroke-width':2}));
+    // O-ring groove
+    const sq = Math.max(0,Math.min(1,r.squeezeFrac));
+    const oringColor = r.extrusionRisk? '#E85D4E' : (r.nSF<1.25?'#F0A63B':'#3FCB8B');
+    const oh = 26 - 14*sq;
+    svg.appendChild(el('rect',{x:300-14,y:cy-oh/2,width:14,height:oh,rx:6,fill:oringColor}));
+    svg.appendChild(el('rect',{x:500,y:cy-oh/2,width:14,height:oh,rx:6,fill:oringColor}));
+    txt2(svg,400,cy+110,'PISTON / ROD WITH O-RING SEALS',{anchor:'middle',size:11,fill:'#9FB'});
+    if (state.showFlow && (state.loadFrac>0.05 || state.phase!=='idle')){
+      const alpha = Math.min(1,state.params.p/20);
+      svg.appendChild(arrow(80,cy,280,cy,'#4FD6E8',2+4*alpha));
+      txt2(svg,180,cy-14,'p = '+fmt(state.params.p)+' MPa',{anchor:'middle',size:11,fill:'#4FD6E8'});
+    }
+    if (stage!=='real'){
+      if (state.showFlow) svg.appendChild(arrow(300,cy-100,300,cy-oh/2-10,'#F0A63B',3));
+      if (state.showEq) txt2(svg,400,50,'Squeeze = (d0 − gh)/d0 ⇒ contact pressure',{anchor:'middle',size:12,fill:'#B7C6D6'});
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`Squeeze=${fmt(r.squeezePct)}%  p_contact=${fmt(r.contactP)} MPa  nSF=${fmt(r.nSF)}`,{anchor:'middle',size:13,fill:'#4FD6E8',weight:700});
+    }
+    tagClickable(svg,400,cy,220,150,'oring_obj');
+  },
+
+  lipseal(svg, stage){
+    const r = calcLipSeal(state.params);
+    const cx=400, cy=210;
+    svg.appendChild(el('rect',{x:80,y:cy-30,width:640,height:60,fill:'#1B2B3E',stroke:'#3A4E63','stroke-width':2})); // shaft
+    txt2(svg,400,cy+6,'SHAFT',{anchor:'middle',size:11,fill:'#0A121C',weight:700});
+    // housing
+    svg.appendChild(el('rect',{x:340,y:cy-90,width:120,height:180,fill:'none',stroke:'#5B7089','stroke-width':2}));
+    // lip seal shape
+    const lipColor = r.utilization>=1?'#E85D4E':(r.utilization>=0.8?'#F0A63B':'#3FCB8B');
+    const wobble = state.running? Math.sin(state.simTime*10)*1.5*Math.min(1,state.params.rpm/3000):0;
+    svg.appendChild(el('path',{d:`M360,${cy-32} L340,${cy-2+wobble} L360,${cy+32} L380,${cy+32} L365,${cy+wobble} L380,${cy-32} Z`, fill:lipColor}));
+    txt2(svg,400,cy+110,'RADIAL LIP SEAL (OIL SEAL)',{anchor:'middle',size:11,fill:'#9FB'});
+    if (stage!=='real'){
+      if (state.showFlow) svg.appendChild(arrow(340,cy-2,326,cy-2,'#F0A63B',3));
+      if (state.showEq) txt2(svg,400,50,'Garter-spring contact ⇒ PV = p_contact × V',{anchor:'middle',size:12,fill:'#B7C6D6'});
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`V=${fmt(r.V)} m/s  PV=${fmt(r.PV)} MPa·m/s  util=${fmt(r.utilization*100)}%`,{anchor:'middle',size:13,fill:'#4FD6E8',weight:700});
+    }
+    if (state.running && state.params.rpm>0){
+      // rotation ticks on shaft to indicate motion
+      const n=8;
+      for (let i=0;i<n;i++){
+        const a = (state.simTime*state.params.rpm/60*2*Math.PI) + i*2*Math.PI/n;
+        const xx = 250+18*Math.cos(a), yy=cy+18*Math.sin(a);
+        svg.appendChild(el('circle',{cx:xx,cy:yy,r:2,fill:'#4FD6E8'}));
+      }
+    }
+    tagClickable(svg,360,cy,60,90,'lipseal_obj');
+  },
+
+  mechseal(svg, stage){
+    const r = calcMechSeal(state.params);
+    const cx=400, cy=210;
+    svg.appendChild(el('rect',{x:120,y:cy-100,width:200,height:200,fill:'#101B29',stroke:'#3A4E63','stroke-width':2}));
+    txt2(svg,220,cy+120,'PROCESS FLUID SIDE',{anchor:'middle',size:10,fill:'#7F91A5'});
+    // rotating face
+    svg.appendChild(el('rect',{x:320,y:cy-70,width:16,height:140,fill:'#5B7089'}));
+    // gap / film
+    const gapPx = 4 + 10*Math.min(1,state.params.h/5);
+    const filmColor = r.filmSafe ? '#3FCB8B' : '#E85D4E';
+    svg.appendChild(el('rect',{x:336,y:cy-70,width:gapPx,height:140,fill:filmColor,opacity:0.7}));
+    // stationary face
+    svg.appendChild(el('rect',{x:336+gapPx,y:cy-70,width:16,height:140,fill:'#7C93AC'}));
+    // spring
+    svg.appendChild(el('rect',{x:360+gapPx,y:cy-30,width:60,height:60,fill:'none',stroke:'#F0A63B','stroke-width':2,'stroke-dasharray':'4 3'}));
+    txt2(svg,390+gapPx,cy+50,'spring',{anchor:'middle',size:9,fill:'#F0A63B'});
+    txt2(svg,400,cy+120,'MECHANICAL SEAL FACES',{anchor:'middle',size:11,fill:'#9FB'});
+    if (stage!=='real' && state.showEq){
+      txt2(svg,400,50,'Net closing pressure ⇒ face film ⇒ radial leakage Q',{anchor:'middle',size:12,fill:'#B7C6D6'});
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`p_close=${fmt(r.netClosingP)} MPa  Q=${fmtSci(r.Q)} m³/s  Ploss=${fmt(r.powerLoss)} W`,{anchor:'middle',size:12.5,fill:'#4FD6E8',weight:700});
+    }
+    if (state.running && state.params.rpm>0){
+      const n=6;
+      for (let i=0;i<n;i++){
+        const a=(state.simTime*state.params.rpm/60*2*Math.PI)+i*2*Math.PI/n;
+        const yy=cy+55*Math.sin(a);
+        svg.appendChild(el('circle',{cx:328,cy:yy,r:2,fill:'#4FD6E8'}));
+      }
+    }
+    tagClickable(svg,340,cy,40,140,'mechseal_obj');
+  },
+
+  labyrinth(svg, stage){
+    const r = calcLabyrinth(state.params);
+    const cx=400, cy=210;
+    svg.appendChild(el('rect',{x:80,y:cy-20,width:640,height:40,fill:'#1B2B3E',stroke:'#3A4E63','stroke-width':2}));
+    const n = Math.min(12, Math.round(state.params.nTeeth));
+    const spacing = 560/(n+1);
+    for (let i=0;i<n;i++){
+      const xx = 100+spacing*(i+1);
+      svg.appendChild(el('rect',{x:xx-6,y:cy-42,width:12,height:24,fill:'#7C93AC'}));
+    }
+    txt2(svg,400,cy+60,'LABYRINTH SEAL (NON-CONTACT)',{anchor:'middle',size:11,fill:'#9FB'});
+    if (stage!=='real'){
+      if (state.showFlow) svg.appendChild(arrow(85,cy,660,cy,'#4FD6E8',2));
+      if (state.showEq) txt2(svg,400,50,'Staged pressure drop across teeth ⇒ compressible leakage ṁ',{anchor:'middle',size:12,fill:'#B7C6D6'});
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`ṁ ≈ ${fmtSci(r.mdot)} kg/s   Δp/gigi=${fmt(r.dpPerTooth)} MPa`,{anchor:'middle',size:13,fill:'#4FD6E8',weight:700});
+    }
+    // flow dots moving if running
+    if (state.running && state.showFlow){
+      const nd=10;
+      for (let i=0;i<nd;i++){
+        const ph = (state.simTime*0.5+i/nd)%1;
+        const xx = 90+ph*580;
+        svg.appendChild(el('circle',{cx:xx,cy:cy,r:2.4,fill:'#4FD6E8',opacity:0.8}));
+      }
+    }
+    txt2(svg,110,cy-50,'p1='+fmt(state.params.p1)+' MPa',{size:11,fill:'#7F91A5'});
+    txt2(svg,610,cy-50,'p2='+fmt(state.params.p2)+' MPa',{size:11,fill:'#7F91A5'});
+    tagClickable(svg,400,cy,560,60,'labyrinth_obj');
+  },
+
+  bearing(svg, stage){
+    const r = calcBearing(state.params);
+    const cx=400, cy=210, R=110;
+    svg.appendChild(el('circle',{cx,cy,r:R,fill:'none',stroke:'#5B7089','stroke-width':4}));
+    // eccentric shaft position based on eps
+    const eps = Math.min(0.95, r.eps);
+    const ex = eps*(R-40)*Math.cos(Math.PI*1.3);
+    const ey = eps*(R-40)*Math.sin(Math.PI*1.3);
+    const shaftR = R-40;
+    svg.appendChild(el('circle',{cx:cx+ex,cy:cy+ey,r:shaftR,fill:'#1B2B3E',stroke:'#7C93AC','stroke-width':2}));
+    // film color by regime
+    const filmColor = r.regime==='boundary'?'#E85D4E':(r.regime==='mixed'?'#F0A63B':'#3FCB8B');
+    svg.appendChild(el('circle',{cx,cy,r:R,fill:'none',stroke:filmColor,'stroke-width':3,'stroke-dasharray':'4 4',opacity:0.6}));
+    txt2(svg,400,cy+R+34,'JOURNAL BEARING (OIL FILM)',{anchor:'middle',size:11,fill:'#9FB'});
+    // rotation marks
+    if (state.running){
+      const n=6;
+      for (let i=0;i<n;i++){
+        const a=(state.simTime*state.params.rpm/60*2*Math.PI)+i*2*Math.PI/n;
+        const xx=cx+ex+(shaftR-8)*Math.cos(a), yy=cy+ey+(shaftR-8)*Math.sin(a);
+        svg.appendChild(el('circle',{cx:xx,cy:yy,r:2.4,fill:'#4FD6E8'}));
+      }
+    }
+    if (stage!=='real'){
+      if (state.showFlow) svg.appendChild(arrow(cx-70,cy-R-4,cx-70,cy-20,'#F0A63B',3));
+      if (state.showEq) txt2(svg,400,50,'Load W + rotation N ⇒ hydrodynamic film pressure',{anchor:'middle',size:12,fill:'#B7C6D6'});
+    }
+    if (stage==='seal'){
+      txt2(svg,400,80,`S=${fmt(r.S)}  f=${fmt(r.f)}  h0=${fmt(r.h0)} µm  [${r.regime.toUpperCase()}]`,{anchor:'middle',size:13,fill:'#4FD6E8',weight:700});
+    }
+    tagClickable(svg,cx,cy,R*2,R*2,'bearing_obj');
+  }
+};
+
+function txt2(svg,x,y,s,opts){ svg.appendChild(txt(x,y,s,opts)); }
+function arrow(x1,y1,x2,y2,color,width){
+  const g = el('g',{});
+  g.appendChild(el('line',{x1,y1,x2,y2,stroke:color,'stroke-width':width}));
+  const ang = Math.atan2(y2-y1,x2-x1);
+  const ah=8;
+  const p1x=x2-ah*Math.cos(ang-0.4), p1y=y2-ah*Math.sin(ang-0.4);
+  const p2x=x2-ah*Math.cos(ang+0.4), p2y=y2-ah*Math.sin(ang+0.4);
+  g.appendChild(el('polygon',{points:`${x2},${y2} ${p1x},${p1y} ${p2x},${p2y}`,fill:color}));
+  return g;
+}
+function dimLine(svg,x1,y1,x2,y2,label){
+  if (!state.showDim) return;
+  svg.appendChild(el('line',{x1,y1,x2,y2,stroke:'#5B7089','stroke-width':1}));
+  svg.appendChild(txt((x1+x2)/2,y1-6,label,{anchor:'middle',size:10,fill:'#7F91A5'}));
+}
+function tagClickable(svg,cx,cy,w,h,objKey){
+  const hit = el('rect',{x:cx-w/2,y:cy-h/2,width:w,height:h,fill:'transparent',style:'cursor:pointer'});
+  hit.addEventListener('click', ()=>showInfoPanel(objKey));
+  svg.appendChild(hit);
+}
+
+/* =========================================================================
+   INFO PANEL (click objects)
+========================================================================= */
+const OBJINFO = {
+  gasket_obj:{
+    id:{title:'GASKET TERKOMPRESI', fn:'Menahan tekanan internal melalui tegangan kontak akibat gaya prategang baut.',
+        eq:'σ_gasket = F_residual / A_gasket ; F_residual = Fi − (1−C)Fp', app:'Flange perpipaan, penutup bejana, sambungan pompa/kompresor.'},
+    en:{title:'COMPRESSED GASKET', fn:'Contains internal pressure via contact stress from bolt preload.',
+        eq:'σ_gasket = F_residual / A_gasket ; F_residual = Fi − (1−C)Fp', app:'Piping flanges, vessel covers, pump/compressor joints.'}
+  },
+  oring_obj:{
+    id:{title:'O-RING TERKOMPRESI', fn:'Menahan tekanan statis/dinamis melalui kompresi elastomer pada gland.',
+        eq:'Squeeze = (d0−gh)/d0 ; p_contact ≈ k·squeeze', app:'Silinder hidrolik, penutup statis, fitting bertekanan.'},
+    en:{title:'COMPRESSED O-RING', fn:'Seals static/dynamic pressure via elastomer compression in the gland.',
+        eq:'Squeeze = (d0−gh)/d0 ; p_contact ≈ k·squeeze', app:'Hydraulic cylinders, static covers, pressurized fittings.'}
+  },
+  lipseal_obj:{
+    id:{title:'BIBIR SEAL RADIAL', fn:'Pegas garter menekan bibir elastomer ke poros berputar untuk menahan pelumas.',
+        eq:'PV = p_contact × V ; utilization = PV/PVmax', app:'Seal poros pompa, motor, gearbox.'},
+    en:{title:'RADIAL LIP', fn:'Garter spring presses the elastomer lip onto the rotating shaft to retain lubricant.',
+        eq:'PV = p_contact × V ; utilization = PV/PVmax', app:'Pump, motor, gearbox shaft seals.'}
+  },
+  mechseal_obj:{
+    id:{title:'MUKA MECHANICAL SEAL', fn:'Sepasang muka dipisahkan film fluida tipis; keseimbangan gaya penutup vs pembuka.',
+        eq:'p_close = p(2B−1)+ps ; Q = πΔp h³/(6μ ln(ro/ri))', app:'Pompa sentrifugal, kompresor, mixer proses.'},
+    en:{title:'MECHANICAL SEAL FACES', fn:'A pair of faces separated by a thin fluid film; closing vs opening force balance.',
+        eq:'p_close = p(2B−1)+ps ; Q = πΔp h³/(6μ ln(ro/ri))', app:'Centrifugal pumps, compressors, process mixers.'}
+  },
+  labyrinth_obj:{
+    id:{title:'GIGI LABYRINTH', fn:'Celah non-kontak bertingkat membatasi aliran gas bocor sepanjang poros.',
+        eq:'ṁ = Cd·A·√[(p1²−p2²)/(n·R·T)]', app:'Kompresor gas, turbin, seal poros non-kontak.'},
+    en:{title:'LABYRINTH TEETH', fn:'Staged non-contact clearance restricts gas leakage along the shaft.',
+        eq:'ṁ = Cd·A·√[(p1²−p2²)/(n·R·T)]', app:'Gas compressors, turbines, non-contact shaft seals.'}
+  },
+  bearing_obj:{
+    id:{title:'FILM OLI HIDRODINAMIK', fn:'Memisahkan poros dan bushing melalui tekanan film yang dibangkitkan gerak relatif.',
+        eq:'S=(r/c)²(μN/P) ; f=2π²(r/c)(μN/P)', app:'Bantalan poros turbin, mesin diesel, generator.'},
+    en:{title:'HYDRODYNAMIC OIL FILM', fn:'Separates shaft and bushing via motion-generated film pressure.',
+        eq:'S=(r/c)²(μN/P) ; f=2π²(r/c)(μN/P)', app:'Turbine, diesel engine, and generator shaft bearings.'}
+  }
+};
+function showInfoPanel(key){
+  const o = OBJINFO[key][LANG];
+  const r = safetyStatus();
+  document.getElementById('infoPanel').innerHTML = `
+    <div style="font-weight:700;color:var(--text-0);margin-bottom:6px;">${o.title}</div>
+    <div style="margin-bottom:6px;">${o.fn}</div>
+    <div style="font-family:var(--mono);font-size:11.5px;color:var(--cyan);margin-bottom:6px;">${o.eq}</div>
+    <div style="margin-bottom:6px;"><b>${LANG==='id'?'Aplikasi':'Application'}:</b> ${o.app}</div>
+    <div style="font-size:11px;color:var(--text-2);">${LANG==='id'?'Status saat ini':'Current status'}: ${t(r.status==='na'?'na':r.status)}</div>
+  `;
+}
+
+/* =========================================================================
+   ENGINEERING CARDS + SAFETY METER + STATUS PILLS
+========================================================================= */
+function buildCards(){
+  const grid = document.getElementById('cardGrid');
+  const r = runCalc(); const sys = state.sysType;
+  let cards = [];
+  if (sys==='gasket'){
+    cards = [
+      ['Fi', fmt(state.params.Fi),'N'], ['Fp', fmt(r.Fp),'N'],
+      ['F_residual', fmt(r.Fresidual),'N'], ['σ_gasket', fmt(r.sigma),'MPa'],
+      ['A_gasket', fmt(r.Agasket),'mm²'], ['nSF (crush)', fmt(r.nSF),''],
+    ];
+  } else if (sys==='oring'){
+    cards = [
+      ['Squeeze', fmt(r.squeezePct),'%'], ['p_contact', fmt(r.contactP),'MPa'],
+      ['nSF', fmt(r.nSF),''], ['F_friction', fmt(r.frictionForce),'N'],
+      ['P_friction', fmt(r.frictionPower),'W'], ['Extrusion', r.extrusionRisk?(LANG==='id'?'RISIKO':'RISK'):'OK',''],
+    ];
+  } else if (sys==='lipseal'){
+    cards = [
+      ['V surface', fmt(r.V),'m/s'], ['PV', fmt(r.PV),'MPa·m/s'],
+      ['Utilization', fmt(r.utilization*100),'%'], ['F_friction', fmt(r.frictionForce),'N'],
+      ['Power loss', fmt(r.powerLoss),'W'], ['nSF', fmt(r.nSF),''],
+    ];
+  } else if (sys==='mechseal'){
+    cards = [
+      ['p_close', fmt(r.netClosingP),'MPa'], ['Q leakage', fmtSci(r.Q),'m³/s'],
+      ['Friction F', fmt(r.frictionForce),'N'], ['Power loss', fmt(r.powerLoss),'W'],
+      ['Film h', fmt(state.params.h),'µm'], ['nSF (film)', fmt(r.nSF),''],
+    ];
+  } else if (sys==='labyrinth'){
+    cards = [
+      ['ṁ leakage', fmtSci(r.mdot),'kg/s'], ['Δp/tooth', fmt(r.dpPerTooth),'MPa'],
+      ['n teeth', state.params.nTeeth,''], ['clearance c', fmt(state.params.c),'mm'],
+      ['p1', fmt(state.params.p1),'MPa'], ['p2', fmt(state.params.p2),'MPa'],
+    ];
+  } else if (sys==='bearing'){
+    cards = [
+      ['Sommerfeld S', fmt(r.S),''], ['Friction f', fmt(r.f),''],
+      ['Torque Tf', fmt(r.Tf),'N·m'], ['Power loss', fmt(r.Hloss),'W'],
+      ['Film h0', fmt(r.h0),'µm'], ['nSF (film)', fmt(r.nSF),''],
+    ];
+  }
+  grid.innerHTML = cards.map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}<span class="u">${c[2]}</span></div></div>`).join('');
+}
+
+function buildSafety(){
+  const s = safetyStatus();
+  const fill = document.getElementById('safetyFill');
+  const txt_ = document.getElementById('safetyText');
+  const pct = document.getElementById('utilPct');
+  let colorVar = '#3FCB8B', label = t('safe');
+  if (s.status==='warn'){colorVar='#F0A63B'; label=t('warn');}
+  if (s.status==='crit'){colorVar='#E85D4E'; label=t('crit');}
+  if (s.status==='na'){colorVar='#7F91A5'; label=t('na');}
+  const pctVal = Math.max(0, Math.min(140, s.util*100));
+  fill.style.width = Math.min(100,pctVal)+'%';
+  fill.style.background = colorVar;
+  txt_.textContent = label;
+  txt_.style.color = colorVar;
+  pct.textContent = (isFinite(pctVal)?pctVal.toFixed(0):'—')+'%';
+
+  // status pills
+  const pills = document.getElementById('statusPills');
+  const dotClass = s.status==='safe'?'safe':(s.status==='warn'?'warn':(s.status==='crit'?'crit':'na'));
+  pills.innerHTML = `
+    <div class="pill"><span class="dot ${dotClass}"></span>${SYS[state.sysType][LANG]}</div>
+    <div class="pill"><span class="dot"></span>${phaseLabel().split('·')[0].trim()}</div>
+    <div class="pill"><span class="dot ${dotClass}"></span>${label}</div>
+  `;
+}
+
+/* =========================================================================
+   CALCULATION STEPS PANEL
+========================================================================= */
+function buildCalcSteps(){
+  const p = state.params, sys = state.sysType, r = runCalc();
+  const box = document.getElementById('calcSteps');
+  let lines = [];
+  if (sys==='gasket'){
+    lines = [
+`STEP 1 — Input: Fi=${fmt(p.Fi)} N, p=${fmt(p.p)} MPa, bore d=${fmt(p.boreD)} mm, OD=${fmt(p.OD)} mm, ID=${fmt(p.ID)} mm, C=${fmt(p.C)}`,
+`STEP 2 — Bore area:  Ab = π/4·d² = ${fmt(r.Ab)} mm²`,
+`STEP 3 — Separating force: Fp = p·Ab = ${fmt(p.p)} × ${fmt(r.Ab)} = ${fmt(r.Fp)} N`,
+`STEP 4 — Gasket area: A_gasket = π/4·(OD²−ID²) = ${fmt(r.Agasket)} mm²`,
+`STEP 5 — Residual clamp: F_residual = Fi − (1−C)Fp = ${fmt(p.Fi)} − (1−${fmt(p.C)})×${fmt(r.Fp)} = ${fmt(r.Fresidual)} N`,
+`STEP 6 — Gasket stress: σ_gasket = F_residual/A_gasket = ${fmt(r.Fresidual)}/${fmt(r.Agasket)} = ${fmt(r.sigma)} MPa`,
+`STEP 7 — Seating check: σ_gasket ${r.seated?'≥':'<'} y(${fmt(p.y)} MPa) → ${r.seated?t('seated'):t('notseated')}`,
+`STEP 8 — Crush margin: nSF = σ_crush/σ_gasket = ${fmt(p.crush)}/${fmt(r.sigma)} = ${fmt(r.nSF)}`,
+`FORCE BALANCE — Residual R = F_residual − σ_gasket·A_gasket = ${fmt(r.Fresidual - r.sigma*r.Agasket)} N  → ${Math.abs(r.Fresidual-r.sigma*r.Agasket)<1e-3?('<span class="balanceOk">'+ (LANG==='id'?'NERACA TERPENUHI':'BALANCE SATISFIED') +'</span>'):('<span class="balanceBad">BALANCE ERROR</span>')}`
+    ];
+  } else if (sys==='oring'){
+    lines=[
+`STEP 1 — Input: d0=${fmt(p.d0)} mm, gh=${fmt(p.gh)} mm, k=${fmt(p.kComp)} MPa, p=${fmt(p.p)} MPa`,
+`STEP 2 — Squeeze fraction: (d0−gh)/d0 = (${fmt(p.d0)}−${fmt(p.gh)})/${fmt(p.d0)} = ${fmt(r.squeezeFrac)} → ${fmt(r.squeezePct)}%`,
+`STEP 3 — Contact pressure: p_contact ≈ k·squeeze = ${fmt(p.kComp)}×${fmt(r.squeezeFrac)} = ${fmt(r.contactP)} MPa`,
+`STEP 4 — Safety vs system pressure: nSF = p_contact/p = ${fmt(r.contactP)}/${fmt(p.p)} = ${fmt(r.nSF)}`,
+`STEP 5 — Friction: A_contact=π·d_rod·w = ${fmt(r.contactArea)} mm²; F=μ·p_contact·A = ${fmt(r.frictionForce)} N; P=F·V=${fmt(r.frictionPower)} W`,
+`STEP 6 — Extrusion check: squeeze in valid 8–30% range → ${r.extrusionRisk? (LANG==='id'?'RISIKO EKSTRUSI':'EXTRUSION RISK'):'OK'}`
+    ];
+  } else if (sys==='lipseal'){
+    lines=[
+`STEP 1 — Input: p_contact=${fmt(p.p_contact)} MPa, shaft d=${fmt(p.shaftD)} mm, N=${fmt(p.rpm)} rpm, PVmax=${fmt(p.PVmax)} MPa·m/s`,
+`STEP 2 — Surface velocity: V = π·d·N/60000 = π×${fmt(p.shaftD)}×${fmt(p.rpm)}/60000 = ${fmt(r.V)} m/s`,
+`STEP 3 — PV factor: PV = p_contact × V = ${fmt(p.p_contact)}×${fmt(r.V)} = ${fmt(r.PV)} MPa·m/s`,
+`STEP 4 — Utilization: PV/PVmax = ${fmt(r.PV)}/${fmt(p.PVmax)} = ${fmt(r.utilization*100)}%`,
+`STEP 5 — Power loss: F=μ·p_contact·A_contact = ${fmt(r.frictionForce)} N; P=F·V = ${fmt(r.powerLoss)} W`
+    ];
+  } else if (sys==='mechseal'){
+    lines=[
+`STEP 1 — Input: p=${fmt(p.p)} MPa, B=${fmt(p.B)}, ps=${fmt(p.ps)} MPa, OD=${fmt(p.OD)} mm, ID=${fmt(p.ID)} mm, μ=${fmt(p.mu)} mPa·s, h=${fmt(p.h)} µm`,
+`STEP 2 — Net closing pressure: p_close = p(2B−1)+ps = ${fmt(p.p)}×(2×${fmt(p.B)}−1)+${fmt(p.ps)} = ${fmt(r.netClosingP)} MPa`,
+`STEP 3 — Convert: Δp=${fmt(p.p*1e6)} Pa, h=${fmt(p.h/1e6)} m, μ=${fmt(p.mu/1000)} Pa·s`,
+`STEP 4 — Radial leakage: Q = πΔp·h³ / (6μ·ln(ro/ri)) = ${fmtSci(r.Q)} m³/s`,
+`STEP 5 — Face friction power loss (viscous shear estimate): P ≈ ${fmt(r.powerLoss)} W`
+    ];
+  } else if (sys==='labyrinth'){
+    lines=[
+`STEP 1 — Input: n=${p.nTeeth}, c=${fmt(p.c)} mm, shaft d=${fmt(p.shaftD)} mm, p1=${fmt(p.p1)} MPa, p2=${fmt(p.p2)} MPa, T=${fmt(p.T)} K`,
+`STEP 2 — Flow area per tooth: A = π·d·c = ${fmtSci(r.A)} m²`,
+`STEP 3 — Compressible multi-stage flow (Egli-type, Cd=0.7):`,
+`         ṁ = Cd·A·√[(p1²−p2²)/(n·R·T)] = ${fmtSci(r.mdot)} kg/s`,
+`STEP 4 — Approx. pressure drop per tooth: Δp/n = ${fmt(r.dpPerTooth)} MPa`
+    ];
+  } else if (sys==='bearing'){
+    lines=[
+`STEP 1 — Input: r=${fmt(p.r)} mm, c=${fmt(p.c)} mm, L=${fmt(p.L)} mm, W=${fmt(p.W)} N, μ=${fmt(p.mu)} Pa·s, N=${fmt(p.rpm)} rpm`,
+`STEP 2 — Convert: r=${fmt(p.r/1000)} m, c=${fmt(p.c/1000)} m, L=${fmt(p.L/1000)} m, N=${fmt(p.rpm/60)} rev/s`,
+`STEP 3 — Unit load: P = W/(2rL) = ${fmt(p.W)}/(2×${fmt(p.r/1000)}×${fmt(p.L/1000)}) = ${fmtSci(r.P)} Pa`,
+`STEP 4 — Sommerfeld number: S = (r/c)²(μN/P) = ${fmtSci(r.S)}`,
+`STEP 5 — Petroff friction: f = 2π²(r/c)(μN/P) = ${fmt(r.f)}`,
+`STEP 6 — Torque & power: Tf=f·W·r=${fmt(r.Tf)} N·m; ω=2πN=${fmt(2*Math.PI*p.rpm/60)} rad/s; Hloss=Tf·ω=${fmt(r.Hloss)} W (${fmt(r.Hloss/1000)} kW)`,
+`STEP 7 — Film: ε≈1/(1+S)=${fmt(r.eps)}; h0=c(1−ε)=${fmt(r.h0)} µm; h0min=2×Ra=${fmt(r.h0min)} µm; nSF=${fmt(r.nSF)} [${r.regime.toUpperCase()}]`
+    ];
+  }
+  box.innerHTML = lines.join('\n');
+}
+
+/* =========================================================================
+   FLOW DIAGRAM (bottom tab)
+========================================================================= */
+function buildFlowDiagram(){
+  const svg = document.getElementById('flowSvg');
+  svg.innerHTML='';
+  const sys = state.sysType;
+  const stepsMap = {
+    gasket: LANG==='id'
+      ? ['Prategang Baut Fi','Gaya Pemisah Fp','Tegangan Kontak σ_gasket','Risiko Kebocoran / Crush','Margin Keamanan nSF']
+      : ['Bolt Preload Fi','Separating Force Fp','Contact Stress σ_gasket','Leakage / Crush Risk','Safety Margin nSF'],
+    oring: LANG==='id'
+      ? ['Gland Force / Squeeze','Tegangan Kontak Elastomer','Gesekan Dinamis','Risiko Ekstrusi','Margin Keamanan nSF']
+      : ['Gland Force / Squeeze','Elastomer Contact Stress','Dynamic Friction','Extrusion Risk','Safety Margin nSF'],
+    lipseal: LANG==='id'
+      ? ['Pegas Garter','Tekanan Kontak','Kecepatan Permukaan V','PV Factor','Status PV/PVmax']
+      : ['Garter Spring','Contact Pressure','Surface Velocity V','PV Factor','PV/PVmax Status'],
+    mechseal: LANG==='id'
+      ? ['Tekanan Proses p','Gaya Penutup Bersih','Film Antarmuka h','Kebocoran Q','Rugi Daya Gesek']
+      : ['Process Pressure p','Net Closing Force','Interface Film h','Leakage Q','Friction Power Loss'],
+    labyrinth: LANG==='id'
+      ? ['Tekanan Hulu p1','Celah Gigi Labirin','Penurunan Tekanan Bertahap','Aliran Gas ṁ','Tekanan Hilir p2']
+      : ['Upstream Pressure p1','Labyrinth Tooth Clearance','Staged Pressure Drop','Gas Flow ṁ','Downstream Pressure p2'],
+    bearing: LANG==='id'
+      ? ['Beban W & Kecepatan N','Film Oli Terbentuk','Tegangan Geser / Gesekan f','Rugi Daya & Panas','Ketebalan Film h0']
+      : ['Load W & Speed N','Oil Film Formation','Shear Stress / Friction f','Power Loss & Heat','Film Thickness h0'],
+  };
+  const steps = stepsMap[sys];
+  const n = steps.length;
+  const boxW=150, gap=(900-40-boxW*n)/(n-1);
+  const y=100;
+  for (let i=0;i<n;i++){
+    const x = 20+i*(boxW+gap);
+    const g = el('g',{});
+    g.appendChild(el('rect',{x,y:y-30,width:boxW,height:60,rx:8,fill:'#1B2B3E',stroke:'#4FD6E8','stroke-width':1.5}));
+    const tspan = wrapText(steps[i], 20);
+    tspan.forEach((line,li)=>{
+      g.appendChild(txt(x+boxW/2,y-4+li*14,line,{anchor:'middle',size:11,fill:'#E9F1F8'}));
+    });
+    svg.appendChild(g);
+    if (i<n-1){
+      svg.appendChild(arrow(x+boxW, y, x+boxW+gap, y, '#F0A63B', 2.5));
+    }
+  }
+  svg.appendChild(txt(450,190,LANG==='id'?'Lebar panah dan warna kotak mengikuti besar nilai aktual dari calculation engine.':'Arrow width and box color follow actual values from the calculation engine.',
+    {anchor:'middle',size:10.5,fill:'#7F91A5'}));
+}
+function wrapText(s,maxLen){
+  const words = s.split(' '); let lines=[]; let cur='';
+  words.forEach(w=>{
+    if ((cur+' '+w).trim().length>maxLen){ lines.push(cur.trim()); cur=w; }
+    else cur = (cur+' '+w).trim();
+  });
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+/* =========================================================================
+   CHARTS (canvas 2D)
+========================================================================= */
+function setupCanvas(id){
+  const c = document.getElementById(id);
+  const dpr = window.devicePixelRatio||1;
+  const w = c.clientWidth||300, h=220;
+  c.width = w*dpr; c.height=h*dpr;
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function chartAxes(ctx,w,h,pad){
+  ctx.strokeStyle='#25384D'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,h-pad.b); ctx.lineTo(w-pad.r,h-pad.b); ctx.stroke();
+}
+function drawChart1(){ // Leakage/response vs pressure (or generic parameter sweep)
+  const {ctx,w,h}=setupCanvas('chart1');
+  ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:14,t:12,b:26};
+  chartAxes(ctx,w,h,pad);
+  const sys=state.sysType, p=state.params;
+  let xs=[], ys=[], xlabel='', ylabel='', xunit='', title='';
+  const N=40;
+  if (sys==='gasket'){
+    title = LANG==='id'?'Tegangan Gasket vs Tekanan':'Gasket Stress vs Pressure';
+    xlabel='p'; xunit='MPa';
+    for(let i=0;i<=N;i++){ const pp=i/N*8; const pr=Object.assign({},p,{p:pp}); const rr=calcGasket(pr); xs.push(pp); ys.push(rr.sigma); }
+    ylabel='σ_gasket (MPa)';
+  } else if (sys==='oring'){
+    title = LANG==='id'?'nSF vs Tekanan Sistem':'nSF vs System Pressure';
+    xlabel='p'; xunit='MPa';
+    for(let i=0;i<=N;i++){ const pp=i/N*30+0.1; const pr=Object.assign({},p,{p:pp}); const rr=calcOring(pr); xs.push(pp); ys.push(Math.min(5,rr.nSF)); }
+    ylabel='nSF';
+  } else if (sys==='lipseal'){
+    title = LANG==='id'?'PV vs Kecepatan':'PV vs Speed';
+    xlabel='rpm'; xunit='rpm';
+    for(let i=0;i<=N;i++){ const rpm=i/N*6000; const pr=Object.assign({},p,{rpm}); const rr=calcLipSeal(pr); xs.push(rpm); ys.push(rr.PV); }
+    ylabel='PV (MPa·m/s)';
+  } else if (sys==='mechseal'){
+    title = LANG==='id'?'Kebocoran Q vs Tekanan':'Leakage Q vs Pressure';
+    xlabel='p'; xunit='MPa';
+    for(let i=0;i<=N;i++){ const pp=i/N*6; const pr=Object.assign({},p,{p:pp}); const rr=calcMechSeal(pr); xs.push(pp); ys.push(rr.Q*1e9); }
+    ylabel='Q (×10⁻⁹ m³/s)';
+  } else if (sys==='labyrinth'){
+    title = LANG==='id'?'Laju Aliran vs Tekanan Hulu':'Flow Rate vs Upstream Pressure';
+    xlabel='p1'; xunit='MPa';
+    for(let i=0;i<=N;i++){ const p1=Math.max(p.p2+0.05, i/N*8); const pr=Object.assign({},p,{p1}); const rr=calcLabyrinth(pr); xs.push(p1); ys.push(rr.mdot*1000); }
+    ylabel='ṁ (g/s)';
+  } else if (sys==='bearing'){
+    title = LANG==='id'?'Ketebalan Film vs Kecepatan':'Film Thickness vs Speed';
+    xlabel='rpm'; xunit='rpm';
+    for(let i=1;i<=N;i++){ const rpm=i/N*6000; const pr=Object.assign({},p,{rpm}); const rr=calcBearing(pr); xs.push(rpm); ys.push(rr.h0); }
+    ylabel='h0 (µm)';
+  }
+  document.getElementById('chartTitle1').textContent = title;
+  plotLine(ctx,w,h,pad,xs,ys,'#4FD6E8', xlabel+' ('+xunit+')', ylabel);
+  // operating point marker
+  const curX = xs.length? currentXFor(sys,p) : null;
+}
+function currentXFor(sys,p){
+  return {gasket:p.p, oring:p.p, lipseal:p.rpm, mechseal:p.p, labyrinth:p.p1, bearing:p.rpm}[sys];
+}
+function plotLine(ctx,w,h,pad,xs,ys,color,xlabel,ylabel){
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  let ymin=Math.min(...ys), ymax=Math.max(...ys);
+  if (ymin===ymax){ymin-=1;ymax+=1;}
+  const yPad=(ymax-ymin)*0.12; ymin-=yPad; ymax+=yPad;
+  const X=x=> pad.l + (x-xmin)/(xmax-xmin||1)*(w-pad.l-pad.r);
+  const Y=y=> h-pad.b - (y-ymin)/(ymax-ymin||1)*(h-pad.b-pad.t);
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+  xs.forEach((x,i)=>{ const yy=Y(ys[i]); if(i===0) ctx.moveTo(X(x),yy); else ctx.lineTo(X(x),yy); });
+  ctx.stroke();
+  ctx.fillStyle='#7F91A5'; ctx.font='10px monospace';
+  ctx.fillText(xlabel, pad.l, h-6);
+  ctx.save(); ctx.translate(12,pad.t+8); ctx.fillText(ylabel,0,0); ctx.restore();
+  ctx.fillText(ymax.toFixed(2), 2, pad.t+8);
+  ctx.fillText(ymin.toFixed(2), 2, h-pad.b);
+}
+
+function drawChart2(){ // Stribeck curve
+  const {ctx,w,h}=setupCanvas('chart2');
+  ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:14,t:12,b:26};
+  chartAxes(ctx,w,h,pad);
+  document.getElementById('chartTitle2').textContent='Kurva Stribeck / Stribeck Curve (illustrative)';
+  const N=80, xs=[], ys=[];
+  const logMin=-8, logMax=-3.5;
+  for(let i=0;i<=N;i++){ const e=logMin+(logMax-logMin)*i/N; const He=Math.pow(10,e); xs.push(e); ys.push(stribeckF(He)); }
+  plotLine(ctx,w,h,pad,xs,ys,'#F0A63B','log10(He)','f');
+  // mark current operating point if bearing
+  if (state.sysType==='bearing'){
+    const r = calcBearing(state.params);
+    const He = state.params.mu*(state.params.rpm/60)/r.P;
+    const e = Math.log10(He);
+    const xmin=logMin,xmax=logMax;
+    const ymin=Math.min(...ys)-0.02, ymax=Math.max(...ys)+0.02;
+    const X = pad.l+(e-xmin)/(xmax-xmin)*(w-pad.l-pad.r);
+    const Y = h-pad.b-(stribeckF(He)-ymin)/(ymax-ymin)*(h-pad.b-pad.t);
+    ctx.fillStyle='#4FD6E8'; ctx.beginPath(); ctx.arc(Math.min(Math.max(X,pad.l),w-pad.r),Y,4,0,7); ctx.fill();
+  }
+}
+
+function drawChart3(){ // Stress/contact pressure vs time (history)
+  const {ctx,w,h}=setupCanvas('chart3');
+  ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:14,t:12,b:26};
+  chartAxes(ctx,w,h,pad);
+  document.getElementById('chartTitle3').textContent = LANG==='id'?'Tegangan/Tekanan Kontak vs Waktu':'Stress/Contact Pressure vs Time';
+  if (state.history.t.length<2){ ctx.fillStyle='#7F91A5'; ctx.font='11px sans-serif'; ctx.fillText(LANG==='id'?'Jalankan simulasi untuk melihat grafik waktu.':'Run the simulation to see the time graph.',pad.l,h/2); return; }
+  plotLine(ctx,w,h,pad,state.history.t,state.history.stress,'#3FCB8B','t (s)','value');
+}
+function drawChart4(){ // safety factor vs time
+  const {ctx,w,h}=setupCanvas('chart4');
+  ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:14,t:12,b:26};
+  chartAxes(ctx,w,h,pad);
+  document.getElementById('chartTitle4').textContent='Safety Factor vs Time';
+  if (state.history.t.length<2){ ctx.fillStyle='#7F91A5'; ctx.font='11px sans-serif'; ctx.fillText(LANG==='id'?'Jalankan simulasi untuk melihat grafik waktu.':'Run the simulation to see the time graph.',pad.l,h/2); return; }
+  const nsfClamped = state.history.nsf.map(v=>Math.min(6,v));
+  plotLine(ctx,w,h,pad,state.history.t,nsfClamped,'#4FD6E8','t (s)','nSF');
+}
+function drawAllCharts(){ drawChart1(); drawChart2(); drawChart3(); drawChart4(); }
+
+/* =========================================================================
+   PHASE / ANIMATION LOOP
+   Uses a plain setInterval (not requestAnimationFrame) as the primary driver.
+   rAF can be silently paused by some embedded/preview contexts when the
+   document is treated as backgrounded, which made Play look unresponsive.
+   setInterval keeps ticking regardless, so the simulation always advances.
+========================================================================= */
+const FIXED_DT = 1/30;
+let intervalHandle = null;
+function startLoop(){
+  if (intervalHandle) return;
+  intervalHandle = setInterval(()=>{
+    if (!state.running) return;
+    stepSim(FIXED_DT * state.animSpeed);
+    drawStage();
+  }, Math.round(FIXED_DT*1000));
+}
+startLoop();
+// Defensive fallback: also drive one extra tick via rAF when available and the
+// tab is visible, so motion feels smooth on displays with a fast refresh rate.
+if (typeof requestAnimationFrame === 'function'){
+  (function rafTick(){
+    if (state.running && !document.hidden) drawStage();
+    requestAnimationFrame(rafTick);
+  })();
+}
+
+function stepSim(dt){
+  state.simTime += dt;
+  state.phaseT += dt;
+  // phase machine: compress/startup(2s) -> hold/steady(3s) -> release/shutdown(2s) -> idle
+  const isRotational = (state.sysType==='bearing'||state.sysType==='lipseal'||state.sysType==='mechseal'||state.sysType==='labyrinth');
+  if (state.phase==='idle'){
+    state.loadFrac = 0;
+    // While Play is running, an idle system auto-starts its operating cycle so the animation is never "dead".
+    if (state.running){
+      state.phase = isRotational? 'startup':'compress';
+      state.phaseT = 0;
+    }
+  } else if (state.phase==='compress' || state.phase==='startup'){
+    state.loadFrac = Math.min(1, state.phaseT/2);
+    if (state.phaseT>=2){ state.phase = isRotational? 'steady':'hold'; state.phaseT=0; }
+  } else if (state.phase==='hold' || state.phase==='steady'){
+    state.loadFrac = 1;
+    // Auto-advance to release/shutdown after a hold period so Play alone demonstrates a full cycle.
+    if (state.running && state.phaseT>=3){
+      state.phase = isRotational? 'shutdown':'release'; state.phaseT=0;
+    }
+  } else if (state.phase==='release' || state.phase==='shutdown'){
+    state.loadFrac = Math.max(0, 1-state.phaseT/2);
+    if (state.phaseT>=2){ state.phase='idle'; state.phaseT=0; }
+  }
+  recordHistoryPoint();
+  buildCards(); buildSafety();
+}
+function recordHistoryPoint(){
+  const s = safetyStatus();
+  state.history.t.push(state.simTime);
+  state.history.stress.push(s.primary);
+  state.history.nsf.push(isFinite(s.status==='na'?0:(1/Math.max(s.util,1e-6))) ? (s.util>0?1/s.util:6) : 6);
+  if (state.history.t.length>400){ state.history.t.shift(); state.history.stress.shift(); state.history.nsf.shift(); }
+  if (document.getElementById('pane-graphs').classList.contains('active')){ drawChart3(); drawChart4(); }
+}
+
+/* =========================================================================
+   UI WIRING
+========================================================================= */
+function buildPresetSelect(){
+  const sel = document.getElementById('presetSelect');
+  sel.innerHTML = PRESETS.map((p,i)=>`<option value="${i}">${LANG==='id'?p.id:p.en}</option>`).join('');
+}
+function buildSysTypeSelect(){
+  const sel = document.getElementById('sysType');
+  sel.innerHTML = Object.keys(SYS).map(k=>`<option value="${k}" ${k===state.sysType?'selected':''}>${SYS[k][LANG]}</option>`).join('');
+}
+
+function updateAll(){
+  buildSysTypeSelect();
+  buildCards();
+  buildSafety();
+  buildCalcSteps();
+  buildFlowDiagram();
+  drawStage();
+  drawAllCharts();
+  buildAssumptions();
+}
+
+function wireUI(){
+  document.getElementById('presetSelect').addEventListener('change', e=>{
+    loadPreset(PRESETS[+e.target.value]);
+  });
+  document.getElementById('sysType').addEventListener('change', e=>{
+    const key=e.target.value;
+    const preset = PRESETS.find(p=>p.sys===key);
+    loadPreset(preset || {sys:key, params:Object.fromEntries(FIELD_DEFS[key].map(d=>[d.k,(d.min+d.max)/3]))});
+    document.getElementById('presetSelect').value = PRESETS.findIndex(p=>p.sys===key);
+  });
+  document.getElementById('learnLevel').addEventListener('change', e=>{ state.learnLevel=e.target.value; });
+
+  document.getElementById('btnLangID').addEventListener('click', ()=>setLang('id'));
+  document.getElementById('btnLangEN').addEventListener('click', ()=>setLang('en'));
+
+  document.querySelectorAll('.stageBtn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('.stageBtn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); state.stage=b.dataset.stage; drawStage();
+    });
+  });
+  document.getElementById('btnAutoConvert').addEventListener('click', ()=>{
+    const order=['real','model','seal']; let i=order.indexOf(state.stage);
+    autoConvertSeq(order,i);
+  });
+  function autoConvertSeq(order,i){
+    if (i>=order.length-1){ return; }
+    i++;
+    document.querySelectorAll('.stageBtn').forEach(x=>x.classList.toggle('active', x.dataset.stage===order[i]));
+    state.stage=order[i]; drawStage();
+    setTimeout(()=>autoConvertSeq(order,i), 900);
+  }
+  document.getElementById('btnShowFlow').addEventListener('click', (e)=>{ state.showFlow=!state.showFlow; e.target.classList.toggle('active', state.showFlow); drawStage(); });
+  document.getElementById('btnShowDim').addEventListener('click', (e)=>{ state.showDim=!state.showDim; e.target.classList.toggle('active', state.showDim); drawStage(); });
+  document.getElementById('btnShowEq').addEventListener('click', (e)=>{ state.showEq=!state.showEq; e.target.classList.toggle('active', state.showEq); drawStage(); });
+
+  document.getElementById('btnPlay').addEventListener('click', ()=>{
+    state.running=true;
+    document.getElementById('btnPlay').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+  });
+  document.getElementById('btnPause').addEventListener('click', ()=>{
+    state.running=false;
+    document.getElementById('btnPause').classList.add('active');
+    document.getElementById('btnPlay').classList.remove('active');
+  });
+  document.getElementById('btnStep').addEventListener('click', ()=>{ stepSim(FIXED_DT); drawStage(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    state.running=false; state.phase='idle'; state.phaseT=0; state.simTime=0; state.loadFrac=0;
+    state.history={t:[],stress:[],nsf:[]};
+    document.getElementById('btnPlay').classList.remove('active');
+    document.getElementById('btnPause').classList.remove('active');
+    updateAll();
+  });
+  document.getElementById('btnLoad').addEventListener('click', ()=>{
+    const rot = (state.sysType==='bearing'||state.sysType==='lipseal'||state.sysType==='mechseal'||state.sysType==='labyrinth');
+    state.phase = rot? 'startup':'compress'; state.phaseT=0; state.running=true;
+    document.getElementById('btnPlay').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+  });
+  document.getElementById('btnHold').addEventListener('click', ()=>{
+    const rot = (state.sysType==='bearing'||state.sysType==='lipseal'||state.sysType==='mechseal'||state.sysType==='labyrinth');
+    state.phase = rot? 'steady':'hold'; state.phaseT=0; state.loadFrac=1;
+  });
+  document.getElementById('btnUnload').addEventListener('click', ()=>{
+    const rot = (state.sysType==='bearing'||state.sysType==='lipseal'||state.sysType==='mechseal'||state.sysType==='labyrinth');
+    state.phase = rot? 'shutdown':'release'; state.phaseT=0; state.running=true;
+    document.getElementById('btnPlay').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+  });
+  document.getElementById('btnPulse').addEventListener('click', ()=>{
+    // apply a temporary 40% overload to the primary driving parameter
+    const sys=state.sysType, p=state.params;
+    const key = {gasket:'p', oring:'p', lipseal:'p_contact', mechseal:'p', labyrinth:'p1', bearing:'W'}[sys];
+    const orig = p[key];
+    p[key] = orig*1.4;
+    updateAll();
+    setTimeout(()=>{ p[key]=orig; updateAll(); }, 1800);
+  });
+  document.getElementById('animSpeed').addEventListener('input', e=>{
+    state.animSpeed = parseFloat(e.target.value);
+    document.getElementById('valAnimSpeed').textContent = state.animSpeed.toFixed(1)+'×';
+  });
+
+  document.querySelectorAll('.botBtn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('.botBtn').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.bottomPane').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('pane-'+b.dataset.pane).classList.add('active');
+      if (b.dataset.pane==='graphs') drawAllCharts();
+      if (b.dataset.pane==='flow') buildFlowDiagram();
+      if (b.dataset.pane==='calc') buildCalcSteps();
+      if (b.dataset.pane==='challenge') buildChallenge();
+      if (b.dataset.pane==='quiz') buildQuiz();
+      if (b.dataset.pane==='compare') buildCompareTable();
+    });
+  });
+
+  document.getElementById('btnRecord').addEventListener('click', recordTrial);
+  document.getElementById('btnClear').addEventListener('click', ()=>{ state.recorded=[]; buildDataTable(); });
+  document.getElementById('btnExport').addEventListener('click', exportCSV);
+  document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+  document.getElementById('btnCompareAdd').addEventListener('click', ()=>{
+    state.compareList.push(snapshotTrial());
+    buildCompareTable();
+  });
+  document.getElementById('btnCompareClear').addEventListener('click', ()=>{ state.compareList=[]; buildCompareTable(); });
+
+  window.addEventListener('resize', ()=>{ if(document.getElementById('pane-graphs').classList.contains('active')) drawAllCharts(); });
+}
+
+function setLang(l){
+  LANG=l;
+  document.getElementById('btnLangID').classList.toggle('active', l==='id');
+  document.getElementById('btnLangEN').classList.toggle('active', l==='en');
+  applyI18nStatic();
+  buildPresetSelect();
+  document.getElementById('presetSelect').value = currentPresetIndex();
+  buildParamFields();
+  updateAll();
+  buildDataTable();
+  buildCompareTable();
+}
+function currentPresetIndex(){
+  const idx = PRESETS.findIndex(p=>p.sys===state.sysType);
+  return idx>=0?idx:0;
+}
+
+/* =========================================================================
+   DATA TABLE / CSV EXPORT / COMPARE
+========================================================================= */
+function snapshotTrial(){
+  const s = safetyStatus();
+  return {
+    id: state.recorded.length+1+ (state.compareList?state.compareList.length:0),
+    sys: state.sysType,
+    preset: PRESETS[currentPresetIndex()] ? PRESETS[currentPresetIndex()][LANG] : state.sysType,
+    t: state.simTime.toFixed(2),
+    params: Object.assign({}, state.params),
+    calc: Object.assign({}, s.calc),
+    primaryLabel: s.primaryLabel,
+    primary: s.primary,
+    status: s.status,
+  };
+}
+function recordTrial(){
+  state.recorded.push(snapshotTrial());
+  buildDataTable();
+}
+function buildDataTable(){
+  const tbl = document.getElementById('dataTbl');
+  const rows = state.recorded;
+  const cols = ['id','sys','t','primaryLabel','primary','status'];
+  const head = ['Trial','System','t(s)','Metric','Value','Status'];
+  tbl.querySelector('thead tr').innerHTML = head.map(h=>`<th>${h}</th>`).join('');
+  tbl.querySelector('tbody').innerHTML = rows.map(r=>`<tr>
+    <td>${r.id}</td><td>${SYS[r.sys]?SYS[r.sys][LANG]:r.sys}</td><td>${r.t}</td>
+    <td>${r.primaryLabel}</td><td>${fmtSci(r.primary)}</td><td>${t(r.status)}</td>
+  </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--text-2);">${LANG==='id'?'Belum ada data':'No data yet'}</td></tr>`;
+}
+function exportCSV(){
+  if (!state.recorded.length){ alert(LANG==='id'?'Belum ada data untuk diekspor.':'No data to export yet.'); return; }
+  const header = ['trial_id','system','time_s','metric','value','unitless_status'];
+  const rows = state.recorded.map(r=>[r.id,r.sys,r.t,r.primaryLabel,r.primary,r.status]);
+  let csv = header.join(',')+'\n'+rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seal_lubrication_experiment_data.csv';
+  a.click();
+}
+function buildCompareTable(){
+  const tbl = document.getElementById('compareTbl');
+  const rows = state.compareList;
+  const note = document.getElementById('compareNote');
+
+  if (!rows.length){
+    tbl.querySelector('thead tr').innerHTML = `<th>${LANG==='id'?'Perbandingan':'Comparison'}</th>`;
+    tbl.querySelector('tbody').innerHTML = `<tr><td style="text-align:center;color:var(--text-2);">${LANG==='id'?'Belum ada perbandingan. Atur parameter, lalu klik "+ Tambah ke Perbandingan". Ubah parameter (atau ganti sistem/preset) dan tambahkan lagi untuk membandingkan.':'No comparison yet. Set your parameters, then click "+ Add to Comparison". Change a parameter (or switch system/preset) and add again to compare.'}</td></tr>`;
+    if (note) note.textContent='';
+    return;
+  }
+
+  // Column header: one column per trial snapshot
+  const head = ['<th>'+ (LANG==='id'?'Atribut':'Attribute') +'</th>']
+    .concat(rows.map(r=>`<th>#${r.id} — ${SYS[r.sys]?SYS[r.sys][LANG]:r.sys}</th>`));
+  tbl.querySelector('thead tr').innerHTML = head.join('');
+
+  const attrRows = [
+    { label: LANG==='id'?'Preset':'Preset', get:r=>r.preset },
+    { label: LANG==='id'?'Waktu simulasi t':'Simulation time t', get:r=>r.t+' s' },
+  ];
+  const defs = COMPARE_ATTRS;
+  // union of attribute definitions across the systems actually present, grouped by system so
+  // a row only shows a value for trials whose system defines that attribute (others show —)
+  const seenKeys = new Set();
+  rows.forEach(r=>{
+    (defs[r.sys]||[]).forEach(d=>{
+      const uid = r.sys+':'+d.key;
+      if (!seenKeys.has(uid)){
+        seenKeys.add(uid);
+        attrRows.push({ label:(LANG==='id'?d.id:d.en), get:(rr)=> rr.sys===r.sys ? d.val(rr) : '—' });
+      }
+    });
+  });
+  attrRows.push({ label: LANG==='id'?'Status Keamanan':'Safety Status', get:r=>t(r.status) });
+
+  tbl.querySelector('tbody').innerHTML = attrRows.map(a=>`<tr><td>${a.label}</td>${rows.map(r=>`<td>${a.get(r)}</td>`).join('')}</tr>`).join('');
+
+  if (note) note.textContent = LANG==='id'
+    ? 'Setiap kolom adalah satu snapshot parameter saat tombol ditekan. Ubah parameter lalu tambahkan lagi untuk membandingkan hasil.'
+    : 'Each column is one parameter snapshot taken when the button was pressed. Change a parameter, then add again to compare results.';
+}
+
+/* Attribute definitions used to build the side-by-side Compare table, per system type. */
+const COMPARE_ATTRS = {
+  gasket: [
+    {key:'Fi', id:'Prategang Baut Fi', en:'Bolt Preload Fi', val:r=>fmt(r.params.Fi)+' N'},
+    {key:'p', id:'Tekanan p', en:'Pressure p', val:r=>fmt(r.params.p)+' MPa'},
+    {key:'C', id:'Konstanta C', en:'Constant C', val:r=>fmt(r.params.C)},
+    {key:'Ag', id:'Luas Gasket A', en:'Gasket Area A', val:r=>fmt(r.calc.Agasket)+' mm²'},
+    {key:'Fr', id:'Gaya Sisa F_residual', en:'Residual Force F_residual', val:r=>fmt(r.calc.Fresidual)+' N'},
+    {key:'sig', id:'Tegangan σ_gasket', en:'Stress σ_gasket', val:r=>fmt(r.calc.sigma)+' MPa'},
+    {key:'nsf', id:'nSF (crush)', en:'nSF (crush)', val:r=>fmt(r.calc.nSF)},
+    {key:'seat', id:'Status Dudukan', en:'Seating Status', val:r=>r.calc.seated?t('seated'):t('notseated')},
+  ],
+  oring: [
+    {key:'p', id:'Tekanan Sistem p', en:'System Pressure p', val:r=>fmt(r.params.p)+' MPa'},
+    {key:'sq', id:'Squeeze', en:'Squeeze', val:r=>fmt(r.calc.squeezePct)+' %'},
+    {key:'pc', id:'Tekanan Kontak', en:'Contact Pressure', val:r=>fmt(r.calc.contactP)+' MPa'},
+    {key:'nsf', id:'nSF', en:'nSF', val:r=>fmt(r.calc.nSF)},
+    {key:'fr', id:'Gaya Gesek', en:'Friction Force', val:r=>fmt(r.calc.frictionForce)+' N'},
+    {key:'ext', id:'Risiko Ekstrusi', en:'Extrusion Risk', val:r=>r.calc.extrusionRisk?(LANG==='id'?'YA':'YES'):(LANG==='id'?'TIDAK':'NO')},
+  ],
+  lipseal: [
+    {key:'pc', id:'Tekanan Kontak', en:'Contact Pressure', val:r=>fmt(r.params.p_contact)+' MPa'},
+    {key:'rpm', id:'Kecepatan Putar', en:'Rotational Speed', val:r=>fmt(r.params.rpm)+' rpm'},
+    {key:'v', id:'Kecepatan Permukaan V', en:'Surface Velocity V', val:r=>fmt(r.calc.V)+' m/s'},
+    {key:'pv', id:'PV Factor', en:'PV Factor', val:r=>fmt(r.calc.PV)+' MPa·m/s'},
+    {key:'util', id:'Utilisasi PV', en:'PV Utilization', val:r=>fmt(r.calc.utilization*100)+' %'},
+    {key:'nsf', id:'nSF', en:'nSF', val:r=>fmt(r.calc.nSF)},
+  ],
+  mechseal: [
+    {key:'p', id:'Tekanan Proses p', en:'Process Pressure p', val:r=>fmt(r.params.p)+' MPa'},
+    {key:'B', id:'Balance Ratio B', en:'Balance Ratio B', val:r=>fmt(r.params.B)},
+    {key:'h', id:'Tebal Film h', en:'Film Thickness h', val:r=>fmt(r.params.h)+' µm'},
+    {key:'pclose', id:'p_close', en:'p_close', val:r=>fmt(r.calc.netClosingP)+' MPa'},
+    {key:'q', id:'Kebocoran Q', en:'Leakage Q', val:r=>fmtSci(r.calc.Q)+' m³/s'},
+    {key:'ploss', id:'Rugi Daya', en:'Power Loss', val:r=>fmt(r.calc.powerLoss)+' W'},
+  ],
+  labyrinth: [
+    {key:'n', id:'Jumlah Gigi', en:'Number of Teeth', val:r=>r.params.nTeeth},
+    {key:'c', id:'Celah c', en:'Clearance c', val:r=>fmt(r.params.c)+' mm'},
+    {key:'p1', id:'Tekanan Hulu p1', en:'Upstream p1', val:r=>fmt(r.params.p1)+' MPa'},
+    {key:'p2', id:'Tekanan Hilir p2', en:'Downstream p2', val:r=>fmt(r.params.p2)+' MPa'},
+    {key:'mdot', id:'Laju Aliran ṁ', en:'Flow Rate ṁ', val:r=>fmtSci(r.calc.mdot)+' kg/s'},
+  ],
+  bearing: [
+    {key:'r', id:'Radius r', en:'Radius r', val:r=>fmt(r.params.r)+' mm'},
+    {key:'c', id:'Celah c', en:'Clearance c', val:r=>fmt(r.params.c)+' mm'},
+    {key:'W', id:'Beban W', en:'Load W', val:r=>fmt(r.params.W)+' N'},
+    {key:'mu', id:'Viskositas μ', en:'Viscosity μ', val:r=>fmt(r.params.mu)+' Pa·s'},
+    {key:'rpm', id:'Kecepatan Putar', en:'Rotational Speed', val:r=>fmt(r.params.rpm)+' rpm'},
+    {key:'S', id:'Bilangan Sommerfeld S', en:'Sommerfeld Number S', val:r=>fmt(r.calc.S)},
+    {key:'f', id:'Koefisien Gesek f', en:'Friction Coefficient f', val:r=>fmt(r.calc.f)},
+    {key:'h0', id:'Film h0', en:'Film h0', val:r=>fmt(r.calc.h0)+' µm'},
+    {key:'nsf', id:'nSF', en:'nSF', val:r=>fmt(r.calc.nSF)},
+    {key:'regime', id:'Rejim', en:'Regime', val:r=>r.calc.regime.toUpperCase()},
+  ],
+};
+
+/* =========================================================================
+   CHALLENGE MODE
+========================================================================= */
+const CHALLENGES = [
+  { id:{q:'Fi=60 000 N, Fp=20 000 N, C=0.3, A_gasket=800 mm². Hitung σ_gasket (MPa).',
+        hints:['Hitung F_residual = Fi − (1−C)Fp.','Bagi F_residual dengan A_gasket.']},
+    en:{q:'Fi=60,000 N, Fp=20,000 N, C=0.3, A_gasket=800 mm². Compute σ_gasket (MPa).',
+        hints:['Compute F_residual = Fi − (1−C)Fp.','Divide F_residual by A_gasket.']},
+    answer:57.5, tol:0.5 },
+  { id:{q:'r=50 mm, c=0.05 mm, L=100 mm, W=5000 N, μ=0.02 Pa·s, N=50 rev/s. Hitung bilangan Sommerfeld S.',
+        hints:['Hitung unit load P = W/(2rL).','Gunakan S=(r/c)²(μN/P).']},
+    en:{q:'r=50 mm, c=0.05 mm, L=100 mm, W=5000 N, μ=0.02 Pa·s, N=50 rev/s. Compute Sommerfeld number S.',
+        hints:['Compute unit load P = W/(2rL).','Use S=(r/c)²(μN/P).']},
+    answer:2.0, tol:0.1 },
+  { id:{q:'Δp=1 MPa, h=0.05 mm, w=20 mm, L=10 mm, μ=0.05 Pa·s. Hitung Q dalam mL/menit.',
+        hints:['Konversi ke SI dahulu.','Q=Δp·h³·w/(12μL), lalu ubah m³/s ke mL/menit (×1e6×60).']},
+    en:{q:'Δp=1 MPa, h=0.05 mm, w=20 mm, L=10 mm, μ=0.05 Pa·s. Compute Q in mL/min.',
+        hints:['Convert to SI first.','Q=Δp·h³·w/(12μL), then convert m³/s to mL/min (×1e6×60).']},
+    answer:25, tol:1 },
+];
+let challengeIdx=0, hintShown=0;
+function buildChallenge(){
+  const box=document.getElementById('challengeBox');
+  const c = CHALLENGES[challengeIdx][LANG];
+  box.innerHTML = `
+    <div class="quizQ">
+      <div class="qtext"><b>${LANG==='id'?'Soal':'Problem'} ${challengeIdx+1}/${CHALLENGES.length}:</b> ${c.q}</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="number" id="chAnswer" step="0.01" style="flex:1;background:var(--bg-3);border:1px solid var(--line);color:var(--text-0);border-radius:6px;padding:8px;font-family:var(--mono);">
+        <button class="btn small" id="chCheck">${LANG==='id'?'Periksa Jawaban':'Check Answer'}</button>
+      </div>
+      <div class="btnRow">
+        <button class="btn small" id="chHint">${LANG==='id'?'Tampilkan Hint':'Show Hint'}</button>
+        <button class="btn small" id="chSol" style="display:none;">${LANG==='id'?'Tampilkan Solusi':'Show Solution'}</button>
+        <button class="btn small" id="chNext">${LANG==='id'?'Soal Berikutnya':'Next Problem'}</button>
+      </div>
+      <div class="quizFb" id="chFb"></div>
+      <div id="chHintsBox" style="font-size:11.5px;color:var(--text-2);margin-top:6px;"></div>
+    </div>`;
+  hintShown=0;
+  document.getElementById('chHint').addEventListener('click', ()=>{
+    if (hintShown<c.hints.length){
+      document.getElementById('chHintsBox').innerHTML += `<div>💡 ${c.hints[hintShown]}</div>`;
+      hintShown++;
+    }
+    if (hintShown>=c.hints.length) document.getElementById('chSol').style.display='inline-flex';
+  });
+  document.getElementById('chSol').addEventListener('click', ()=>{
+    const fb=document.getElementById('chFb'); fb.style.display='block';
+    fb.textContent = (LANG==='id'?'Jawaban: ':'Answer: ')+CHALLENGES[challengeIdx].answer;
+  });
+  document.getElementById('chCheck').addEventListener('click', ()=>{
+    const v = parseFloat(document.getElementById('chAnswer').value);
+    const fb = document.getElementById('chFb'); fb.style.display='block';
+    const ch = CHALLENGES[challengeIdx];
+    const ok = Math.abs(v-ch.answer) <= Math.max(ch.tol, ch.answer*0.05);
+    fb.textContent = ok? (LANG==='id'?'BENAR! ':'CORRECT! ')+`(≈${ch.answer})` : (LANG==='id'?'COBA LAGI. Periksa konversi satuan.':'TRY AGAIN. Check your unit conversion.');
+    fb.style.color = ok? '#3FCB8B':'#E85D4E';
+  });
+  document.getElementById('chNext').addEventListener('click', ()=>{
+    challengeIdx = (challengeIdx+1)%CHALLENGES.length; buildChallenge();
+  });
+}
+
+/* =========================================================================
+   CONCEPT QUIZ
+========================================================================= */
+const QUIZ = [
+ {id:{q:'Jika Fi digandakan pada Fp dan A_gasket tetap, σ_gasket cenderung?', opts:['Naik','Turun','Tetap','Nol'], ans:0,
+      fb:'F_residual naik karena Fi naik, sehingga σ_gasket naik.'},
+  en:{q:'If Fi is doubled with Fp and A_gasket fixed, σ_gasket tends to?', opts:['Increase','Decrease','Stay the same','Zero'], ans:0,
+      fb:'F_residual increases as Fi increases, so σ_gasket increases.'}},
+ {id:{q:'Pada Q=Δp·h³·w/(12μL), jika h digandakan, Q menjadi berapa kali?', opts:['2×','4×','8×','Tetap'], ans:2,
+      fb:'Q sebanding h³, sehingga menjadi 8×.'},
+  en:{q:'In Q=Δp·h³·w/(12μL), if h is doubled, Q becomes how many times?', opts:['2×','4×','8×','Same'], ans:2,
+      fb:'Q is proportional to h³, so it becomes 8×.'}},
+ {id:{q:'Pada bantalan luncur, jika N digandakan (μ,P tetap), f Petroff menjadi?', opts:['2×','0.5×','4×','Tetap'], ans:0,
+      fb:'f sebanding linear terhadap N pada model Petroff.'},
+  en:{q:'In a journal bearing, if N is doubled (μ,P fixed), Petroff f becomes?', opts:['2×','0.5×','4×','Same'], ans:0,
+      fb:'f is linearly proportional to N in the Petroff model.'}},
+ {id:{q:'Mengapa kurva Stribeck berbentuk U?', opts:['Viskositas acak','Kontak asperitas tinggi di boundary, minimum di mixed/EHL, naik di hydrodynamic akibat geser viskos','Tekanan konstan','Tidak ada hubungan fisik'], ans:1,
+      fb:'Transisi rejim boundary→mixed→hydrodynamic menghasilkan bentuk U.'},
+  en:{q:'Why is the Stribeck curve U-shaped?', opts:['Random viscosity','High asperity contact at boundary, minimum at mixed/EHL, rising at hydrodynamic due to viscous shear','Constant pressure','No physical relation'], ans:1,
+      fb:'The boundary→mixed→hydrodynamic transition produces the U shape.'}},
+ {id:{q:'Pada seal dinamis, jika kecepatan V digandakan pada p_contact tetap, utilization PV menjadi?', opts:['2×','0.5×','Tetap','4×'], ans:0,
+      fb:'PV=p_contact×V sebanding linear terhadap V.'},
+  en:{q:'For a dynamic seal, if V is doubled with p_contact fixed, PV utilization becomes?', opts:['2×','0.5×','Same','4×'], ans:0,
+      fb:'PV=p_contact×V is linearly proportional to V.'}},
+];
+function buildQuiz(){
+  const box=document.getElementById('quizBox');
+  box.innerHTML = QUIZ.map((qq,qi)=>{
+    const q = qq[LANG];
+    return `<div class="quizQ" data-qi="${qi}">
+      <div class="qtext">Q${qi+1}. ${q.q}</div>
+      ${q.opts.map((o,oi)=>`<button class="opt" data-oi="${oi}">${String.fromCharCode(65+oi)}. ${o}</button>`).join('')}
+      <div class="quizFb"></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.quizQ').forEach(card=>{
+    const qi = +card.dataset.qi; const q = QUIZ[qi][LANG];
+    card.querySelectorAll('.opt').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const oi = +btn.dataset.oi;
+        card.querySelectorAll('.opt').forEach(b=>b.classList.remove('correct','wrong'));
+        if (oi===q.ans) btn.classList.add('correct');
+        else { btn.classList.add('wrong'); card.querySelectorAll('.opt')[q.ans].classList.add('correct'); }
+        const fb = card.querySelector('.quizFb');
+        fb.style.display='block';
+        fb.textContent = (oi===q.ans? (LANG==='id'?'BENAR. ':'CORRECT. ') : (LANG==='id'?'KURANG TEPAT. ':'NOT QUITE. ')) + q.fb;
+      });
+    });
+  });
+}
+
+/* =========================================================================
+   TOOLTIP (hover on cards / labels showing symbol defs) — lightweight
+========================================================================= */
+const SYMBOL_TIPS = {
+  id:{ 'σ_gasket':'Tegangan kontak gasket: gaya sisa per satuan luas gasket.', 'nSF':'Faktor keamanan: rasio batas terhadap nilai aktual.',
+       'Q':'Laju aliran kebocoran melalui celah, m³/s.', 'PV':'Faktor tekanan-kecepatan untuk batas keausan seal dinamis.',
+       'S':'Bilangan Sommerfeld: parameter tak berdimensi bantalan luncur.' },
+  en:{ 'σ_gasket':'Gasket contact stress: residual force per unit gasket area.', 'nSF':'Safety factor: ratio of limit to actual value.',
+       'Q':'Leakage flow rate through the gap, m³/s.', 'PV':'Pressure-velocity factor for dynamic seal wear limit.',
+       'S':'Sommerfeld number: dimensionless journal bearing parameter.' }
+};
+
+/* =========================================================================
+   INIT
+========================================================================= */
+function init(){
+  buildPresetSelect();
+  wireUI();
+  applyI18nStatic();
+  document.getElementById('btnShowFlow').classList.toggle('active', state.showFlow);
+  document.getElementById('btnShowDim').classList.toggle('active', state.showDim);
+  document.getElementById('btnShowEq').classList.toggle('active', state.showEq);
+  loadPreset(PRESETS[0]);
+  buildDataTable();
+  buildCompareTable();
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

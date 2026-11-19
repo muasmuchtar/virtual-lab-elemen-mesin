@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Lab: Penyimpan Energi Mekanik — Pegas dan Roda Gila</title>
+<style>
+:root{
+  --navy-950:#070f1a;
+  --navy-900:#0b1a2b;
+  --navy-800:#122539;
+  --navy-700:#1a3049;
+  --steel-600:#3a4f63;
+  --steel-500:#4d6478;
+  --steel-300:#8fa3b3;
+  --ink-100:#eef3f7;
+  --ink-300:#c4d2de;
+  --cyan-400:#3ee6e0;
+  --cyan-500:#1fc9d6;
+  --cyan-300:#8ff2ec;
+  --amber-500:#f0a83c;
+  --red-500:#ef5b4e;
+  --green-500:#3fce8a;
+  --mono: "Consolas","SFMono-Regular","Menlo",monospace;
+  --sans: "Segoe UI","Inter",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --radius:6px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--navy-950);color:var(--ink-100);font-family:var(--sans);font-size:14px;}
+button, input, select{font-family:inherit;font-size:inherit;color:inherit;}
+h1,h2,h3,h4{margin:0 0 6px 0;font-weight:600;letter-spacing:.2px;}
+.small{font-size:11.5px;color:var(--ink-300);}
+.mono{font-family:var(--mono);}
+.hidden{display:none !important;}
+a{color:var(--cyan-400);}
+
+/* ===== layout shell ===== */
+#app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;}
+header.topbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 16px;background:linear-gradient(180deg,var(--navy-900),var(--navy-950));
+  border-bottom:1px solid var(--steel-600);
+}
+header.topbar .title{font-size:16px;font-weight:700;color:var(--ink-100);}
+header.topbar .subtitle{font-size:11.5px;color:var(--cyan-300);}
+header.topbar .spacer{flex:1;}
+.preset-select{background:var(--navy-800);border:1px solid var(--steel-600);border-radius:var(--radius);padding:6px 8px;}
+.lang-switch{display:flex;border:1px solid var(--steel-600);border-radius:var(--radius);overflow:hidden;}
+.lang-switch button{background:var(--navy-800);border:none;padding:6px 12px;cursor:pointer;color:var(--ink-300);}
+.lang-switch button.active{background:var(--cyan-500);color:var(--navy-950);font-weight:700;}
+
+.layout{display:grid;grid-template-columns:290px 1fr 300px;gap:0;min-height:0;}
+.panel{padding:12px;overflow-y:auto;}
+.panel-left{background:var(--navy-900);border-right:1px solid var(--steel-600);}
+.panel-right{background:var(--navy-900);border-left:1px solid var(--steel-600);}
+.panel-center{background:var(--navy-950);display:flex;flex-direction:column;min-width:0;}
+
+section.block{background:var(--navy-800);border:1px solid var(--steel-600);border-radius:var(--radius);padding:10px;margin-bottom:10px;}
+section.block h3{font-size:12px;text-transform:none;color:var(--cyan-300);border-bottom:1px solid var(--steel-600);padding-bottom:6px;margin-bottom:8px;}
+
+.field{margin-bottom:9px;}
+.field label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-300);margin-bottom:3px;}
+.field label .val{color:var(--cyan-300);font-family:var(--mono);}
+.field .row{display:flex;gap:6px;align-items:center;}
+.field input[type=range]{flex:1;accent-color:var(--cyan-500);}
+.field input[type=number]{width:76px;background:var(--navy-950);border:1px solid var(--steel-600);border-radius:4px;padding:4px 6px;}
+.field select{width:100%;background:var(--navy-950);border:1px solid var(--steel-600);border-radius:4px;padding:5px 6px;}
+.readonly{opacity:.65;}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{background:var(--navy-950);border:1px solid var(--steel-600);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;}
+.pill.active{background:var(--cyan-500);color:var(--navy-950);border-color:var(--cyan-500);font-weight:700;}
+
+button.btn{background:var(--navy-950);border:1px solid var(--steel-600);border-radius:5px;padding:7px 10px;cursor:pointer;color:var(--ink-100);font-size:12px;}
+button.btn:hover{border-color:var(--cyan-500);}
+button.btn.primary{background:var(--cyan-500);color:var(--navy-950);border-color:var(--cyan-500);font-weight:700;}
+button.btn.warn{background:var(--amber-500);color:var(--navy-950);border-color:var(--amber-500);font-weight:700;}
+button.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+
+/* toggles */
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:11.5px;}
+.toggle input{accent-color:var(--cyan-500);}
+
+/* center stage */
+.stage-tabs{display:flex;gap:6px;padding:10px 12px 0 12px;flex-wrap:wrap;}
+.stage-tabs button{flex:none;}
+.canvas-wrap{position:relative;flex:1;margin:10px 12px;background:radial-gradient(circle at 30% 20%, #0e2032, #071120 70%);border:1px solid var(--steel-600);border-radius:8px;overflow:hidden;min-height:340px;}
+canvas#mainCanvas{width:100%;height:100%;display:block;}
+.stage-caption{position:absolute;left:10px;top:8px;font-size:11px;color:var(--cyan-300);background:rgba(7,15,26,.55);padding:3px 8px;border-radius:4px;}
+.exagg-note{position:absolute;right:10px;bottom:8px;font-size:10.5px;color:var(--ink-300);background:rgba(7,15,26,.55);padding:3px 8px;border-radius:4px;max-width:260px;text-align:right;}
+
+/* status bar */
+.statusbar{display:flex;flex-wrap:wrap;gap:0;background:var(--navy-900);border-top:1px solid var(--steel-600);border-bottom:1px solid var(--steel-600);font-size:11px;}
+.statusbar .seg{padding:7px 12px;border-right:1px solid var(--steel-600);display:flex;gap:6px;align-items:center;}
+.statusbar .k{color:var(--ink-300);}
+.statusbar .v{font-family:var(--mono);color:var(--ink-100);}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.safe{background:var(--green-500);}
+.dot.warn{background:var(--amber-500);}
+.dot.crit{background:var(--red-500);}
+.dot.na{background:var(--steel-500);}
+
+/* engineering cards */
+.card{background:var(--navy-950);border:1px solid var(--steel-600);border-radius:5px;padding:8px 10px;margin-bottom:7px;}
+.card .row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.card .row .lbl{color:var(--ink-300);}
+.card .row .num{font-family:var(--mono);color:var(--cyan-300);}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10.5px;font-weight:700;}
+.badge.safe{background:rgba(63,206,138,.18);color:var(--green-500);}
+.badge.warn{background:rgba(240,168,60,.18);color:var(--amber-500);}
+.badge.crit{background:rgba(239,91,78,.2);color:var(--red-500);}
+.badge.na{background:rgba(143,163,179,.15);color:var(--steel-300);}
+
+/* bottom dock */
+.dock{background:var(--navy-900);border-top:1px solid var(--steel-600);}
+.dock-tabs{display:flex;gap:2px;padding:6px 10px 0 10px;flex-wrap:wrap;}
+.dock-tabs button{background:var(--navy-800);border:1px solid var(--steel-600);border-bottom:none;border-radius:5px 5px 0 0;padding:6px 12px;font-size:11.5px;cursor:pointer;color:var(--ink-300);}
+.dock-tabs button.active{background:var(--navy-950);color:var(--cyan-300);border-color:var(--cyan-500);}
+.dock-body{background:var(--navy-950);border-top:1px solid var(--steel-600);padding:12px;max-height:46vh;overflow:auto;}
+.dock-panel{display:none;}
+.dock-panel.active{display:block;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+@media (max-width:1000px){.grid2,.grid3{grid-template-columns:1fr;}}
+.chartbox{background:var(--navy-800);border:1px solid var(--steel-600);border-radius:6px;padding:6px;}
+.chartbox canvas{width:100%;height:210px;display:block;}
+.chartbox .chart-title{font-size:11.5px;color:var(--cyan-300);margin-bottom:4px;}
+
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th,td{border:1px solid var(--steel-600);padding:4px 6px;text-align:right;white-space:nowrap;}
+th{background:var(--navy-800);color:var(--cyan-300);position:sticky;top:0;}
+td:first-child,th:first-child{text-align:left;}
+.table-wrap{max-height:260px;overflow:auto;border:1px solid var(--steel-600);border-radius:6px;}
+
+.step-line{padding:5px 0;border-bottom:1px dashed var(--steel-600);font-size:12.5px;}
+.step-line b{color:var(--cyan-300);}
+.step-line .formula{font-family:var(--mono);color:var(--ink-100);}
+
+.qa{background:var(--navy-800);border:1px solid var(--steel-600);border-radius:6px;padding:10px;margin-bottom:10px;}
+.qa .opt{display:block;width:100%;text-align:left;background:var(--navy-950);border:1px solid var(--steel-600);border-radius:5px;padding:6px 8px;margin:4px 0;cursor:pointer;}
+.qa .opt.correct{border-color:var(--green-500);background:rgba(63,206,138,.12);}
+.qa .opt.wrong{border-color:var(--red-500);background:rgba(239,91,78,.12);}
+.qa .feedback{font-size:12px;margin-top:6px;color:var(--ink-300);}
+
+.tooltip{position:fixed;z-index:50;background:var(--navy-950);border:1px solid var(--cyan-500);border-radius:5px;padding:6px 9px;font-size:11.5px;max-width:260px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4);}
+[data-tip]{border-bottom:1px dotted var(--steel-300);cursor:help;}
+
+.info-popover{position:absolute;z-index:40;background:var(--navy-800);border:1px solid var(--cyan-500);border-radius:6px;padding:10px 12px;font-size:11.5px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+.info-popover h4{color:var(--cyan-300);font-size:12px;}
+.info-popover .close{position:absolute;top:4px;right:6px;cursor:pointer;color:var(--ink-300);}
+
+footer.legal{padding:8px 14px;font-size:10.5px;color:var(--steel-300);border-top:1px solid var(--steel-600);background:var(--navy-900);}
+
+/* print */
+@media print{
+  header.topbar,.panel-left,.panel-right,.stage-tabs,.statusbar,.dock-tabs,footer.legal,.no-print{display:none !important;}
+  #printReport{display:block !important;}
+  body{background:#fff;color:#111;}
+}
+#printReport{display:none;padding:20px;color:#111;background:#fff;font-family:var(--sans);}
+#printReport h2{border-bottom:2px solid #222;padding-bottom:6px;}
+#printReport .pr-section{margin-bottom:14px;}
+#printReport table{color:#111;}
+#printReport th{background:#eee;color:#111;}
+
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:var(--steel-600);border-radius:5px;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .panel-left,.panel-right{border:none;border-bottom:1px solid var(--steel-600);}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header class="topbar">
+  <div>
+    <div class="title" data-i18n="appTitle">Virtual Lab: Penyimpan Energi Mekanik — Pegas &amp; Roda Gila</div>
+    <div class="subtitle" data-i18n="appSubtitle">Mechanical Energy Storage Engineering Simulator</div>
+  </div>
+  <select id="presetSelect" class="preset-select"></select>
+  <div class="spacer"></div>
+  <div class="btnrow" style="margin:0;">
+    <button class="btn" id="btnVerify" data-i18n="btnVerify">Uji Verifikasi</button>
+  </div>
+  <div class="lang-switch">
+    <button id="langID" class="active">ID</button>
+    <button id="langEN">EN</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ===================== LEFT PANEL : CONTROLS ===================== -->
+  <div class="panel panel-left">
+
+    <section class="block">
+      <h3 data-i18n="hSystem">Jenis Sistem / System Type</h3>
+      <div class="pillrow" id="categoryPills">
+        <div class="pill" data-cat="spring" data-i18n="catSpring">Pegas</div>
+        <div class="pill" data-cat="flywheel" data-i18n="catFlywheel">Roda Gila</div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-i18n="lblSubtype">Tipe</label>
+        <select id="subtypeSelect"></select>
+      </div>
+      <div class="field" id="controlModeField">
+        <label data-i18n="lblControlMode">Mode Kontrol</label>
+        <select id="controlModeSelect">
+          <option value="displacement" data-i18n="optDispCtrl">Displacement-controlled</option>
+          <option value="force" data-i18n="optForceCtrl">Force-controlled</option>
+        </select>
+      </div>
+      <div class="field" id="stiffnessModeField">
+        <label data-i18n="lblStiffMode">Sumber Kekakuan k</label>
+        <select id="stiffnessModeSelect">
+          <option value="direct" data-i18n="optDirectK">Direct stiffness</option>
+          <option value="geometry" data-i18n="optGeomK">Geometry-derived</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="block" id="springParamsBlock">
+      <h3 data-i18n="hSpringParams">Parameter Pegas</h3>
+      <div class="field"><label><span data-tip="tipK" data-i18n="lblK">Kekakuan k</span><span class="val" id="v_k"></span></label>
+        <div class="row"><input type="range" id="s_k" min="0.1" max="200" step="0.1"><input type="number" id="n_k" step="0.1"></div></div>
+      <div class="field"><label><span data-i18n="lblX">Deformasi x</span><span class="val" id="v_x"></span></label>
+        <div class="row"><input type="range" id="s_x" min="0" max="150" step="0.5"><input type="number" id="n_x" step="0.5"></div></div>
+      <div class="field"><label><span data-i18n="lblF">Gaya diterapkan F</span><span class="val" id="v_F"></span></label>
+        <div class="row"><input type="range" id="s_F" min="0" max="3000" step="1"><input type="number" id="n_F" step="1"></div></div>
+      <div class="field" id="preloadField"><label><span data-tip="tipPreload" data-i18n="lblF0">Preload / initial tension F0</span><span class="val" id="v_F0"></span></label>
+        <div class="row"><input type="range" id="s_F0" min="0" max="500" step="1"><input type="number" id="n_F0" step="1"></div></div>
+      <div class="field"><label><span data-i18n="lblXmax">Stroke maksimum xmax</span><span class="val" id="v_xmax"></span></label>
+        <div class="row"><input type="range" id="s_xmax" min="5" max="200" step="1"><input type="number" id="n_xmax" step="1"></div></div>
+
+      <div id="geomFields">
+        <div class="field"><label><span data-i18n="lblD">Diameter kawat d, mm</span><span class="val" id="v_d"></span></label>
+          <div class="row"><input type="range" id="s_d" min="0.5" max="20" step="0.1"><input type="number" id="n_d" step="0.1"></div></div>
+        <div class="field"><label><span data-i18n="lblDcoil">Diameter lilitan D, mm</span><span class="val" id="v_D"></span></label>
+          <div class="row"><input type="range" id="s_D" min="2" max="150" step="0.5"><input type="number" id="n_D" step="0.5"></div></div>
+        <div class="field"><label><span data-i18n="lblNa">Lilitan aktif na</span><span class="val" id="v_na"></span></label>
+          <div class="row"><input type="range" id="s_na" min="1" max="40" step="1"><input type="number" id="n_na" step="1"></div></div>
+        <div class="field"><label><span data-i18n="lblG">Modulus geser G, GPa</span><span class="val" id="v_G"></span></label>
+          <div class="row"><input type="range" id="s_G" min="30" max="90" step="0.5"><input type="number" id="n_G" step="0.5"></div></div>
+      </div>
+
+      <div class="field"><label><span data-i18n="lblM">Massa bergerak m, kg</span><span class="val" id="v_m"></span></label>
+        <div class="row"><input type="range" id="s_m" min="0" max="50" step="0.1"><input type="number" id="n_m" step="0.1"></div></div>
+      <div class="field"><label><span data-i18n="lblC">Redaman c, N·s/m</span><span class="val" id="v_c"></span></label>
+        <div class="row"><input type="range" id="s_c" min="0" max="200" step="1"><input type="number" id="n_c" step="1"></div></div>
+      <div class="field"><label><span data-i18n="lblStress">Allowable stress τlimit, MPa</span><span class="val" id="v_taulim"></span></label>
+        <div class="row"><input type="range" id="s_taulim" min="0" max="1200" step="5"><input type="number" id="n_taulim" step="5"></div></div>
+    </section>
+
+    <section class="block" id="flywheelParamsBlock">
+      <h3 data-i18n="hFlyParams">Parameter Roda Gila</h3>
+      <div class="field"><label><span data-i18n="lblM">Massa m, kg</span><span class="val" id="v_fm"></span></label>
+        <div class="row"><input type="range" id="s_fm" min="1" max="500" step="1"><input type="number" id="n_fm" step="1"></div></div>
+      <div class="field"><label><span data-i18n="lblRo">Radius luar ro, m</span><span class="val" id="v_ro"></span></label>
+        <div class="row"><input type="range" id="s_ro" min="0.05" max="1.2" step="0.01"><input type="number" id="n_ro" step="0.01"></div></div>
+      <div class="field" id="riField"><label><span data-i18n="lblRi">Radius dalam ri, m</span><span class="val" id="v_ri"></span></label>
+        <div class="row"><input type="range" id="s_ri" min="0" max="1.1" step="0.01"><input type="number" id="n_ri" step="0.01"></div></div>
+      <div class="field" id="ICustomField"><label><span data-i18n="lblIcustom">Momen inersia I, kg·m² (custom)</span><span class="val" id="v_Icustom"></span></label>
+        <div class="row"><input type="range" id="s_Icustom" min="0.01" max="200" step="0.01"><input type="number" id="n_Icustom" step="0.01"></div></div>
+      <div class="field readonly"><label data-i18n="lblIcalc">Momen inersia terhitung I</label><span class="val mono" id="v_Icalc"></span></div>
+
+      <div class="field"><label><span data-i18n="lblN0">Kecepatan awal N0, rpm</span><span class="val" id="v_N0"></span></label>
+        <div class="row"><input type="range" id="s_N0" min="0" max="2000" step="1"><input type="number" id="n_N0" step="1"></div></div>
+      <div class="field"><label><span data-i18n="lblNtarget">Kecepatan target, rpm</span><span class="val" id="v_Ntarget"></span></label>
+        <div class="row"><input type="range" id="s_Ntarget" min="0" max="2000" step="1"><input type="number" id="n_Ntarget" step="1"></div></div>
+      <div class="field"><label><span data-tip="tipNmin" data-i18n="lblNmin">Kecepatan minimum operasi Nmin, rpm</span><span class="val" id="v_Nmin"></span></label>
+        <div class="row"><input type="range" id="s_Nmin" min="0" max="2000" step="1"><input type="number" id="n_Nmin" step="1"></div></div>
+      <div class="field"><label><span data-i18n="lblNmax">Kecepatan maksimum Nmax, rpm</span><span class="val" id="v_Nmax"></span></label>
+        <div class="row"><input type="range" id="s_Nmax" min="0" max="3000" step="1"><input type="number" id="n_Nmax" step="1"></div></div>
+
+      <div class="field"><label><span data-i18n="lblPmotor">Daya motor Pmotor, kW</span><span class="val" id="v_Pmotor"></span></label>
+        <div class="row"><input type="range" id="s_Pmotor" min="0.05" max="200" step="0.05"><input type="number" id="n_Pmotor" step="0.05"></div></div>
+      <div class="field"><label><span data-i18n="lblTmax">Torsi maksimum motor Tmax, N·m</span><span class="val" id="v_Tmax"></span></label>
+        <div class="row"><input type="range" id="s_Tmax" min="0.5" max="3000" step="0.5"><input type="number" id="n_Tmax" step="0.5"></div></div>
+      <div class="field"><label><span data-i18n="lblPload">Daya beban Pload, kW</span><span class="val" id="v_Pload"></span></label>
+        <div class="row"><input type="range" id="s_Pload" min="0.1" max="500" step="0.1"><input type="number" id="n_Pload" step="0.1"></div></div>
+      <div class="field"><label><span data-i18n="lblDt">Durasi pulsa Δt, s</span><span class="val" id="v_dtload"></span></label>
+        <div class="row"><input type="range" id="s_dtload" min="0.05" max="10" step="0.05"><input type="number" id="n_dtload" step="0.05"></div></div>
+      <div class="field"><label><span data-i18n="lblCyclePeriod">Periode siklus, s</span><span class="val" id="v_cycle"></span></label>
+        <div class="row"><input type="range" id="s_cycle" min="1" max="60" step="0.5"><input type="number" id="n_cycle" step="0.5"></div></div>
+      <div class="field"><label><span data-tip="tipB" data-i18n="lblB">Koefisien rugi b, N·m·s/rad</span><span class="val" id="v_b"></span></label>
+        <div class="row"><input type="range" id="s_b" min="0" max="5" step="0.01"><input type="number" id="n_b" step="0.01"></div></div>
+      <div class="toggle"><span data-i18n="lblLossesOn">Aktifkan rugi-rugi (b, viskos)</span><input type="checkbox" id="lossesToggle"></div>
+      <div class="field"><label><span data-i18n="lblEtaC">η charge</span><span class="val" id="v_etaC"></span></label>
+        <div class="row"><input type="range" id="s_etaC" min="0.5" max="1" step="0.01"><input type="number" id="n_etaC" step="0.01"></div></div>
+      <div class="field"><label><span data-i18n="lblEtaD">η discharge</span><span class="val" id="v_etaD"></span></label>
+        <div class="row"><input type="range" id="s_etaD" min="0.5" max="1" step="0.01"><input type="number" id="n_etaD" step="0.01"></div></div>
+    </section>
+
+    <section class="block">
+      <h3 data-i18n="hAnim">Animasi &amp; Tampilan</h3>
+      <div class="field"><label><span data-i18n="lblAnimSpeed">Animation Speed</span><span class="val" id="v_animspeed"></span></label>
+        <div class="row"><input type="range" id="s_animspeed" min="0.1" max="4" step="0.1"></div></div>
+      <div class="field"><label><span data-i18n="lblDeformScale">Deformation Display Scale</span><span class="val" id="v_deformscale"></span></label>
+        <div class="row"><input type="range" id="s_deformscale" min="1" max="10" step="1"></div></div>
+      <div class="toggle"><span data-i18n="lblShowFlow">Show Energy Flow</span><input type="checkbox" id="toggleFlow" checked></div>
+      <div class="toggle"><span data-i18n="lblShowForce">Show Force/Torque</span><input type="checkbox" id="toggleForce" checked></div>
+      <div class="toggle"><span data-i18n="lblShowDim">Show Dimensions</span><input type="checkbox" id="toggleDim" checked></div>
+      <div class="toggle"><span data-i18n="lblShowMeters">Show Energy Meters</span><input type="checkbox" id="toggleMeters" checked></div>
+      <div class="toggle"><span data-i18n="lblShowLosses">Show Losses</span><input type="checkbox" id="toggleLosses" checked></div>
+      <div class="toggle"><span data-i18n="lblShowEq">Show Equations</span><input type="checkbox" id="toggleEq" checked></div>
+      <div class="toggle"><span data-i18n="lblReducedMotion">prefers-reduced-motion</span><input type="checkbox" id="toggleReducedMotion"></div>
+    </section>
+
+    <section class="block">
+      <h3 data-i18n="hLearning">Mode Belajar / Learning Mode</h3>
+      <div class="pillrow" id="learningPills">
+        <div class="pill" data-lvl="beginner" data-i18n="lvlBeginner">Beginner</div>
+        <div class="pill active" data-lvl="intermediate" data-i18n="lvlIntermediate">Intermediate</div>
+        <div class="pill" data-lvl="advanced" data-i18n="lvlAdvanced">Advanced</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== CENTER : SIMULATION ===================== -->
+  <div class="panel panel-center">
+
+    <div class="stage-tabs">
+      <button class="btn" data-stage="1" id="stageBtn1" data-i18n="stage1">1. REAL SYSTEM</button>
+      <button class="btn" data-stage="2" id="stageBtn2" data-i18n="stage2">2. ENGINEERING MODEL</button>
+      <button class="btn" data-stage="3" id="stageBtn3" data-i18n="stage3">3. ENERGY MODEL</button>
+      <button class="btn primary" id="autoConvertBtn" data-i18n="autoConvert">AUTO CONVERT</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas"></canvas>
+      <div class="stage-caption" id="stageCaption"></div>
+      <div class="exagg-note" data-i18n="exaggNote">Deformasi diperbesar secara visual untuk tujuan pembelajaran / Deformation is visually exaggerated for educational purposes.</div>
+    </div>
+
+    <div class="btnrow" style="padding:0 12px;">
+      <button class="btn primary" id="btnPlay" data-i18n="btnPlay">PLAY</button>
+      <button class="btn" id="btnPause" data-i18n="btnPause">PAUSE</button>
+      <button class="btn" id="btnStep" data-i18n="btnStep">STEP</button>
+      <button class="btn" id="btnReset" data-i18n="btnReset">RESET</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="btnCharge" data-i18n="btnCharge">CHARGE</button>
+      <button class="btn" id="btnHold" data-i18n="btnHold">HOLD</button>
+      <button class="btn" id="btnDischarge" data-i18n="btnDischarge">DISCHARGE</button>
+      <button class="btn warn" id="btnLoadPulse" data-i18n="btnLoadPulse">APPLY LOAD PULSE</button>
+    </div>
+
+    <div class="statusbar" id="statusBar"></div>
+
+    <div class="dock">
+      <div class="dock-tabs" id="dockTabs">
+        <button class="active" data-panel="graphs" data-i18n="tabGraphs">Grafik</button>
+        <button data-panel="calc" data-i18n="tabCalc">Perhitungan</button>
+        <button data-panel="flow" data-i18n="tabFlow">Aliran Energi</button>
+        <button data-panel="table" data-i18n="tabTable">Tabel Data</button>
+        <button data-panel="compare" data-i18n="tabCompare">Perbandingan</button>
+        <button data-panel="worksheet" data-i18n="tabWorksheet">Lembar Kerja</button>
+        <button data-panel="challenge" data-i18n="tabChallenge">Tantangan</button>
+        <button data-panel="quiz" data-i18n="tabQuiz">Kuis Konsep</button>
+        <button data-panel="assumptions" data-i18n="tabAssumptions">Asumsi</button>
+      </div>
+      <div class="dock-body">
+
+        <div class="dock-panel active" id="panel-graphs">
+          <div class="grid3" id="graphGrid"></div>
+        </div>
+
+        <div class="dock-panel" id="panel-calc">
+          <div id="calcSteps"></div>
+          <div class="step-line" id="energyBalanceLine"></div>
+        </div>
+
+        <div class="dock-panel" id="panel-flow">
+          <canvas id="flowCanvas" style="width:100%;height:300px;background:var(--navy-800);border:1px solid var(--steel-600);border-radius:6px;"></canvas>
+        </div>
+
+        <div class="dock-panel" id="panel-table">
+          <div class="btnrow">
+            <button class="btn primary" id="btnRecord" data-i18n="btnRecord">RECORD DATA</button>
+            <button class="btn" id="btnClearData" data-i18n="btnClearData">CLEAR DATA</button>
+            <button class="btn" id="btnExportCSV" data-i18n="btnExportCSV">EXPORT CSV</button>
+            <button class="btn" id="btnPrintReport" data-i18n="btnPrintReport">PRINT LAB REPORT</button>
+          </div>
+          <div class="table-wrap"><table id="dataTable"><thead></thead><tbody></tbody></table></div>
+        </div>
+
+        <div class="dock-panel" id="panel-compare">
+          <p class="small" data-i18n="compareHelp">Rekam beberapa trial pada Tabel Data lalu pilih dua baris untuk dibandingkan berdampingan.</p>
+          <div class="btnrow">
+            <select id="compareA"></select>
+            <select id="compareB"></select>
+            <button class="btn primary" id="btnCompare" data-i18n="btnDoCompare">BANDINGKAN</button>
+          </div>
+          <div id="compareResult"></div>
+        </div>
+
+        <div class="dock-panel" id="panel-worksheet">
+          <div class="grid2">
+            <div><label class="small" data-i18n="wsGoal">Tujuan eksperimen</label><br><textarea id="wsGoal" rows="2" style="width:100%;background:var(--navy-800);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:5px;"></textarea></div>
+            <div><label class="small" data-i18n="wsIndep">Variabel bebas</label><br><input id="wsIndep" style="width:100%;background:var(--navy-800);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:5px;padding:5px;"></div>
+            <div><label class="small" data-i18n="wsControlled">Variabel terkontrol</label><br><input id="wsControlled" style="width:100%;background:var(--navy-800);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:5px;padding:5px;"></div>
+            <div><label class="small" data-i18n="wsPrediction">Prediksi (gaya/energi atau RPM akhir)</label><br><input id="wsPrediction" style="width:100%;background:var(--navy-800);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:5px;padding:5px;"></div>
+            <div><label class="small" data-i18n="wsResult">Hasil calculation engine</label><br><input id="wsResult" readonly style="width:100%;background:var(--navy-900);border:1px solid var(--steel-600);color:var(--cyan-300);border-radius:5px;padding:5px;"></div>
+            <div><label class="small" data-i18n="wsDiff">Selisih relatif</label><br><input id="wsDiff" readonly style="width:100%;background:var(--navy-900);border:1px solid var(--steel-600);color:var(--cyan-300);border-radius:5px;padding:5px;"></div>
+          </div>
+          <div style="margin-top:8px;"><label class="small" data-i18n="wsConclusion">Kesimpulan &amp; keterkaitan dengan mesin nyata</label><br>
+          <textarea id="wsConclusion" rows="3" style="width:100%;background:var(--navy-800);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:5px;"></textarea></div>
+          <button class="btn primary" id="btnWsCheck" style="margin-top:6px;" data-i18n="btnWsCheck">Bandingkan Prediksi vs Hasil</button>
+        </div>
+
+        <div class="dock-panel" id="panel-challenge">
+          <div id="challengeArea"></div>
+        </div>
+
+        <div class="dock-panel" id="panel-quiz">
+          <div id="quizArea"></div>
+        </div>
+
+        <div class="dock-panel" id="panel-assumptions">
+          <ul id="assumptionsList" style="line-height:1.6;"></ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== RIGHT PANEL : INFO / CARDS ===================== -->
+  <div class="panel panel-right">
+    <section class="block">
+      <h3 data-i18n="hEngCards">Engineering Cards</h3>
+      <div id="engineeringCards"></div>
+    </section>
+    <section class="block">
+      <h3 data-i18n="hSafety">Status Keselamatan</h3>
+      <div id="safetyStatus"></div>
+    </section>
+    <section class="block">
+      <h3 data-i18n="hPresetInfo">Konteks Preset</h3>
+      <div class="small" id="presetInfoText"></div>
+    </section>
+  </div>
+
+</div>
+
+<footer class="legal" data-i18n="legalNote">
+  Simulator ini adalah alat bantu pembelajaran dan bukan pengganti validasi desain, analisis kelelahan (fatigue), analisis kecepatan kritis, atau prosedur keselamatan mesin nyata.
+</footer>
+</div>
+
+<div id="printReport"></div>
+<div id="tooltipEl" class="tooltip hidden"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   VIRTUAL LAB: MECHANICAL ENERGY STORAGE — SPRINGS & FLYWHEELS
+   Single-file, offline, no external dependencies.
+   ===================================================================== */
+
+/* --------------------------- I18N DICTIONARY --------------------------- */
+const I18N = {
+ID:{
+ appTitle:"Virtual Lab: Penyimpan Energi Mekanik — Pegas & Roda Gila",
+ appSubtitle:"Simulator Teknik Penyimpanan Energi Mekanik",
+ btnVerify:"Uji Verifikasi",
+ hSystem:"Jenis Sistem",
+ catSpring:"Pegas", catFlywheel:"Roda Gila",
+ lblSubtype:"Tipe", lblControlMode:"Mode Kontrol", lblStiffMode:"Sumber Kekakuan k",
+ optDispCtrl:"Displacement-controlled", optForceCtrl:"Force-controlled",
+ optDirectK:"Kekakuan langsung", optGeomK:"Dari geometri",
+ hSpringParams:"Parameter Pegas",
+ lblK:"Kekakuan k (N/mm)", lblX:"Deformasi x (mm)", lblF:"Gaya diterapkan F (N)",
+ lblF0:"Preload / initial tension F0 (N)", lblXmax:"Stroke maksimum xmax (mm)",
+ lblD:"Diameter kawat d (mm)", lblDcoil:"Diameter lilitan D (mm)", lblNa:"Lilitan aktif na",
+ lblG:"Modulus geser G (GPa)", lblM:"Massa (kg)", lblC:"Redaman c (N·s/m)",
+ lblStress:"Allowable stress τlimit (MPa)",
+ hFlyParams:"Parameter Roda Gila",
+ lblRo:"Radius luar ro (m)", lblRi:"Radius dalam ri (m)", lblIcustom:"Momen inersia I (kg·m²)",
+ lblIcalc:"Momen inersia terhitung I", lblN0:"Kecepatan awal N0 (rpm)",
+ lblNtarget:"Kecepatan target (rpm)", lblNmin:"Kecepatan minimum Nmin (rpm)", lblNmax:"Kecepatan maksimum Nmax (rpm)",
+ lblPmotor:"Daya motor Pmotor (kW)", lblTmax:"Torsi maksimum Tmax (N·m)",
+ lblPload:"Daya beban Pload (kW)", lblDt:"Durasi pulsa Δt (s)", lblCyclePeriod:"Periode siklus (s)",
+ lblB:"Koefisien rugi b (N·m·s/rad)", lblLossesOn:"Aktifkan rugi-rugi",
+ lblEtaC:"η charge", lblEtaD:"η discharge",
+ hAnim:"Animasi & Tampilan", lblAnimSpeed:"Animation Speed", lblDeformScale:"Skala Tampilan Deformasi",
+ lblShowFlow:"Tampilkan Aliran Energi", lblShowForce:"Tampilkan Gaya/Torsi", lblShowDim:"Tampilkan Dimensi",
+ lblShowMeters:"Tampilkan Meter Energi", lblShowLosses:"Tampilkan Rugi-rugi", lblShowEq:"Tampilkan Persamaan",
+ lblReducedMotion:"Kurangi Gerakan (motion)",
+ hLearning:"Mode Belajar", lvlBeginner:"Pemula", lvlIntermediate:"Menengah", lvlAdvanced:"Lanjut",
+ stage1:"1. SISTEM NYATA", stage2:"2. MODEL TEKNIK", stage3:"3. MODEL ENERGI", autoConvert:"KONVERSI OTOMATIS",
+ exaggNote:"Deformasi diperbesar secara visual untuk tujuan pembelajaran / Deformation is visually exaggerated for educational purposes.",
+ btnPlay:"PUTAR", btnPause:"JEDA", btnStep:"LANGKAH", btnReset:"RESET",
+ btnCharge:"ISI (CHARGE)", btnHold:"TAHAN (HOLD)", btnDischarge:"LEPAS (DISCHARGE)", btnLoadPulse:"TERAPKAN PULSA BEBAN",
+ tabGraphs:"Grafik", tabCalc:"Perhitungan", tabFlow:"Aliran Energi", tabTable:"Tabel Data", tabCompare:"Perbandingan",
+ tabWorksheet:"Lembar Kerja", tabChallenge:"Tantangan", tabQuiz:"Kuis Konsep", tabAssumptions:"Asumsi",
+ btnRecord:"REKAM DATA", btnClearData:"HAPUS DATA", btnExportCSV:"EKSPOR CSV", btnPrintReport:"CETAK LAPORAN LAB",
+ compareHelp:"Rekam beberapa trial pada Tabel Data lalu pilih dua baris untuk dibandingkan berdampingan.",
+ btnDoCompare:"BANDINGKAN",
+ wsGoal:"Tujuan eksperimen", wsIndep:"Variabel bebas", wsControlled:"Variabel terkontrol",
+ wsPrediction:"Prediksi (gaya/energi atau RPM akhir)", wsResult:"Hasil calculation engine", wsDiff:"Selisih relatif",
+ wsConclusion:"Kesimpulan & keterkaitan dengan mesin nyata", btnWsCheck:"Bandingkan Prediksi vs Hasil",
+ hEngCards:"Engineering Cards", hSafety:"Status Keselamatan", hPresetInfo:"Konteks Preset",
+ legalNote:"Simulator ini adalah alat bantu pembelajaran dan bukan pengganti validasi desain, analisis kelelahan (fatigue), analisis kecepatan kritis, atau prosedur keselamatan mesin nyata.",
+ tipK:"Kekakuan pegas: gaya per satuan deformasi, N/m",
+ tipPreload:"Gaya tarik awal sebelum deformasi tambahan (khusus pegas tarik)",
+ tipNmin:"Energi di bawah batas operasi ini tidak dianggap tersedia untuk beban",
+ tipB:"Koefisien rugi viskos bantalan/aerodinamik pada rotor",
+ realSpring:"Sistem Nyata: Aktuator + Pegas + Massa Bergerak",
+ realFlywheel:"Sistem Nyata: Motor → Sabuk/Puli → Roda Gila → Kopling → Beban",
+ modelReady:"NERACA ENERGI TERPENUHI", modelError:"NERACA ENERGI DI LUAR TOLERANSI",
+ safe:"AMAN", warning:"PERINGATAN", critical:"KRITIS", limit:"BATAS TERCAPAI", notEval:"BELUM DIEVALUASI",
+ chargingPhase:"PENGISIAN", holdingPhase:"PENAHANAN", dischargingPhase:"PELEPASAN", idlePhase:"DIAM/IDLE", pausedPhase:"JEDA", recoveryPhase:"PEMULIHAN",
+ met:"TERPENUHI", limited:"TERBATAS", unmet:"TIDAK TERPENUHI",
+},
+EN:{
+ appTitle:"Virtual Lab: Mechanical Energy Storage — Springs & Flywheels",
+ appSubtitle:"Mechanical Energy Storage Engineering Simulator",
+ btnVerify:"Run Verification Tests",
+ hSystem:"System Type",
+ catSpring:"Spring", catFlywheel:"Flywheel",
+ lblSubtype:"Type", lblControlMode:"Control Mode", lblStiffMode:"Stiffness Source (k)",
+ optDispCtrl:"Displacement-controlled", optForceCtrl:"Force-controlled",
+ optDirectK:"Direct stiffness", optGeomK:"Geometry-derived",
+ hSpringParams:"Spring Parameters",
+ lblK:"Stiffness k (N/mm)", lblX:"Displacement x (mm)", lblF:"Applied force F (N)",
+ lblF0:"Preload / initial tension F0 (N)", lblXmax:"Maximum stroke xmax (mm)",
+ lblD:"Wire diameter d (mm)", lblDcoil:"Coil diameter D (mm)", lblNa:"Active coils na",
+ lblG:"Shear modulus G (GPa)", lblM:"Moving mass (kg)", lblC:"Damping c (N·s/m)",
+ lblStress:"Allowable stress τlimit (MPa)",
+ hFlyParams:"Flywheel Parameters",
+ lblRo:"Outer radius ro (m)", lblRi:"Inner radius ri (m)", lblIcustom:"Moment of inertia I (kg·m²)",
+ lblIcalc:"Calculated inertia I", lblN0:"Initial speed N0 (rpm)",
+ lblNtarget:"Target speed (rpm)", lblNmin:"Minimum speed Nmin (rpm)", lblNmax:"Maximum speed Nmax (rpm)",
+ lblPmotor:"Motor power Pmotor (kW)", lblTmax:"Maximum torque Tmax (N·m)",
+ lblPload:"Load power Pload (kW)", lblDt:"Pulse duration Δt (s)", lblCyclePeriod:"Cycle period (s)",
+ lblB:"Loss coefficient b (N·m·s/rad)", lblLossesOn:"Enable losses",
+ lblEtaC:"η charge", lblEtaD:"η discharge",
+ hAnim:"Animation & Display", lblAnimSpeed:"Animation Speed", lblDeformScale:"Deformation Display Scale",
+ lblShowFlow:"Show Energy Flow", lblShowForce:"Show Force/Torque", lblShowDim:"Show Dimensions",
+ lblShowMeters:"Show Energy Meters", lblShowLosses:"Show Losses", lblShowEq:"Show Equations",
+ lblReducedMotion:"Reduced Motion",
+ hLearning:"Learning Mode", lvlBeginner:"Beginner", lvlIntermediate:"Intermediate", lvlAdvanced:"Advanced",
+ stage1:"1. REAL SYSTEM", stage2:"2. ENGINEERING MODEL", stage3:"3. ENERGY MODEL", autoConvert:"AUTO CONVERT",
+ exaggNote:"Deformation is visually exaggerated for educational purposes.",
+ btnPlay:"PLAY", btnPause:"PAUSE", btnStep:"STEP", btnReset:"RESET",
+ btnCharge:"CHARGE", btnHold:"HOLD", btnDischarge:"DISCHARGE", btnLoadPulse:"APPLY LOAD PULSE",
+ tabGraphs:"Graphs", tabCalc:"Calculation", tabFlow:"Energy Flow", tabTable:"Data Table", tabCompare:"Comparison",
+ tabWorksheet:"Worksheet", tabChallenge:"Challenge", tabQuiz:"Concept Quiz", tabAssumptions:"Assumptions",
+ btnRecord:"RECORD DATA", btnClearData:"CLEAR DATA", btnExportCSV:"EXPORT CSV", btnPrintReport:"PRINT LAB REPORT",
+ compareHelp:"Record a few trials in the Data Table, then pick two rows to compare side by side.",
+ btnDoCompare:"COMPARE",
+ wsGoal:"Experiment goal", wsIndep:"Independent variable", wsControlled:"Controlled variable(s)",
+ wsPrediction:"Prediction (force/energy or final RPM)", wsResult:"Calculation engine result", wsDiff:"Relative difference",
+ wsConclusion:"Conclusion & link to real machines", btnWsCheck:"Compare Prediction vs Result",
+ hEngCards:"Engineering Cards", hSafety:"Safety Status", hPresetInfo:"Preset Context",
+ legalNote:"This simulator is a learning aid and is not a substitute for design validation, fatigue analysis, critical-speed analysis, or real machine safety procedures.",
+ tipK:"Spring stiffness: force per unit deformation, N/m",
+ tipPreload:"Initial tension before additional deformation (extension spring only)",
+ tipNmin:"Energy below this operating limit is not considered available to the load",
+ tipB:"Bearing/aerodynamic viscous loss coefficient on the rotor",
+ realSpring:"Real System: Actuator + Spring + Moving Mass",
+ realFlywheel:"Real System: Motor → Belt/Pulley → Flywheel → Clutch → Load",
+ modelReady:"ENERGY BALANCE SATISFIED", modelError:"ENERGY BALANCE OUTSIDE TOLERANCE",
+ safe:"SAFE", warning:"WARNING", critical:"CRITICAL", limit:"LIMIT REACHED", notEval:"NOT EVALUATED",
+ chargingPhase:"CHARGING", holdingPhase:"HOLDING", dischargingPhase:"DISCHARGING", idlePhase:"IDLE", pausedPhase:"PAUSED", recoveryPhase:"RECOVERY",
+ met:"MET", limited:"LIMITED", unmet:"UNMET",
+}
+};
+
+/* ------------------------------ PRESETS -------------------------------- */
+const PRESETS = [
+ {id:"pressFlywheel", cat:"flywheel", sub:"solid",
+  nameID:"Preset 4 — Mesin Press dengan Roda Gila", nameEN:"Preset 4 — Mechanical Press with Flywheel",
+  ctxID:"Motor → sabuk/puli → roda gila → kopling → poros engkol → batang penghubung → ram/punch → benda kerja. Motor memasok energi relatif kontinu; punching memerlukan energi besar dalam durasi singkat.",
+  ctxEN:"Motor → belt/pulley → flywheel → clutch → crankshaft → connecting rod → ram/punch → workpiece. The motor supplies relatively continuous energy while punching demands a large burst of energy over a short duration.",
+  params:{fm:100, ro:0.4, ri:0, N0:600, Ntarget:600, Nmin:500, Nmax:650, Pmotor:1, Tmax:25, Pload:5, dtload:1, cycle:8, b:0.02}},
+ {id:"compressionMechanism", cat:"spring", sub:"compression",
+  nameID:"Preset 1 — Mekanisme Pegas Tekan", nameEN:"Preset 1 — Compression Spring Mechanism",
+  ctxID:"Real system: aktuator + pegas + massa bergerak. Kerja aktuator diubah menjadi energi elastis lalu energi gerak beban + rugi redaman.",
+  ctxEN:"Real system: actuator + spring + moving mass. Actuator work is converted to elastic energy, then to load kinetic energy plus damping losses.",
+  params:{k:20, x:50, F:1000, F0:0, xmax:100, d:5, D:40, na:8, G:79, m:2, c:5, taulim:600}},
+ {id:"punchReturnSpring", cat:"spring", sub:"compression",
+  nameID:"Preset 2 — Pegas Pengembali Punch", nameEN:"Preset 2 — Die/Punch Return Spring",
+  ctxID:"Real system: ram + punch + die + benda kerja + pegas pengembali. Prategang dan batas stroke dapat diatur; energi pemotongan dipisahkan dari energi pegas pengembali.",
+  ctxEN:"Real system: ram + punch + die + workpiece + return spring. Preload and stroke limit are adjustable; cutting energy is kept separate from the return-spring energy.",
+  params:{k:35, x:30, F:1050, F0:50, xmax:60, d:6, D:45, na:10, G:79, m:3, c:8, taulim:650}},
+ {id:"valveCamSpring", cat:"spring", sub:"compression",
+  nameID:"Preset 3 — Pegas Katup & Cam", nameEN:"Preset 3 — Valve Spring & Cam",
+  ctxID:"Real system: cam + follower + valve + pegas. Cam rotation → kompresi pegas → penyimpanan elastis → ekspansi pegas → pelepasan energi. Follower separation tidak dimodelkan (keterbatasan dinyatakan).",
+  ctxEN:"Real system: cam + follower + valve + spring. Cam rotation → spring compression → elastic storage → spring expansion → energy release. Follower separation is not modeled (limitation stated explicitly).",
+  params:{k:15, x:8, F:120, F0:30, xmax:12, d:3, D:20, na:6, G:79, m:0.3, c:1, taulim:700}},
+ {id:"iceFlywheel", cat:"flywheel", sub:"solid",
+  nameID:"Preset 5 — Roda Gila Mesin Pembakaran Dalam", nameEN:"Preset 5 — Internal Combustion Engine Flywheel",
+  ctxID:"Real system: piston + batang penghubung + poros engkol + roda gila + beban. Fluktuasi torsi siklik disederhanakan sebagai pulsa beban berulang berlabel edukasi (bukan data uji mesin tertentu).",
+  ctxEN:"Real system: piston + connecting rod + crankshaft + flywheel + load. Cyclic torque fluctuation is simplified as a repeated, clearly labeled educational load pulse (not a specific engine's test data).",
+  params:{fm:60, ro:0.25, ri:0, N0:2000, Ntarget:2000, Nmin:1800, Nmax:2400, Pmotor:15, Tmax:120, Pload:20, dtload:0.3, cycle:2, b:0.05}},
+ {id:"flywheelStorage", cat:"flywheel", sub:"rim",
+  nameID:"Preset 6 — Sistem Penyimpan Energi Roda Gila", nameEN:"Preset 6 — Flywheel Energy Storage System",
+  ctxID:"Motor/generator listrik + poros + rotor + rugi bantalan + wadah + beban listrik. CHARGING, STORAGE, DISCHARGING, dan RECOVERY dipisahkan melalui η charge dan η discharge.",
+  ctxEN:"Electric motor/generator + shaft + rotor + bearing losses + containment + electrical load. CHARGING, STORAGE, DISCHARGING, and RECOVERY are separated through η charge and η discharge.",
+  params:{fm:40, ro:0.3, ri:0.24, N0:0, Ntarget:3000, Nmin:1500, Nmax:3200, Pmotor:8, Tmax:60, Pload:10, dtload:2, cycle:15, b:0.03, etaC:0.92, etaD:0.9}},
+ {id:"buildOwn", cat:"spring", sub:"compression",
+  nameID:"Bangun Sistem Sendiri", nameEN:"Build Your Own System",
+  ctxID:"Mode bebas: pilih jenis pegas atau roda gila dan atur seluruh parameter sendiri.",
+  ctxEN:"Free mode: choose a spring or flywheel type and set every parameter yourself.",
+  params:{k:20, x:50, F:1000, F0:0, xmax:100, d:5, D:40, na:8, G:79, m:2, c:5, taulim:600}}
+];
+
+/* ------------------------------ STATE ----------------------------------- */
+const state = {
+  lang: "ID",
+  category: "flywheel",     // 'spring' | 'flywheel'
+  springType: "compression",// compression | extension | torsion
+  flywheelType: "solid",    // solid | rim | annular | custom
+  controlMode: "displacement",
+  stiffnessMode: "direct",
+  learningLevel: "intermediate",
+  stage: 3,
+  preset: "pressFlywheel",
+  running: false,
+  simTime: 0,
+  dt: 0.001,               // fixed physics step, s
+  animSpeed: 1,
+  deformScale: 5,
+  reducedMotion:false,
+  show:{flow:true, force:true, dim:true, meters:true, losses:true, eq:true},
+  // spring params (SI-facing kept in display units, converted at use)
+  spring:{k:20, x:0, xTargetForCtrl:50, F:1000, F0:0, xmax:100, d:5,D:40,na:8,G:79, m:2,c:5, taulim:600,
+          xdyn:0, vdyn:0, actuatorActive:false, phase:"idle"},
+  // flywheel params
+  fw:{fm:100, ro:0.4, ri:0, Icustom:8, N0:600, Ntarget:600, Nmin:500, Nmax:650,
+      Pmotor:1, Tmax:25, Pload:5, dtload:1, cycle:8, b:0.02, etaC:0.95, etaD:0.95,
+      omega:0, phase:"idle", loadTimeRemaining:0, unmetEnergy:0, cycleClock:0, motorOn:true},
+  // running integrals for energy balance
+  energy:{Win:0, Wout:0, Wloss:0, E0:0},
+  history:{t:[],N:[],E:[],Pin:[],Pout:[],Ploss:[], x:[], v:[], Us:[], Ek:[]},
+  trials:[],
+  trialCounter:0
+};
+
+function t(key){ return (I18N[state.lang] && I18N[state.lang][key]) || key; }
+
+/* ------------------------------ HELPERS --------------------------------- */
+function fmt(x, d=3){
+  if (x===null || x===undefined || Number.isNaN(x) || !Number.isFinite(x)) return "N/A";
+  return Number(x).toFixed(d);
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function rpmToOmega(N){ return N*2*Math.PI/60; }
+function omegaToRpm(w){ return w*60/(2*Math.PI); }
+
+/* ===================== CALCULATION ENGINE (pure functions) ============== */
+
+function calculateSpringStiffness(){
+  if (state.stiffnessMode === "geometry"){
+    const G = state.spring.G*1e9;      // Pa
+    const d = state.spring.d/1000;     // m
+    const D = state.spring.D/1000;     // m
+    const na = state.spring.na;
+    if (d<=0 || D<=d || na<=0 || G<=0) return NaN;
+    const k_SI = (G*Math.pow(d,4)) / (8*Math.pow(D,3)*na); // N/m
+    return k_SI/1000; // N/mm for display consistency with UI
+  }
+  return state.spring.k; // N/mm direct
+}
+
+function calculateSpringForceEnergy(x_mm){
+  const type = state.springType;
+  const k = calculateSpringStiffness(); // N/mm
+  const k_SI = k*1000; // N/m
+  const x_SI = x_mm/1000; // m
+  let F, Us;
+  if (type === "torsion"){
+    // here "x_mm" channel reused as theta in degrees for UI simplicity externally;
+    // handled separately in calculateTorsionSpring()
+    return calculateTorsionSpring();
+  } else if (type === "extension"){
+    const F0 = state.spring.F0;
+    F = F0 + k_SI*x_SI;
+    Us = F0*x_SI + 0.5*k_SI*x_SI*x_SI;
+  } else { // compression
+    F = k_SI*x_SI;
+    Us = 0.5*k_SI*x_SI*x_SI;
+  }
+  return {F, Us, k_SI, x_SI};
+}
+
+function calculateTorsionSpring(){
+  // torsional stiffness kθ stored in state.spring.k as N*m/rad-equivalent via k (N/mm) reinterpreted;
+  // to keep UI simple we treat state.spring.k (N/mm) * 1000 as kθ in N·m/rad when torsion selected,
+  // and x (mm) field is reinterpreted as angle in degrees.
+  const kTheta = state.spring.k; // N*m/rad (direct input, UI units already N*m/rad for torsion mode)
+  const thetaDeg = state.spring.x; // degrees
+  const thetaRad = thetaDeg*Math.PI/180;
+  const T = kTheta*thetaRad;
+  const Us = 0.5*kTheta*thetaRad*thetaRad;
+  return {F:T, Us, k_SI:kTheta, x_SI:thetaRad, isTorsion:true};
+}
+
+function calculateSpringStress(F){
+  const d = state.spring.d, D = state.spring.D, na = state.spring.na;
+  if (state.springType!=="compression" || d<=0 || D<=d) return NaN;
+  const C = D/d;
+  const Kw = (4*C-1)/(4*C-4) + 0.615/C;
+  const tau = Kw*8*F*(D/1000) / (Math.PI*Math.pow(d/1000,3)); // Pa
+  return tau/1e6; // MPa
+}
+
+function calculateFlywheelInertia(){
+  const m = state.fw.fm, ro = state.fw.ro, ri = state.fw.ri;
+  switch(state.flywheelType){
+    case "solid": return 0.5*m*ro*ro;
+    case "rim": return m*ro*ro;
+    case "annular": return 0.5*m*(ri*ri+ro*ro);
+    case "custom": return state.fw.Icustom;
+    default: return NaN;
+  }
+}
+
+function calculateFlywheelEnergy(I, omega){ return 0.5*I*omega*omega; }
+
+function calculateInputLoadLossPower(I, omega){
+  const Tmotor = Math.min(state.fw.Tmax, (state.fw.Pmotor*1000)/Math.max(omega,1e-3));
+  const Tloss = state.show.losses ? state.fw.b*omega : 0;
+  return {Tmotor, Tloss};
+}
+
+/* -------------------- DYNAMIC INTEGRATION (fixed dt) --------------------- */
+
+function integrateSpringDynamics(dt){
+  const sp = state.spring;
+  const k_SI = calculateSpringStiffness()*1000;
+  const m = Math.max(sp.m, 1e-6);
+  const c = sp.c;
+  let Fext = 0;
+  if (sp.phase === "charging") Fext = sp.F0? sp.F0 + k_SI*(sp.xTargetForCtrl/1000)*1.02 : k_SI*(sp.xTargetForCtrl/1000)*1.02; // gentle push toward target
+  if (sp.phase === "discharging") Fext = 0;
+
+  const springForce = (state.springType==="extension") ? (sp.F0 + k_SI*sp.xdyn) : k_SI*sp.xdyn;
+  const a = (Fext - springForce - c*sp.vdyn)/m;
+  sp.vdyn += a*dt;
+  sp.xdyn += sp.vdyn*dt;
+  if (sp.xdyn < 0){ sp.xdyn = 0; if (sp.vdyn<0) sp.vdyn *= -0.3; }
+  const xmax_SI = sp.xmax/1000;
+  if (sp.xdyn > xmax_SI){ sp.xdyn = xmax_SI; if (sp.vdyn>0) sp.vdyn *= -0.3; }
+
+  const Us = (state.springType==="extension") ? sp.F0*sp.xdyn + 0.5*k_SI*sp.xdyn*sp.xdyn : 0.5*k_SI*sp.xdyn*sp.xdyn;
+  const Ek = 0.5*m*sp.vdyn*sp.vdyn;
+  const Ploss = c*sp.vdyn*sp.vdyn;
+  const Pin = Fext*sp.vdyn;
+
+  state.energy.Win += Math.max(Pin,0)*dt;
+  state.energy.Wout += Math.max(-Pin,0)*dt;
+  state.energy.Wloss += Ploss*dt;
+
+  return {Us, Ek, Ploss, Pin, x_mm: sp.xdyn*1000, v: sp.vdyn};
+}
+
+function integrateFlywheelDynamics(dt){
+  const fw = state.fw;
+  const I = calculateFlywheelInertia();
+  if (!(I>0)) return null;
+  const omega = fw.omega;
+  const NminOmega = rpmToOmega(fw.Nmin);
+  const NmaxOmega = rpmToOmega(fw.Nmax);
+
+  let Tmotor = 0;
+  const wantCharge = fw.motorOn && (omega < rpmToOmega(fw.Ntarget) - 0.05 || fw.phase==="charging");
+  if (wantCharge){
+    Tmotor = Math.min(fw.Tmax, (fw.Pmotor*1000)/Math.max(omega,0.5));
+  }
+  let Tloss = state.show.losses ? fw.b*omega : 0;
+
+  let Tload = 0;
+  if (fw.loadTimeRemaining > 0){
+    if (omega > NminOmega){
+      Tload = (fw.Pload*1000)/Math.max(omega,0.5);
+      fw.loadTimeRemaining -= dt;
+    } else {
+      fw.unmetEnergy += fw.Pload*1000*dt;
+    }
+  }
+
+  const alpha = (Tmotor - Tload - Tloss)/I;
+  const newOmega = Math.max(0, omega + alpha*dt);
+
+  const Pin = Tmotor*omega;
+  const Pout = Tload*omega;
+  const Ploss = Tloss*omega;
+  state.energy.Win += Pin*dt;
+  state.energy.Wout += Pout*dt;
+  state.energy.Wloss += Ploss*dt;
+
+  fw.omega = newOmega;
+  if (newOmega > NmaxOmega){ fw.overspeed = true; } else { fw.overspeed = false; }
+
+  return {I, omega:newOmega, Pin, Pout, Ploss, Tmotor, Tload, Tloss};
+}
+
+/* ------------------------------ ENERGY BALANCE --------------------------- */
+function checkEnergyBalance(currentE){
+  const R = currentE - state.energy.E0 - state.energy.Win + state.energy.Wout + state.energy.Wloss;
+  const epsAbs = 0.01, epsRel = 0.001;
+  const scale = Math.max(Math.abs(state.energy.E0), Math.abs(currentE), Math.abs(state.energy.Win), Math.abs(state.energy.Wout), 1);
+  const tol = epsAbs + epsRel*scale;
+  return {R, tol, ok: Math.abs(R) <= tol};
+}
+
+function checkOperatingLimits(){
+  const results = {status:"na", messages:[]};
+  if (state.category === "spring"){
+    const {F, x_SI} = (function(){
+      if (state.springType==="torsion"){
+        const r = calculateTorsionSpring(); return {F:r.F, x_SI:r.x_SI};
+      }
+      const r = calculateSpringForceEnergy(state.spring.x); return {F:r.F, x_SI:r.x_SI};
+    })();
+    const xmax_SI = state.spring.xmax/1000;
+    const util = state.springType==="torsion" ? Math.min(1, Math.abs(x_SI)/(Math.PI)) : Math.min(1, x_SI/Math.max(xmax_SI,1e-9));
+    const tau = calculateSpringStress(F);
+    let nSF = NaN;
+    if (!Number.isNaN(tau) && state.spring.taulim>0) nSF = state.spring.taulim/tau;
+    let status = "safe";
+    if (state.springType==="compression" && !Number.isNaN(nSF)){
+      if (nSF < 1) status = "critical";
+      else if (nSF < 1.25) status = "warning";
+    } else if (Number.isNaN(tau)) {
+      status = (util>=1)?"critical":(util>=0.8?"warning":"safe");
+    }
+    if (util>=1) status="critical";
+    results.status = status; results.utilization = util; results.nSF = nSF; results.tau = tau;
+  } else {
+    const N = omegaToRpm(state.fw.omega);
+    const util = Math.max(0, Math.min(1.2, (N-state.fw.Nmin? 0:0)));
+    const overNmax = N > state.fw.Nmax;
+    const utilN = N/Math.max(state.fw.Nmax,1e-9);
+    let status = "safe";
+    if (overNmax) status = "critical";
+    else if (utilN >= 0.92) status = "warning";
+    results.status = status; results.utilization = utilN; results.N=N;
+    if (state.flywheelType==="rim"){
+      const v = state.fw.ro*state.fw.omega;
+      const rho = 7850;
+      const sigma = rho*v*v/1e6; // MPa
+      results.hoopStress = sigma;
+    }
+  }
+  return results;
+}
+
+/* ================================ RENDERING ============================== */
+const canvas = document.getElementById("mainCanvas");
+const ctx = canvas.getContext("2d");
+function resizeCanvas(){
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = wrap.clientWidth*dpr;
+  canvas.height = wrap.clientHeight*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", resizeCanvas);
+
+function drawGrid(w,h){
+  ctx.save();
+  ctx.strokeStyle = "rgba(143,163,179,0.08)";
+  ctx.lineWidth=1;
+  for(let x=0;x<w;x+=30){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0;y<h;y+=30){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  ctx.restore();
+}
+
+function drawSpring(cx, cy, len, coils, compressed, label){
+  ctx.save();
+  ctx.strokeStyle = "#8ff2ec"; ctx.lineWidth=3; ctx.lineCap="round";
+  const totalLen = len;
+  const segs = coils*2;
+  ctx.beginPath();
+  ctx.moveTo(cx-totalLen/2, cy);
+  for(let i=0;i<=segs;i++){
+    const x = cx-totalLen/2 + (totalLen*i/segs);
+    const y = cy + ((i%2===0)?-14:14);
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(cx+totalLen/2, cy);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFlywheelShape(cx, cy, r, angle, type){
+  ctx.save();
+  ctx.translate(cx,cy);
+  // shaft
+  ctx.fillStyle="#3a4f63"; ctx.fillRect(-r-30,-4,30,8); ctx.fillRect(r,-4,30,8);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.arc(0,0,r,0,Math.PI*2);
+  const grad = ctx.createRadialGradient(0,0,r*0.2,0,0,r);
+  grad.addColorStop(0,"#1a3049"); grad.addColorStop(1,"#0e2032");
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.lineWidth = (type==="rim")? 10 : 2;
+  ctx.strokeStyle = "#3ee6e0"; ctx.stroke();
+  if (type==="annular"){
+    ctx.beginPath(); ctx.arc(0,0,r*0.55,0,Math.PI*2); ctx.strokeStyle="#8ff2ec"; ctx.lineWidth=6; ctx.stroke();
+  }
+  // hub
+  ctx.beginPath(); ctx.arc(0,0,r*0.14,0,Math.PI*2); ctx.fillStyle="#4d6478"; ctx.fill();
+  // orientation marker
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r*0.9,0); ctx.strokeStyle="#f0a83c"; ctx.lineWidth=3; ctx.stroke();
+  ctx.restore();
+}
+
+function drawForceArrow(x1,y1,x2,y2,color,label){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang = Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-10*Math.cos(ang-0.4), y2-10*Math.sin(ang-0.4));
+  ctx.lineTo(x2-10*Math.cos(ang+0.4), y2-10*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+  if (label){ ctx.font="11px sans-serif"; ctx.fillText(label, x2+6, y2); }
+  ctx.restore();
+}
+
+let fwAngle = 0;
+function drawRealSystem(w,h){
+  ctx.fillStyle="#c4d2de"; ctx.font="13px sans-serif";
+  if (state.category==="spring"){
+    ctx.fillText(t("realSpring"), 16, 20);
+    const cy=h/2;
+    ctx.fillStyle="#4d6478"; ctx.fillRect(30,cy-30,50,60); ctx.fillStyle="#eef3f7"; ctx.font="10px sans-serif"; ctx.fillText("Actuator",30,cy+45);
+    drawSpring(w*0.42, cy, 140, 7);
+    ctx.fillStyle="#3ee6e0"; ctx.fillRect(w*0.62,cy-25,45,50); ctx.fillStyle="#eef3f7"; ctx.fillText("Mass / Beban", w*0.62,cy+45);
+  } else {
+    ctx.fillText(t("realFlywheel"), 16, 20);
+    const cy=h*0.55;
+    const boxes = [["Motor",70],["Belt/Pulley",190],["Flywheel",320],["Clutch",430],["Crank/Ram",540],["Workpiece",650]];
+    boxes.forEach((b,i)=>{
+      ctx.fillStyle= i===2? "#1fc9d6":"#3a4f63";
+      ctx.fillRect(Math.min(b[1],w-90), cy-24, 80,48);
+      ctx.fillStyle="#eef3f7"; ctx.font="10px sans-serif";
+      ctx.fillText(b[0], Math.min(b[1],w-90)+4, cy+38);
+      if (i>0){ drawForceArrow(Math.min(boxes[i-1][1],w-90)+80, cy, Math.min(b[1],w-90), cy, "#8fa3b3"); }
+    });
+    drawFlywheelShape(Math.min(320,w-90)+40, cy-24-30, 22, fwAngle, state.flywheelType);
+  }
+}
+
+function drawEngineeringModel(w,h){
+  if (state.category==="spring"){
+    const cy=h/2;
+    const dispPx = state.spring.xdyn*1000*state.deformScale*0.6;
+    ctx.fillStyle="#c4d2de"; ctx.font="12px sans-serif";
+    ctx.fillText((state.springType==="compression"?"Compression Spring":state.springType==="extension"?"Extension Spring":"Torsion Spring")+" — idealized", 16, 20);
+    if (state.springType==="torsion"){
+      const cx=w/2;
+      ctx.save(); ctx.translate(cx,cy); ctx.strokeStyle="#8ff2ec"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,0,50,0,Math.PI*2); ctx.stroke();
+      const ang = -Math.PI/2 + (state.spring.x*Math.PI/180)*0.6;
+      ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(80,0); ctx.strokeStyle="#f0a83c"; ctx.lineWidth=4; ctx.stroke();
+      ctx.restore();
+    } else {
+      const springLen = 140 - (state.springType==="compression"? dispPx : -dispPx);
+      drawSpring(w*0.42, cy, Math.max(30,springLen), 7);
+      ctx.fillStyle="#3ee6e0";
+      const mx = w*0.42 + Math.max(30,springLen)/2 + 25;
+      ctx.fillRect(mx, cy-25, 45,50);
+      if (state.show.force){
+        const F = calculateSpringForceEnergy(state.spring.x).F;
+        drawForceArrow(mx+50,cy, mx+50+ Math.min(80, Math.abs(F)/20), cy, "#f0a83c", "F="+fmt(F,0)+" N");
+      }
+      if (state.show.dim){
+        ctx.strokeStyle="#4d6478"; ctx.beginPath(); ctx.moveTo(w*0.42-Math.max(30,springLen)/2, cy+40); ctx.lineTo(w*0.42+Math.max(30,springLen)/2, cy+40); ctx.stroke();
+        ctx.fillStyle="#8fa3b3"; ctx.font="10px sans-serif"; ctx.fillText("x = "+fmt(state.spring.xdyn*1000,1)+" mm", w*0.42-20, cy+55);
+      }
+    }
+  } else {
+    const cy=h/2;
+    ctx.fillStyle="#c4d2de"; ctx.font="12px sans-serif";
+    ctx.fillText("Flywheel — idealized rotor ("+state.flywheelType+")", 16, 20);
+    drawFlywheelShape(w/2, cy, 90, fwAngle, state.flywheelType);
+    const N = omegaToRpm(state.fw.omega);
+    ctx.fillStyle="#8ff2ec"; ctx.font="13px monospace";
+    ctx.fillText("N = "+fmt(N,1)+" rpm", w/2-40, cy+130);
+    if (state.show.force){
+      const {Tmotor} = integrateInputPreview();
+      drawForceArrow(w/2-150, cy, w/2-150, cy-Math.min(60,Tmotor), "#f0a83c", "Tmotor");
+    }
+  }
+}
+
+function integrateInputPreview(){
+  const I = calculateFlywheelInertia();
+  const omega = state.fw.omega;
+  return calculateInputLoadLossPower(I, omega);
+}
+
+function drawEnergyModel(w,h){
+  ctx.fillStyle="#c4d2de"; ctx.font="12px sans-serif";
+  ctx.fillText(t("tabFlow")+" & "+t("tabCalc"), 16, 20);
+  drawEnergyFlow(document.getElementById("flowCanvas"));
+  // also mini preview here
+  ctx.fillStyle="#8fa3b3"; ctx.font="11px sans-serif";
+  if (state.category==="spring"){
+    ctx.fillText("Us(x) = ½kx²  (buka tab Aliran Energi untuk diagram penuh)", 16, h-16);
+  } else {
+    ctx.fillText("Ef(ω) = ½Iω²  (buka tab Aliran Energi untuk diagram penuh)", 16, h-16);
+  }
+}
+
+function drawEnergyFlow(flowCanvas){
+  if (!flowCanvas) return;
+  const fctx = flowCanvas.getContext("2d");
+  const dpr = window.devicePixelRatio||1;
+  const w = flowCanvas.clientWidth, h = flowCanvas.clientHeight;
+  flowCanvas.width = w*dpr; flowCanvas.height=h*dpr; fctx.setTransform(dpr,0,0,dpr,0,0);
+  fctx.clearRect(0,0,w,h);
+  fctx.fillStyle="#eef3f7"; fctx.font="12px sans-serif";
+
+  const stages = state.category==="spring"
+    ? ["Source","Actuator","Spring (Us)","Load","Losses"]
+    : ["Motor","Shaft","Rotor (Ef)","Load","Losses"];
+
+  const boxW=110, boxH=50, gap=(w-40-boxW)/(stages.length-1);
+  const y = h*0.35;
+  const positions = stages.map((s,i)=> ({x:20+i*gap, y, label:s}));
+
+  let Pin=0,Pout=0,Ploss=0;
+  if (state.category==="spring"){
+    const last = state.history;
+    Pin = last.Pin.length? last.Pin[last.Pin.length-1]:0;
+  } else {
+    const I = calculateFlywheelInertia();
+    const r = integrateInputPreview();
+    Pin = r.Tmotor*state.fw.omega;
+    Ploss = r.Tloss*state.fw.omega;
+    Pout = state.fw.loadTimeRemaining>0? (state.fw.Pload*1000):0;
+  }
+  const maxP = Math.max(1, Pin, Pout, Ploss);
+
+  positions.forEach((p,i)=>{
+    fctx.fillStyle = i===2? "#1fc9d6":"#1a3049";
+    fctx.strokeStyle="#3ee6e0"; fctx.lineWidth=1.5;
+    fctx.fillRect(p.x,p.y,boxW,boxH); fctx.strokeRect(p.x,p.y,boxW,boxH);
+    fctx.fillStyle="#eef3f7"; fctx.font="11px sans-serif";
+    fctx.fillText(p.label, p.x+8, p.y+boxH/2+4);
+    if (i<positions.length-2){
+      const p2 = positions[i+1];
+      const width = 2+ (Pin/maxP)*10;
+      drawFlowArrow(fctx, p.x+boxW, p.y+boxH/2, p2.x, p2.y+boxH/2, "#3ee6e0", width, i===0? ("Pin="+fmt(Pin/1000,2)+" kW"):"");
+    }
+  });
+  // loss branch downward from rotor/spring box
+  const mid = positions[2];
+  drawFlowArrow(fctx, mid.x+boxW/2, mid.y+boxH, mid.x+boxW/2, mid.y+boxH+60, "#ef5b4e", 2+(Ploss/maxP)*10, "Ploss="+fmt(Ploss/1000,2)+" kW");
+  fctx.fillStyle="#ef5b4e"; fctx.fillText(t("lblShowLosses"), mid.x+boxW/2-20, mid.y+boxH+80);
+  // load branch to last box
+  const loadBox = positions[3], lossOut = positions[4];
+  drawFlowArrow(fctx, loadBox.x+boxW, loadBox.y+boxH/2, lossOut.x, lossOut.y+boxH/2, "#f0a83c", 2+(Pout/maxP)*10, "Pout="+fmt(Pout/1000,2)+" kW");
+
+  fctx.fillStyle="#8fa3b3"; fctx.font="10.5px sans-serif";
+  fctx.fillText("Win(kumulatif)="+fmt(state.energy.Win/1000,3)+" kJ   Wout="+fmt(state.energy.Wout/1000,3)+" kJ   Wloss="+fmt(state.energy.Wloss/1000,3)+" kJ", 20, h-14);
+}
+function drawFlowArrow(fctx,x1,y1,x2,y2,color,width,label){
+  fctx.save();
+  fctx.strokeStyle=color; fctx.fillStyle=color; fctx.lineWidth=width;
+  fctx.beginPath(); fctx.moveTo(x1,y1); fctx.lineTo(x2,y2); fctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1);
+  fctx.beginPath(); fctx.moveTo(x2,y2);
+  fctx.lineTo(x2-12*Math.cos(ang-0.4), y2-12*Math.sin(ang-0.4));
+  fctx.lineTo(x2-12*Math.cos(ang+0.4), y2-12*Math.sin(ang+0.4));
+  fctx.closePath(); fctx.fill();
+  if(label){ fctx.font="10.5px sans-serif"; fctx.fillStyle="#eef3f7"; fctx.fillText(label,(x1+x2)/2-20,(y1+y2)/2-8);}
+  fctx.restore();
+}
+
+function renderMain(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  drawGrid(w,h);
+  if (state.stage===1) drawRealSystem(w,h);
+  else if (state.stage===2) drawEngineeringModel(w,h);
+  else drawEnergyModel(w,h);
+}
+
+/* ================================ CHARTS ================================= */
+function drawLineChart(canvasEl, series, opts){
+  const dpr = window.devicePixelRatio||1;
+  const w = canvasEl.clientWidth, h = canvasEl.clientHeight;
+  canvasEl.width = w*dpr; canvasEl.height = h*dpr;
+  const c = canvasEl.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,w,h);
+  const pad = {l:44,r:10,t:10,b:26};
+  const plotW = w-pad.l-pad.r, plotH = h-pad.t-pad.b;
+  let xmin=opts.xmin, xmax=opts.xmax, ymin=opts.ymin, ymax=opts.ymax;
+  if (xmin===undefined || xmax===undefined){
+    xmin=Infinity;xmax=-Infinity;
+    series.forEach(s=>s.points.forEach(p=>{xmin=Math.min(xmin,p.x); xmax=Math.max(xmax,p.x);}));
+    if (!Number.isFinite(xmin)){xmin=0;xmax=1;}
+    if (xmax===xmin) xmax=xmin+1;
+  }
+  if (ymin===undefined || ymax===undefined){
+    ymin=Infinity;ymax=-Infinity;
+    series.forEach(s=>s.points.forEach(p=>{ymin=Math.min(ymin,p.y); ymax=Math.max(ymax,p.y);}));
+    if (!Number.isFinite(ymin)){ymin=0;ymax=1;}
+    if (ymax===ymin) ymax=ymin+1;
+    const m=(ymax-ymin)*0.1; ymin-=m; ymax+=m;
+    if (ymin>0 && opts.zeroBase) ymin=0;
+  }
+  const X = x=> pad.l + (x-xmin)/(xmax-xmin)*plotW;
+  const Y = y=> pad.t + plotH - (y-ymin)/(ymax-ymin)*plotH;
+
+  c.strokeStyle="rgba(143,163,179,0.18)"; c.lineWidth=1;
+  for(let i=0;i<=4;i++){ const yy=pad.t+plotH*i/4; c.beginPath(); c.moveTo(pad.l,yy); c.lineTo(w-pad.r,yy); c.stroke(); }
+  c.fillStyle="#8fa3b3"; c.font="9.5px sans-serif"; c.textAlign="right";
+  for(let i=0;i<=4;i++){ const val = ymax-(ymax-ymin)*i/4; c.fillText(fmt(val,2), pad.l-4, pad.t+plotH*i/4+3); }
+  c.textAlign="center";
+  for(let i=0;i<=4;i++){ const val = xmin+(xmax-xmin)*i/4; c.fillText(fmt(val,1), pad.l+plotW*i/4, h-8); }
+
+  if (opts.fillTo!==undefined && series[0] && series[0].points.length>1){
+    const s=series[0];
+    c.beginPath();
+    c.moveTo(X(s.points[0].x), Y(opts.fillTo));
+    s.points.forEach(p=> c.lineTo(X(p.x),Y(p.y)));
+    c.lineTo(X(s.points[s.points.length-1].x), Y(opts.fillTo));
+    c.closePath();
+    c.fillStyle="rgba(62,230,224,0.18)"; c.fill();
+  }
+
+  series.forEach(s=>{
+    if (s.points.length<1) return;
+    c.beginPath();
+    s.points.forEach((p,i)=>{ const px=X(p.x), py=Y(p.y); if(i===0) c.moveTo(px,py); else c.lineTo(px,py); });
+    c.strokeStyle=s.color||"#3ee6e0"; c.lineWidth=1.8; c.stroke();
+  });
+
+  if (opts.marker){
+    c.beginPath(); c.arc(X(opts.marker.x), Y(opts.marker.y), 4,0,Math.PI*2);
+    c.fillStyle="#f0a83c"; c.fill();
+  }
+  if (opts.hline!==undefined){
+    c.strokeStyle="rgba(239,91,78,0.6)"; c.setLineDash([4,4]);
+    c.beginPath(); c.moveTo(pad.l,Y(opts.hline)); c.lineTo(w-pad.r,Y(opts.hline)); c.stroke(); c.setLineDash([]);
+  }
+  if (opts.vline!==undefined){
+    c.strokeStyle="rgba(240,168,60,0.6)"; c.setLineDash([4,4]);
+    c.beginPath(); c.moveTo(X(opts.vline),pad.t); c.lineTo(X(opts.vline),pad.t+plotH); c.stroke(); c.setLineDash([]);
+  }
+}
+
+function buildGraphGrid(){
+  const grid = document.getElementById("graphGrid");
+  grid.innerHTML="";
+  const specs = state.category==="spring"
+    ? [["chFx","Force–Displacement F(x)"],["chUx","Elastic Energy–Displacement Us(x)"],["chEt","Energy vs Time"]]
+    : [["chEfN","Flywheel Energy–RPM Ef(N)"],["chNt","RPM vs Time"],["chEtF","Stored Energy vs Time"],["chPt","Power vs Time (Pin/Pout/Ploss)"]];
+  specs.forEach(([id,title])=>{
+    const box=document.createElement("div"); box.className="chartbox";
+    box.innerHTML=`<div class="chart-title">${title}</div><canvas id="${id}"></canvas>`;
+    grid.appendChild(box);
+  });
+}
+
+function updateCharts(){
+  if (state.category==="spring"){
+    const kSI = calculateSpringStiffness()*1000;
+    const xmax = state.spring.xmax/1000;
+    const pts=[]; const eus=[];
+    const N=60;
+    for(let i=0;i<=N;i++){
+      const x = xmax*i/N;
+      let F,Us;
+      if (state.springType==="extension"){ F=state.spring.F0+kSI*x; Us=state.spring.F0*x+0.5*kSI*x*x; }
+      else { F=kSI*x; Us=0.5*kSI*x*x; }
+      pts.push({x:x*1000,y:F}); eus.push({x:x*1000,y:Us});
+    }
+    const cur = calculateSpringForceEnergy(state.spring.x);
+    const fx = document.getElementById("chFx"); const ux=document.getElementById("chUx"); const et=document.getElementById("chEt");
+    if (fx) drawLineChart(fx,[{points:pts,color:"#3ee6e0"}],{xlabel:"x (mm)",ylabel:"F (N)",marker:{x:state.spring.x,y:cur.F},fillTo:0,zeroBase:true});
+    if (ux) drawLineChart(ux,[{points:eus,color:"#f0a83c"}],{marker:{x:state.spring.x,y:cur.Us},zeroBase:true});
+    if (et){
+      const s1={points: state.history.t.map((tt,i)=>({x:tt,y:state.history.Us[i]})), color:"#3ee6e0"};
+      const s2={points: state.history.t.map((tt,i)=>({x:tt,y:state.history.Ek[i]})), color:"#f0a83c"};
+      drawLineChart(et,[s1,s2],{zeroBase:true});
+    }
+  } else {
+    const I = calculateFlywheelInertia();
+    const Nmax = state.fw.Nmax*1.05;
+    const pts=[]; const M=60;
+    for(let i=0;i<=M;i++){ const N=Nmax*i/M; const w=rpmToOmega(N); pts.push({x:N,y:0.5*I*w*w}); }
+    const curN = omegaToRpm(state.fw.omega);
+    const efn = document.getElementById("chEfN");
+    if (efn) drawLineChart(efn,[{points:pts,color:"#3ee6e0"}],{marker:{x:curN,y:0.5*I*state.fw.omega*state.fw.omega},vline:state.fw.Nmin,zeroBase:true});
+    const nt = document.getElementById("chNt");
+    if (nt) drawLineChart(nt,[{points:state.history.t.map((tt,i)=>({x:tt,y:state.history.N[i]})),color:"#3ee6e0"}],{hline:state.fw.Nmin,zeroBase:true});
+    const etF = document.getElementById("chEtF");
+    if (etF) drawLineChart(etF,[{points:state.history.t.map((tt,i)=>({x:tt,y:state.history.E[i]})),color:"#8ff2ec"}],{zeroBase:true});
+    const pt = document.getElementById("chPt");
+    if (pt){
+      const s1={points:state.history.t.map((tt,i)=>({x:tt,y:state.history.Pin[i]/1000})),color:"#3ee6e0"};
+      const s2={points:state.history.t.map((tt,i)=>({x:tt,y:state.history.Pout[i]/1000})),color:"#f0a83c"};
+      const s3={points:state.history.t.map((tt,i)=>({x:tt,y:state.history.Ploss[i]/1000})),color:"#ef5b4e"};
+      drawLineChart(pt,[s1,s2,s3],{zeroBase:true});
+    }
+  }
+}
+
+/* ============================= UI: CARDS / STATUS ========================= */
+function updateEngineeringCards(){
+  const el = document.getElementById("engineeringCards");
+  el.innerHTML="";
+  if (state.category==="spring"){
+    let res;
+    if (state.springType==="torsion") res = calculateTorsionSpring();
+    else res = calculateSpringForceEnergy(state.spring.x);
+    const stress = calculateSpringStress(res.F);
+    const nSF = (!Number.isNaN(stress) && state.spring.taulim>0) ? state.spring.taulim/stress : NaN;
+    const util = state.springType==="torsion" ? NaN : (state.spring.x/Math.max(state.spring.xmax,1e-9));
+    const rows = [
+      [state.springType==="torsion"?"T (N·m)":"F (N)", fmt(res.F,2)],
+      [state.springType==="torsion"?"θs (deg)":"x (mm)", fmt(state.spring.x,2)],
+      ["k "+(state.springType==="torsion"?"(N·m/rad)":"(N/mm)"), fmt(calculateSpringStiffness(),4)],
+      ["Us (J)", fmt(res.Us,3)],
+      ["Ek massa (J)", fmt(0.5*state.spring.m*state.spring.vdyn*state.spring.vdyn,3)],
+      ["τ (MPa)", Number.isNaN(stress)?"N/A":fmt(stress,2)],
+      ["nSF", Number.isNaN(nSF)?"N/A":fmt(nSF,2)],
+      ["Stroke util. (%)", Number.isNaN(util)?"N/A":fmt(util*100,1)]
+    ];
+    el.appendChild(buildCard(rows));
+  } else {
+    const I = calculateFlywheelInertia();
+    const N = omegaToRpm(state.fw.omega);
+    const Ef = calculateFlywheelEnergy(I, state.fw.omega);
+    const NminOmega = rpmToOmega(state.fw.Nmin);
+    const usable = Math.max(0, 0.5*I*(state.fw.omega*state.fw.omega - NminOmega*NminOmega));
+    const H = I*state.fw.omega;
+    const v = state.fw.ro*state.fw.omega;
+    const r = integrateInputPreview();
+    const rows = [
+      ["N (rpm)", fmt(N,2)],
+      ["ω (rad/s)", fmt(state.fw.omega,3)],
+      ["I (kg·m²)", fmt(I,4)],
+      ["Ef (J)", fmt(Ef,1)+" ("+fmt(Ef/1000,3)+" kJ)"],
+      ["Usable energy > Nmin (kJ)", fmt(usable/1000,3)],
+      ["Wout kumulatif (kJ)", fmt(state.energy.Wout/1000,3)],
+      ["H = Iω (kg·m²/s)", fmt(H,3)],
+      ["Rim speed v (m/s)", fmt(v,2)],
+      ["Pin (kW)", fmt(r.Tmotor*state.fw.omega/1000,3)],
+      ["Ploss (kW)", fmt(r.Tloss*state.fw.omega/1000,3)],
+      ["Unmet energy (kJ)", fmt(state.fw.unmetEnergy/1000,3)]
+    ];
+    el.appendChild(buildCard(rows));
+  }
+}
+function buildCard(rows){
+  const card = document.createElement("div"); card.className="card";
+  rows.forEach(([lbl,num])=>{
+    const r=document.createElement("div"); r.className="row";
+    r.innerHTML=`<span class="lbl">${lbl}</span><span class="num">${num}</span>`;
+    card.appendChild(r);
+  });
+  return card;
+}
+
+function updateSafetyStatus(){
+  const el = document.getElementById("safetyStatus");
+  const limits = checkOperatingLimits();
+  const badgeClass = limits.status==="safe"?"safe":limits.status==="warning"?"warn":limits.status==="critical"?"crit":"na";
+  const label = limits.status==="safe"?t("safe"):limits.status==="warning"?t("warning"):limits.status==="critical"?t("critical"):t("notEval");
+  let extra = "";
+  if (state.category==="spring"){
+    extra = `<div class="small">Utilization: ${Number.isNaN(limits.utilization)?"N/A":fmt(limits.utilization*100,1)+"%"}<br>nSF: ${Number.isNaN(limits.nSF)?"N/A":fmt(limits.nSF,2)}</div>`;
+  } else {
+    extra = `<div class="small">N/Nmax: ${fmt(limits.utilization*100,1)}%<br>Hoop stress est.: ${limits.hoopStress!==undefined?fmt(limits.hoopStress,1)+" MPa (thin-rim est.)":"N/A"}</div>`;
+  }
+  el.innerHTML = `<span class="badge ${badgeClass}">${label}</span>${extra}`;
+}
+
+function updateStatusBar(){
+  const bar = document.getElementById("statusBar");
+  const balance = computeCurrentEnergyBalance();
+  const limits = checkOperatingLimits();
+  const dotClass = limits.status==="safe"?"safe":limits.status==="warning"?"warn":limits.status==="critical"?"crit":"na";
+  const phaseKey = state.category==="spring" ? state.spring.phase : state.fw.phase;
+  const phaseLabel = {
+    charging:t("chargingPhase"), holding:t("holdingPhase"), discharging:t("dischargingPhase"),
+    idle:t("idlePhase"), paused:t("pausedPhase"), recovery:t("recoveryPhase")
+  }[phaseKey] || phaseKey;
+
+  const segs = [];
+  segs.push(["SYSTEM", (state.category==="spring"?t("catSpring"):t("catFlywheel")) + " / " + presetName()]);
+  segs.push(["MODE", state.running? phaseLabel : t("pausedPhase")]);
+  segs.push(["MODEL", balance.validModel? "Valid":"Invalid"]);
+  segs.push(["ENERGY BAL.", (balance.ok? t("modelReady"):t("modelError")) + " (R="+fmt(balance.R,3)+" J)"]);
+  segs.push(["STORED E", fmt(balance.currentE,2)+" J"]);
+  if (state.category==="flywheel"){
+    segs.push(["N", fmt(omegaToRpm(state.fw.omega),1)+" rpm"]);
+    segs.push(["LOAD", state.fw.loadTimeRemaining>0 ? (state.fw.unmetEnergy>0?t("limited"):t("met")) : (state.fw.unmetEnergy>0? t("unmet"):"—")]);
+  } else {
+    segs.push(["x", fmt(state.spring.xdyn*1000,2)+" mm"]);
+  }
+  segs.push(["TIME", fmt(state.simTime,2)+" s ×"+fmt(state.animSpeed,1)]);
+
+  bar.innerHTML = segs.map(([k,v])=>`<div class="seg"><span class="k">${k}:</span><span class="v">${v}</span></div>`).join("")
+    + `<div class="seg"><span class="dot ${dotClass}"></span><span class="v">${limits.status.toUpperCase()}</span></div>`;
+}
+
+function presetName(){
+  const p = PRESETS.find(p=>p.id===state.preset);
+  return p ? (state.lang==="ID"? p.nameID : p.nameEN) : "";
+}
+
+function computeCurrentEnergyBalance(){
+  let currentE, validModel=true;
+  if (state.category==="spring"){
+    const Us = (state.springType==="extension") ? state.spring.F0*state.spring.xdyn + 0.5*calculateSpringStiffness()*1000*state.spring.xdyn*state.spring.xdyn
+             : 0.5*calculateSpringStiffness()*1000*state.spring.xdyn*state.spring.xdyn;
+    const Ek = 0.5*state.spring.m*state.spring.vdyn*state.spring.vdyn;
+    currentE = Us+Ek;
+    if (state.spring.m<=0 || calculateSpringStiffness()<=0) validModel=false;
+  } else {
+    const I = calculateFlywheelInertia();
+    currentE = calculateFlywheelEnergy(I, state.fw.omega);
+    if (!(I>0)) validModel=false;
+  }
+  const b = checkEnergyBalance(currentE);
+  return {currentE, R:b.R, tol:b.tol, ok:b.ok, validModel};
+}
+
+/* ============================= CALCULATION STEPS PANEL ==================== */
+function updateCalculationPanel(){
+  const el = document.getElementById("calcSteps");
+  const steps=[];
+  if (state.category==="spring"){
+    const kSI = calculateSpringStiffness()*1000;
+    if (state.springType==="torsion"){
+      const r = calculateTorsionSpring();
+      steps.push(`STEP 1 — Input: kθ = ${fmt(state.spring.k,3)} N·m/rad; θs = ${fmt(state.spring.x,2)}°.`);
+      steps.push(`STEP 2 — Convert: θs = ${fmt(r.x_SI,4)} rad.`);
+      steps.push(`STEP 3 — Torque: T = kθ·θs = ${fmt(r.F,2)} N·m.`);
+      steps.push(`STEP 4 — Stored energy: Us = ½kθ·θs² = ${fmt(r.Us,3)} J.`);
+    } else {
+      steps.push(`STEP 1 — Input: k = ${fmt(state.spring.k,3)} N/mm; x = ${fmt(state.spring.x,2)} mm.`);
+      steps.push(`STEP 2 — Convert: k = ${fmt(kSI,1)} N/m; x = ${fmt(state.spring.x/1000,4)} m.`);
+      const r = calculateSpringForceEnergy(state.spring.x);
+      if (state.springType==="extension"){
+        steps.push(`STEP 3 — Force: F = F0 + kx = ${fmt(state.spring.F0,1)} + ${fmt(kSI,1)}×${fmt(state.spring.x/1000,4)} = ${fmt(r.F,2)} N.`);
+        steps.push(`STEP 4 — Stored energy (sejak x=0): ΔUs = F0x + ½kx² = ${fmt(r.Us,3)} J.`);
+      } else {
+        steps.push(`STEP 3 — Force: F = kx = ${fmt(kSI,1)} × ${fmt(state.spring.x/1000,4)} = ${fmt(r.F,2)} N.`);
+        steps.push(`STEP 4 — Stored energy: Us = ½kx² = ${fmt(r.Us,3)} J.`);
+        steps.push(`STEP 5 — Verify area: ½Fx = ${fmt(0.5*r.F*(state.spring.x/1000),3)} J.`);
+      }
+    }
+  } else {
+    const I = calculateFlywheelInertia();
+    const w = state.fw.omega;
+    const N = omegaToRpm(w);
+    const Ef = calculateFlywheelEnergy(I,w);
+    steps.push(`STEP 1 — Input: ${state.flywheelType} ; m = ${fmt(state.fw.fm,2)} kg; ro = ${fmt(state.fw.ro,3)} m${state.flywheelType==="annular"?", ri="+fmt(state.fw.ri,3)+" m":""}.`);
+    steps.push(`STEP 2 — Inertia: I = ${I===0.5*state.fw.fm*state.fw.ro*state.fw.ro?"½mr²":(I===state.fw.fm*state.fw.ro*state.fw.ro?"mr²":"½m(ri²+ro²) / custom")} = ${fmt(I,4)} kg·m².`);
+    steps.push(`STEP 3 — Speed: N = ${fmt(N,2)} rpm → ω = 2πN/60 = ${fmt(w,4)} rad/s.`);
+    steps.push(`STEP 4 — Energy: Ef = ½Iω² = ${fmt(Ef,2)} J = ${fmt(Ef/1000,3)} kJ.`);
+    steps.push(`STEP 5 — dE/dt = Pin − Pout − Ploss (integrasi numerik langkah tetap, dt=${state.dt}s).`);
+  }
+  el.innerHTML = steps.map(s=>`<div class="step-line">${s}</div>`).join("");
+
+  const bal = computeCurrentEnergyBalance();
+  document.getElementById("energyBalanceLine").innerHTML =
+    `<b>${t("tabCalc")} — ${t("modelReady")}/${t("modelError")}</b>: E(t)−E(0) = Win−Wout−Wloss &nbsp; R = ${fmt(bal.R,4)} J &nbsp; tol=${fmt(bal.tol,4)} J &nbsp; <b style="color:${bal.ok? '#3fce8a':'#ef5b4e'}">${bal.ok? t("modelReady"):t("modelError")}</b>`;
+}
+
+/* ============================= INPUT WIRING =============================== */
+const bindings = []; // {slider,num,get,set,decimals}
+function bindPair(sliderId, numId, getter, setter, decimals=2){
+  const s = document.getElementById(sliderId), n = document.getElementById(numId);
+  function refresh(){ const v=getter(); if(s) s.value=v; if(n) n.value= (decimals===0? Math.round(v): Number(v).toFixed(decimals)); }
+  if (s) s.addEventListener("input", ()=>{ setter(parseFloat(s.value)); onParamChanged(); });
+  if (n) n.addEventListener("input", ()=>{ if(n.value==="") return; setter(parseFloat(n.value)); onParamChanged(); });
+  bindings.push(refresh);
+  refresh();
+}
+function refreshAllBindings(){ bindings.forEach(f=>f()); }
+
+function onParamChanged(){
+  // per spec section 5: changing k, I, geometry, or initial state during a run must stop & re-init the run
+  stopAndReinit();
+  refreshValLabels();
+  updateAll();
+}
+
+function refreshValLabels(){
+  const map = {
+    v_k:["s_k"], v_x:["s_x"], v_F:["s_F"], v_F0:["s_F0"], v_xmax:["s_xmax"],
+    v_d:["s_d"], v_D:["s_D"], v_na:["s_na"], v_G:["s_G"], v_m:["s_m"], v_c:["s_c"], v_taulim:["s_taulim"],
+    v_fm:["s_fm"], v_ro:["s_ro"], v_ri:["s_ri"], v_Icustom:["s_Icustom"],
+    v_N0:["s_N0"], v_Ntarget:["s_Ntarget"], v_Nmin:["s_Nmin"], v_Nmax:["s_Nmax"],
+    v_Pmotor:["s_Pmotor"], v_Tmax:["s_Tmax"], v_Pload:["s_Pload"], v_dtload:["s_dtload"], v_cycle:["s_cycle"], v_b:["s_b"],
+    v_etaC:["s_etaC"], v_etaD:["s_etaD"], v_animspeed:["s_animspeed"], v_deformscale:["s_deformscale"]
+  };
+  Object.entries(map).forEach(([span,[sliderId]])=>{
+    const s=document.getElementById(sliderId), el=document.getElementById(span);
+    if (s && el) el.textContent = s.value;
+  });
+  document.getElementById("v_Icalc").textContent = fmt(calculateFlywheelInertia(),4)+" kg·m²";
+}
+
+function setupBindings(){
+  bindPair("s_k","n_k", ()=>state.spring.k, v=>state.spring.k=v, 3);
+  bindPair("s_x","n_x", ()=>state.spring.x, v=>state.spring.x=v, 2);
+  bindPair("s_F","n_F", ()=>state.spring.F, v=>{
+    state.spring.F=v;
+    if (state.controlMode==="force"){
+      const kSI = calculateSpringStiffness()*1000;
+      if (kSI>0){
+        if (state.springType==="extension") state.spring.x = Math.max(0,(v-state.spring.F0)/kSI*1000);
+        else state.spring.x = v/kSI*1000;
+      }
+    }
+  }, 1);
+  bindPair("s_F0","n_F0", ()=>state.spring.F0, v=>state.spring.F0=v, 1);
+  bindPair("s_xmax","n_xmax", ()=>state.spring.xmax, v=>state.spring.xmax=v, 1);
+  bindPair("s_d","n_d", ()=>state.spring.d, v=>state.spring.d=v, 2);
+  bindPair("s_D","n_D", ()=>state.spring.D, v=>state.spring.D=v, 2);
+  bindPair("s_na","n_na", ()=>state.spring.na, v=>state.spring.na=v, 0);
+  bindPair("s_G","n_G", ()=>state.spring.G, v=>state.spring.G=v, 1);
+  bindPair("s_m","n_m", ()=>state.spring.m, v=>state.spring.m=v, 2);
+  bindPair("s_c","n_c", ()=>state.spring.c, v=>state.spring.c=v, 1);
+  bindPair("s_taulim","n_taulim", ()=>state.spring.taulim, v=>state.spring.taulim=v, 0);
+
+  bindPair("s_fm","n_fm", ()=>state.fw.fm, v=>state.fw.fm=v, 1);
+  bindPair("s_ro","n_ro", ()=>state.fw.ro, v=>state.fw.ro=v, 3);
+  bindPair("s_ri","n_ri", ()=>state.fw.ri, v=>state.fw.ri=v, 3);
+  bindPair("s_Icustom","n_Icustom", ()=>state.fw.Icustom, v=>state.fw.Icustom=v, 2);
+  bindPair("s_N0","n_N0", ()=>state.fw.N0, v=>{state.fw.N0=v; state.fw.omega=rpmToOmega(v);}, 0);
+  bindPair("s_Ntarget","n_Ntarget", ()=>state.fw.Ntarget, v=>state.fw.Ntarget=v, 0);
+  bindPair("s_Nmin","n_Nmin", ()=>state.fw.Nmin, v=>state.fw.Nmin=v, 0);
+  bindPair("s_Nmax","n_Nmax", ()=>state.fw.Nmax, v=>state.fw.Nmax=v, 0);
+  bindPair("s_Pmotor","n_Pmotor", ()=>state.fw.Pmotor, v=>state.fw.Pmotor=v, 2);
+  bindPair("s_Tmax","n_Tmax", ()=>state.fw.Tmax, v=>state.fw.Tmax=v, 1);
+  bindPair("s_Pload","n_Pload", ()=>state.fw.Pload, v=>state.fw.Pload=v, 1);
+  bindPair("s_dtload","n_dtload", ()=>state.fw.dtload, v=>state.fw.dtload=v, 2);
+  bindPair("s_cycle","n_cycle", ()=>state.fw.cycle, v=>state.fw.cycle=v, 1);
+  bindPair("s_b","n_b", ()=>state.fw.b, v=>state.fw.b=v, 3);
+  bindPair("s_etaC","n_etaC", ()=>state.fw.etaC, v=>state.fw.etaC=v, 2);
+  bindPair("s_etaD","n_etaD", ()=>state.fw.etaD, v=>state.fw.etaD=v, 2);
+
+  bindPair("s_animspeed",null, ()=>state.animSpeed, v=>state.animSpeed=v, 1);
+  document.getElementById("s_animspeed").addEventListener("input", e=>{state.animSpeed=parseFloat(e.target.value); refreshValLabels();});
+  document.getElementById("s_deformscale").addEventListener("input", e=>{state.deformScale=parseFloat(e.target.value); refreshValLabels();});
+}
+
+/* ============================= VISIBILITY LOGIC ============================ */
+function applyVisibility(){
+  const isSpring = state.category==="spring";
+  document.getElementById("springParamsBlock").style.display = isSpring? "block":"none";
+  document.getElementById("flywheelParamsBlock").style.display = isSpring? "none":"block";
+  document.getElementById("controlModeField").style.display = isSpring? "block":"none";
+  document.getElementById("stiffnessModeField").style.display = (isSpring && state.springType!=="torsion")? "block":"none";
+  document.getElementById("geomFields").style.display = (isSpring && state.stiffnessMode==="geometry" && state.springType!=="torsion")? "block":"none";
+  document.getElementById("preloadField").style.display = (isSpring && state.springType==="extension")? "block":"none";
+  document.getElementById("riField").style.display = (!isSpring && state.flywheelType==="annular")? "block":"none";
+  document.getElementById("ICustomField").style.display = (!isSpring && state.flywheelType==="custom")? "block":"none";
+
+  // relabel k/x fields for torsion
+  const lblK = document.querySelector('label span[data-tip="tipK"]');
+  document.getElementById("v_k").parentElement.querySelector("span").textContent="";
+  document.querySelector("#springParamsBlock .field:nth-child(2) label span:first-child").textContent =
+     (state.springType==="torsion") ? (state.lang==="ID"?"Kekakuan torsi kθ (N·m/rad)":"Torsional stiffness kθ (N·m/rad)") : t("lblK");
+  document.querySelector("#springParamsBlock .field:nth-child(3) label span:first-child").textContent =
+     (state.springType==="torsion") ? (state.lang==="ID"?"Sudut defleksi θs (derajat)":"Angular deflection θs (deg)") : t("lblX");
+
+  // k is read-only if geometry-derived
+  const kSlider=document.getElementById("s_k"), kNum=document.getElementById("n_k");
+  const readOnly = (state.stiffnessMode==="geometry" && state.springType!=="torsion");
+  kSlider.disabled = readOnly; kNum.disabled = readOnly;
+}
+
+/* ============================= SUBTYPE SELECT =============================== */
+function rebuildSubtypeSelect(){
+  const sel = document.getElementById("subtypeSelect");
+  sel.innerHTML="";
+  const opts = state.category==="spring"
+    ? [["compression", state.lang==="ID"?"Pegas Tekan":"Compression Spring"],
+       ["extension", state.lang==="ID"?"Pegas Tarik":"Extension Spring"],
+       ["torsion", state.lang==="ID"?"Pegas Torsi":"Torsion Spring"]]
+    : [["solid", state.lang==="ID"?"Cakram Pejal (Solid Disk)":"Solid Disk"],
+       ["rim", state.lang==="ID"?"Cincin Tipis (Thin Rim)":"Thin Rim"],
+       ["annular", state.lang==="ID"?"Cakram Annular":"Annular Disk"],
+       ["custom", state.lang==="ID"?"Rotor Khusus (Custom)":"Custom Rotor"]];
+  opts.forEach(([v,l])=>{ const o=document.createElement("option"); o.value=v; o.textContent=l; sel.appendChild(o); });
+  sel.value = state.category==="spring"? state.springType : state.flywheelType;
+  sel.onchange = ()=>{
+    if (state.category==="spring") state.springType = sel.value; else state.flywheelType = sel.value;
+    onCategoryOrTypeChanged();
+  };
+}
+
+function onCategoryOrTypeChanged(){
+  applyVisibility();
+  stopAndReinit();
+  buildGraphGrid();
+  updateAll();
+}
+
+/* ============================= PRESETS APPLY =============================== */
+function populatePresetSelect(){
+  const sel = document.getElementById("presetSelect");
+  sel.innerHTML="";
+  PRESETS.forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent = state.lang==="ID"? p.nameID:p.nameEN; sel.appendChild(o); });
+  sel.value = state.preset;
+  sel.onchange = ()=> applyPreset(sel.value);
+}
+function applyPreset(id){
+  const p = PRESETS.find(p=>p.id===id);
+  if (!p) return;
+  state.preset = id;
+  state.category = p.cat;
+  if (p.cat==="spring") state.springType = p.sub; else state.flywheelType = p.sub;
+  Object.assign(state.spring, {
+    k:p.params.k??state.spring.k, x:0, F:p.params.F??state.spring.F, F0:p.params.F0??0,
+    xmax:p.params.xmax??state.spring.xmax, d:p.params.d??state.spring.d, D:p.params.D??state.spring.D,
+    na:p.params.na??state.spring.na, G:p.params.G??state.spring.G, m:p.params.m??state.spring.m,
+    c:p.params.c??state.spring.c, taulim:p.params.taulim??state.spring.taulim, xdyn:0, vdyn:0
+  });
+  Object.assign(state.fw, {
+    fm:p.params.fm??state.fw.fm, ro:p.params.ro??state.fw.ro, ri:p.params.ri??0,
+    N0:p.params.N0??0, Ntarget:p.params.Ntarget??state.fw.Ntarget, Nmin:p.params.Nmin??state.fw.Nmin,
+    Nmax:p.params.Nmax??state.fw.Nmax, Pmotor:p.params.Pmotor??state.fw.Pmotor, Tmax:p.params.Tmax??state.fw.Tmax,
+    Pload:p.params.Pload??state.fw.Pload, dtload:p.params.dtload??state.fw.dtload, cycle:p.params.cycle??state.fw.cycle,
+    b:p.params.b??state.fw.b, etaC:p.params.etaC??0.95, etaD:p.params.etaD??0.95,
+    omega:rpmToOmega(p.params.N0??0), loadTimeRemaining:0, unmetEnergy:0
+  });
+  document.getElementById("presetInfoText").innerHTML = "<p>"+(state.lang==="ID"?p.ctxID:p.ctxEN)+"</p>";
+  rebuildCategoryPillsUI();
+  rebuildSubtypeSelect();
+  applyVisibility();
+  refreshAllBindings();
+  refreshValLabels();
+  stopAndReinit();
+  buildGraphGrid();
+  updateAll();
+}
+
+function rebuildCategoryPillsUI(){
+  document.querySelectorAll("#categoryPills .pill").forEach(p=>{
+    p.classList.toggle("active", p.dataset.cat===state.category);
+  });
+}
+
+/* ============================= SIM CONTROL ================================= */
+function stopAndReinit(){
+  state.running = false;
+  document.getElementById("btnPlay").disabled=false;
+  state.simTime = 0;
+  state.energy = {Win:0, Wout:0, Wloss:0, E0:0};
+  state.history = {t:[],N:[],E:[],Pin:[],Pout:[],Ploss:[], x:[], v:[], Us:[], Ek:[]};
+  if (state.category==="spring"){
+    state.spring.xdyn = 0; state.spring.vdyn = 0; state.spring.phase="idle";
+    const Us0 = 0; state.energy.E0 = Us0;
+  } else {
+    state.fw.omega = rpmToOmega(state.fw.N0);
+    state.fw.loadTimeRemaining = 0; state.fw.unmetEnergy = 0; state.fw.phase="idle"; state.fw.cycleClock=0;
+    state.energy.E0 = calculateFlywheelEnergy(calculateFlywheelInertia(), state.fw.omega);
+  }
+}
+
+let lastFrameTime = null;
+let accumulator = 0;
+function animate(ts){
+  requestAnimationFrame(animate);
+  if (lastFrameTime===null) lastFrameTime = ts;
+  let frameDt = (ts-lastFrameTime)/1000;
+  lastFrameTime = ts;
+  frameDt = Math.min(frameDt, 0.05); // avoid spiral of death
+  if (state.running){
+    accumulator += frameDt*state.animSpeed;
+    let steps=0;
+    while (accumulator >= state.dt && steps<2000){
+      physicsStep(state.dt);
+      accumulator -= state.dt;
+      steps++;
+    }
+  }
+  if (!state.reducedMotion){
+    fwAngle += (state.running? state.fw.omega*frameDt*state.animSpeed*0.3 : 0);
+  }
+  renderMain();
+  if (Math.floor(performance.now()/120) !== animate._lastUiTick){
+    animate._lastUiTick = Math.floor(performance.now()/120);
+    updateHud();
+  }
+}
+requestAnimationFrame(animate);
+
+function physicsStep(dt){
+  state.simTime += dt;
+  let sample;
+  if (state.category==="spring"){
+    sample = integrateSpringDynamics(dt);
+    pushHistory(sample.Us+sample.Ek, sample.Us, sample.Ek, sample.Pin, Math.max(-sample.Pin,0), sample.Ploss, sample.x_mm, sample.v);
+  } else {
+    const fw = state.fw;
+    fw.cycleClock += dt;
+    if (fw.cycleClock >= fw.cycle && fw.autoCycle){
+      fw.cycleClock = 0; fw.loadTimeRemaining = fw.dtload;
+    }
+    sample = integrateFlywheelDynamics(dt);
+    if (sample){
+      const N = omegaToRpm(sample.omega);
+      const E = calculateFlywheelEnergy(sample.I, sample.omega);
+      pushHistory(E, null, null, sample.Pin, sample.Pout, sample.Ploss, null, null, N);
+      fw.phase = fw.loadTimeRemaining>0 ? "discharging" : (sample.Tmotor>sample.Tloss+1e-6? "charging":"idle");
+    }
+  }
+}
+function pushHistory(E,Us,Ek,Pin,Pout,Ploss,x,v,N){
+  const h = state.history;
+  h.t.push(state.simTime); h.E.push(E); h.Pin.push(Pin); h.Pout.push(Pout); h.Ploss.push(Ploss);
+  if (Us!==null) h.Us.push(Us); if (Ek!==null) h.Ek.push(Ek);
+  if (x!==null) h.x.push(x); if (v!==null) h.v.push(v);
+  if (N!==undefined) h.N.push(N);
+  const MAXPTS=2000;
+  Object.keys(h).forEach(k=>{ if (h[k].length>MAXPTS) h[k].splice(0, h[k].length-MAXPTS); });
+}
+
+function updateHud(){
+  updateEngineeringCards();
+  updateSafetyStatus();
+  updateStatusBar();
+  updateCalculationPanel();
+  updateCharts();
+  refreshValLabels();
+  if (document.getElementById("panel-flow").classList.contains("active")) drawEnergyFlow(document.getElementById("flowCanvas"));
+}
+function updateAll(){ renderMain(); updateHud(); }
+
+/* ============================= BUTTON WIRING =============================== */
+document.getElementById("btnPlay").addEventListener("click", ()=>{ state.running=true; lastFrameTime=null; });
+document.getElementById("btnPause").addEventListener("click", ()=>{ state.running=false; });
+document.getElementById("btnStep").addEventListener("click", ()=>{ physicsStep(state.dt); updateHud(); renderMain(); });
+document.getElementById("btnReset").addEventListener("click", ()=>{ stopAndReinit(); updateAll(); });
+
+document.getElementById("btnCharge").addEventListener("click", ()=>{
+  if (state.category==="spring"){ state.spring.phase="charging"; }
+  else { state.fw.motorOn=true; state.fw.phase="charging"; }
+  state.running=true; lastFrameTime=null;
+});
+document.getElementById("btnHold").addEventListener("click", ()=>{
+  if (state.category==="spring"){ state.spring.phase="holding"; }
+  else { state.fw.motorOn=false; state.fw.phase="holding"; state.fw.loadTimeRemaining=0; }
+});
+document.getElementById("btnDischarge").addEventListener("click", ()=>{
+  if (state.category==="spring"){ state.spring.phase="discharging"; }
+  else { state.fw.motorOn=false; state.fw.loadTimeRemaining = state.fw.dtload; state.fw.phase="discharging"; }
+  state.running=true; lastFrameTime=null;
+});
+document.getElementById("btnLoadPulse").addEventListener("click", ()=>{
+  if (state.category==="flywheel"){ state.fw.loadTimeRemaining = state.fw.dtload; state.running=true; lastFrameTime=null; }
+  else { state.spring.phase="discharging"; state.running=true; lastFrameTime=null; }
+});
+
+document.querySelectorAll(".stage-tabs [data-stage]").forEach(b=>{
+  b.addEventListener("click", ()=>{ state.stage=parseInt(b.dataset.stage); updateStageCaption(); renderMain(); });
+});
+function updateStageCaption(){
+  const capMap = {1:t("stage1"),2:t("stage2"),3:t("stage3")};
+  document.getElementById("stageCaption").textContent = capMap[state.stage];
+}
+document.getElementById("autoConvertBtn").addEventListener("click", ()=>{
+  let s=1;
+  const iv = setInterval(()=>{ state.stage=s; updateStageCaption(); renderMain(); s++; if(s>3){clearInterval(iv);} }, 700);
+});
+
+document.querySelectorAll("#categoryPills .pill").forEach(p=>{
+  p.addEventListener("click", ()=>{
+    state.category = p.dataset.cat;
+    rebuildCategoryPillsUI();
+    rebuildSubtypeSelect();
+    onCategoryOrTypeChanged();
+  });
+});
+document.getElementById("controlModeSelect").addEventListener("change", e=>{ state.controlMode=e.target.value; applyVisibility(); });
+document.getElementById("stiffnessModeSelect").addEventListener("change", e=>{ state.stiffnessMode=e.target.value; applyVisibility(); refreshValLabels(); updateAll(); });
+document.getElementById("lossesToggle").addEventListener("change", e=>{ state.show.losses = e.target.checked; });
+["toggleFlow","toggleForce","toggleDim","toggleMeters","toggleLosses","toggleEq"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", e=>{
+    const key = id.replace("toggle","").toLowerCase();
+    state.show[key]= e.target.checked;
+  });
+});
+document.getElementById("toggleReducedMotion").addEventListener("change", e=>{ state.reducedMotion = e.target.checked; });
+
+document.querySelectorAll("#learningPills .pill").forEach(p=>{
+  p.addEventListener("click", ()=>{
+    state.learningLevel = p.dataset.lvl;
+    document.querySelectorAll("#learningPills .pill").forEach(x=>x.classList.toggle("active", x===p));
+  });
+});
+
+document.querySelectorAll("#dockTabs button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#dockTabs button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".dock-panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("panel-"+btn.dataset.panel).classList.add("active");
+    if (btn.dataset.panel==="flow") drawEnergyFlow(document.getElementById("flowCanvas"));
+    if (btn.dataset.panel==="table") renderDataTable();
+    if (btn.dataset.panel==="assumptions") renderAssumptions();
+    if (btn.dataset.panel==="challenge") renderChallenge();
+    if (btn.dataset.panel==="quiz") renderQuiz();
+    if (btn.dataset.panel==="compare") refreshCompareSelectors();
+  });
+});
+
+/* ============================= DATA TABLE / RECORD / EXPORT ================ */
+function recordExperiment(){
+  state.trialCounter++;
+  const bal = computeCurrentEnergyBalance();
+  const trial = {
+    id: state.trialCounter,
+    preset: presetName(),
+    system: state.category,
+    subtype: state.category==="spring"? state.springType : state.flywheelType,
+    controlMode: state.controlMode,
+    t: state.simTime,
+  };
+  if (state.category==="spring"){
+    const r = state.springType==="torsion"? calculateTorsionSpring() : calculateSpringForceEnergy(state.spring.x);
+    Object.assign(trial, {
+      k: fmt(calculateSpringStiffness(),4), x: fmt(state.spring.x,2), F: fmt(r.F,2), F0: fmt(state.spring.F0,2),
+      m: fmt(state.spring.m,2), c: fmt(state.spring.c,2), Us: fmt(r.Us,3),
+      Ek: fmt(0.5*state.spring.m*state.spring.vdyn*state.spring.vdyn,3),
+      tau: (function(){const s=calculateSpringStress(r.F); return Number.isNaN(s)?"N/A":fmt(s,2);})(),
+      strokeLimit: fmt(state.spring.xmax,1),
+      safety: checkOperatingLimits().status
+    });
+  } else {
+    const I = calculateFlywheelInertia();
+    Object.assign(trial, {
+      m: fmt(state.fw.fm,2), ri: fmt(state.fw.ri,3), ro: fmt(state.fw.ro,3), I: fmt(I,4),
+      Nawal: fmt(state.fw.N0,1), Nakhir: fmt(omegaToRpm(state.fw.omega),2), Nmin: fmt(state.fw.Nmin,1),
+      Ef: fmt(calculateFlywheelEnergy(I,state.fw.omega),1),
+      Wout: fmt(state.energy.Wout/1000,4), unmet: fmt(state.fw.unmetEnergy/1000,4),
+      safety: checkOperatingLimits().status
+    });
+  }
+  trial.Win = fmt(state.energy.Win/1000,4); trial.Wloss = fmt(state.energy.Wloss/1000,4);
+  trial.residual = fmt(bal.R,4); trial.model = state.category+"-"+trial.subtype;
+  state.trials.push(trial);
+  renderDataTable();
+  refreshCompareSelectors();
+}
+document.getElementById("btnRecord").addEventListener("click", recordExperiment);
+document.getElementById("btnClearData").addEventListener("click", ()=>{ state.trials=[]; renderDataTable(); refreshCompareSelectors(); });
+
+function renderDataTable(){
+  const table = document.getElementById("dataTable");
+  if (state.trials.length===0){ table.querySelector("thead").innerHTML=""; table.querySelector("tbody").innerHTML="<tr><td>—</td></tr>"; return; }
+  const cols = Object.keys(state.trials[0]);
+  table.querySelector("thead").innerHTML = "<tr>"+cols.map(c=>`<th>${c}</th>`).join("")+"</tr>";
+  table.querySelector("tbody").innerHTML = state.trials.map(row=>"<tr>"+cols.map(c=>`<td>${row[c]!==undefined?row[c]:"N/A"}</td>`).join("")+"</tr>").join("");
+}
+document.getElementById("btnExportCSV").addEventListener("click", ()=>{
+  if (state.trials.length===0){ alert(state.lang==="ID"?"Tidak ada data untuk diekspor.":"No data to export."); return; }
+  const cols = Object.keys(state.trials[0]);
+  let csv = cols.join(",")+"\n";
+  state.trials.forEach(row=>{ csv += cols.map(c=> (row[c]!==undefined?row[c]:"N/A")).join(",")+"\n"; });
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="experiment_data.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
+
+function refreshCompareSelectors(){
+  const a = document.getElementById("compareA"), b=document.getElementById("compareB");
+  [a,b].forEach(sel=>{ sel.innerHTML = state.trials.map(tr=>`<option value="${tr.id}">Trial ${tr.id} (${tr.subtype})</option>`).join(""); });
+}
+document.getElementById("btnCompare").addEventListener("click", ()=>{
+  const idA = parseInt(document.getElementById("compareA").value), idB = parseInt(document.getElementById("compareB").value);
+  const trA = state.trials.find(t=>t.id===idA), trB = state.trials.find(t=>t.id===idB);
+  const el = document.getElementById("compareResult");
+  if (!trA || !trB){ el.innerHTML = "<p class='small'>"+(state.lang==="ID"?"Pilih dua trial yang valid.":"Select two valid trials.")+"</p>"; return; }
+  const keys = Array.from(new Set([...Object.keys(trA), ...Object.keys(trB)]));
+  el.innerHTML = "<div class='table-wrap'><table><thead><tr><th></th><th>Trial "+trA.id+"</th><th>Trial "+trB.id+"</th></tr></thead><tbody>"+
+    keys.map(k=>`<tr><td>${k}</td><td>${trA[k]??"N/A"}</td><td>${trB[k]??"N/A"}</td></tr>`).join("")+
+    "</tbody></table></div>";
+});
+
+/* ============================= WORKSHEET =================================== */
+document.getElementById("btnWsCheck").addEventListener("click", ()=>{
+  const pred = parseFloat(document.getElementById("wsPrediction").value);
+  let result;
+  if (state.category==="spring"){
+    const r = state.springType==="torsion"? calculateTorsionSpring(): calculateSpringForceEnergy(state.spring.x);
+    result = r.Us;
+  } else {
+    result = calculateFlywheelEnergy(calculateFlywheelInertia(), state.fw.omega);
+  }
+  document.getElementById("wsResult").value = fmt(result,3);
+  if (!Number.isNaN(pred) && pred!==0){
+    document.getElementById("wsDiff").value = fmt(Math.abs(result-pred)/Math.abs(pred)*100,2)+" %";
+  } else {
+    document.getElementById("wsDiff").value = "N/A";
+  }
+});
+
+/* ============================= CHALLENGE MODE =============================== */
+const CHALLENGES = [
+ {id:"spring1", textID:"k = 20 N/mm dan x = 50 mm. Hitung F (N) dan Us (J).", textEN:"k = 20 N/mm and x = 50 mm. Compute F (N) and Us (J).",
+  answers:[{label:"F (N)",value:1000},{label:"Us (J)",value:25}],
+  hintsID:["Ubah N/mm menjadi N/m dan mm menjadi m.","Gunakan F = kx dan area di bawah grafik F–x.","Substitusi: F=20000×0.05; Us=½×20000×0.05²."],
+  hintsEN:["Convert N/mm to N/m and mm to m.","Use F = kx and the area under the F–x graph.","Substitute: F=20000×0.05; Us=½×20000×0.05²."]},
+ {id:"fly1", textID:"I = 8 kg·m², Nawal = 600 rpm, energi dilepas 4825.14 J. Hitung Nakhir (rpm), losses diabaikan.",
+  textEN:"I = 8 kg·m², N_initial = 600 rpm, energy released 4825.14 J. Compute N_final (rpm), losses neglected.",
+  answers:[{label:"Nakhir (rpm)",value:500}],
+  hintsID:["Konversi RPM menjadi rad/s.","Gunakan Eakhir = Eawal − ΔE.","Gunakan ωakhir = √(2Eakhir/I), lalu ubah ke rpm."],
+  hintsEN:["Convert RPM to rad/s.","Use E_final = E_initial − ΔE.","Use ω_final = √(2E_final/I), then convert to rpm."]}
+];
+function renderChallenge(){
+  const el = document.getElementById("challengeArea");
+  el.innerHTML="";
+  CHALLENGES.forEach(ch=>{
+    const box = document.createElement("div"); box.className="qa";
+    const text = state.lang==="ID"? ch.textID : ch.textEN;
+    const hints = state.lang==="ID"? ch.hintsID : ch.hintsEN;
+    box.innerHTML = `<b>${text}</b><br><br>` +
+      ch.answers.map((a,i)=>`<label class="small">${a.label}: <input type="number" step="any" id="ans_${ch.id}_${i}" style="background:var(--navy-950);border:1px solid var(--steel-600);color:var(--ink-100);border-radius:4px;padding:4px;width:120px;"></label>`).join("<br>") +
+      `<div class="btnrow" style="margin-top:8px;">
+        <button class="btn primary" data-check="${ch.id}">${state.lang==="ID"?"PERIKSA JAWABAN":"CHECK ANSWER"}</button>
+        <button class="btn" data-hint="${ch.id}" data-n="0">Hint 1</button>
+        <button class="btn" data-hint="${ch.id}" data-n="1">Hint 2</button>
+        <button class="btn" data-hint="${ch.id}" data-n="2">Hint 3</button>
+        <button class="btn" data-solve="${ch.id}">Show Solution</button>
+      </div><div class="feedback" id="fb_${ch.id}"></div>`;
+    el.appendChild(box);
+  });
+  el.querySelectorAll("[data-check]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const ch = CHALLENGES.find(c=>c.id===btn.dataset.check);
+      let allOk=true;
+      ch.answers.forEach((a,i)=>{
+        const v = parseFloat(document.getElementById(`ans_${ch.id}_${i}`).value);
+        const tol = Math.max(0.01*Math.abs(a.value), 0.5);
+        if (Number.isNaN(v) || Math.abs(v-a.value)>tol) allOk=false;
+      });
+      document.getElementById("fb_"+ch.id).textContent = allOk? (state.lang==="ID"?"BENAR! Selamat.":"CORRECT! Well done.") : (state.lang==="ID"?"COBA LAGI — periksa satuan dan substitusi.":"TRY AGAIN — check units and substitution.");
+    });
+  });
+  el.querySelectorAll("[data-hint]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const ch = CHALLENGES.find(c=>c.id===btn.dataset.hint);
+      const hints = state.lang==="ID"? ch.hintsID:ch.hintsEN;
+      document.getElementById("fb_"+ch.id).textContent = "Hint: "+hints[parseInt(btn.dataset.n)];
+    });
+  });
+  el.querySelectorAll("[data-solve]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const ch = CHALLENGES.find(c=>c.id===btn.dataset.solve);
+      document.getElementById("fb_"+ch.id).textContent = (state.lang==="ID"?"Solusi: ":"Solution: ")+ch.answers.map(a=>a.label+" = "+a.value).join(", ");
+    });
+  });
+}
+
+/* ============================= CONCEPT QUIZ ================================ */
+const QUIZ = [
+ {qID:"Jika deformasi pegas linear tanpa preload digandakan pada k tetap, energi menjadi berapa?",
+  qEN:"If the deformation of a linear spring without preload is doubled at constant k, the energy becomes?",
+  opts:["2×","4×","½×","Tetap / Unchanged"], correct:1, expl:"Us sebanding x² / Us is proportional to x²."},
+ {qID:"Jika RPM flywheel digandakan pada I tetap, energi menjadi berapa?",
+  qEN:"If flywheel RPM is doubled at constant I, the energy becomes?",
+  opts:["2×","4×","8×","Tetap / Unchanged"], correct:1, expl:"Ef sebanding N² / Ef is proportional to N²."},
+ {qID:"Pada m, radius luar, dan RPM yang sama, energi thin rim ideal dibanding solid disk adalah?",
+  qEN:"At the same m, outer radius, and RPM, the energy of an ideal thin rim vs a solid disk is?",
+  opts:["Sama / Same","Setengah / Half","Dua kali / Twice","Nol / Zero"], correct:2, expl:"I rim = mr² dan I disk = ½mr² / I_rim = mr² and I_disk = ½mr²."},
+ {qID:"Jika daya beban melebihi daya motor sementara rotor memasok selisihnya, apa yang terjadi pada RPM?",
+  qEN:"If load power exceeds motor power while the rotor supplies the difference, what happens to RPM?",
+  opts:["Naik / Rises","Turun / Falls","Selalu tetap / Always constant","Tidak terkait / Unrelated"], correct:1, expl:"Rotor melepas energi selama tersedia / The rotor releases energy while available."},
+ {qID:"Pada gaya tetap, jika k digandakan pada pegas linear tanpa preload, energi menjadi?",
+  qEN:"At constant force, if k is doubled for a linear spring without preload, the energy becomes?",
+  opts:["Dua kali / Twice","Empat kali / Four times","Setengah / Half","Tetap / Unchanged"], correct:2, expl:"Us = F²/(2k) / Us = F²/(2k)."},
+ {qID:"Saat pegas bebas tanpa redaman melewati posisi x=0, ke mana energi elastisnya berpindah?",
+  qEN:"As a free undamped spring passes through x=0, where does its elastic energy go?",
+  opts:["Hilang / Lost","Menjadi energi kinetik massa / Becomes kinetic energy of the mass","Bertambah tanpa input / Increases without input","Tetap seluruhnya elastis / Remains entirely elastic"], correct:1, expl:""},
+ {qID:"Mengapa energi flywheel saat Nmin biasanya tidak seluruhnya dianggap usable energy?",
+  qEN:"Why is flywheel energy at Nmin usually not entirely considered usable energy?",
+  opts:["Energinya nol / Energy is zero","Operasi membatasi putaran minimum / Operation limits minimum speed","I hilang / I disappears","Massa berubah / Mass changes"], correct:1, expl:""}
+];
+function renderQuiz(){
+  const el = document.getElementById("quizArea");
+  el.innerHTML="";
+  QUIZ.forEach((q,qi)=>{
+    const box = document.createElement("div"); box.className="qa";
+    const text = state.lang==="ID"? q.qID : q.qEN;
+    box.innerHTML = `<b>Q${qi+1}. ${text}</b>`;
+    q.opts.forEach((opt,oi)=>{
+      const b = document.createElement("button"); b.className="opt"; b.textContent = opt;
+      b.addEventListener("click", ()=>{
+        box.querySelectorAll(".opt").forEach(o=>o.classList.remove("correct","wrong"));
+        if (oi===q.correct) b.classList.add("correct"); else { b.classList.add("wrong"); box.children[q.correct+1].classList.add("correct"); }
+        const fb = box.querySelector(".feedback") || document.createElement("div");
+        fb.className="feedback";
+        fb.textContent = (oi===q.correct? (state.lang==="ID"?"Benar. ":"Correct. ") : (state.lang==="ID"?"Coba lagi. ":"Try again. ")) + q.expl;
+        box.appendChild(fb);
+      });
+      box.appendChild(b);
+    });
+    el.appendChild(box);
+  });
+}
+
+/* ============================= ASSUMPTIONS ================================= */
+function renderAssumptions(){
+  const listID = [
+   "Pegas elastis linear dalam rentang stroke yang diizinkan.",
+   "Prategang nol kecuali diaktifkan secara eksplisit.",
+   "Rumus heliks close-coiled hanya untuk geometri yang sesuai.",
+   "Massa terpusat dengan redaman viskos opsional.",
+   "Rotor kaku dan seimbang dengan I konstan selama satu run.",
+   "Distribusi massa rotor mengikuti model geometri yang dipilih (solid/rim/annular/custom).",
+   "Satu sumbu putar.",
+   "Rugi bantalan dan aerodinamik hanya diperhitungkan bila diaktifkan; mode tanpa rugi bukan efisiensi sempurna yang diklaim berlaku umum.",
+   "Fleksibilitas poros, resonansi, kelelahan (fatigue), kenaikan suhu, transien kopling detail, dan kekuatan wadah rotor berada di luar model dasar.",
+   "Nilai material bersifat ilustratif kecuali dinyatakan mengacu pada sumber terdokumentasi.",
+   "Hasil merupakan penyederhanaan sistem nyata dan hanya valid untuk asumsi yang ditampilkan di sini."
+  ];
+  const listEN = [
+   "Linear elastic spring within its permitted stroke.",
+   "Zero preload unless explicitly activated.",
+   "Close-coiled helical formula only for applicable geometry.",
+   "Lumped moving mass with optional viscous damping.",
+   "Rigid, balanced rotor with constant I within a single run.",
+   "Rotor mass distribution follows the selected geometry model (solid/rim/annular/custom).",
+   "Single rotational axis.",
+   "Bearing and aerodynamic losses are only counted when enabled; the loss-off mode is not a claim of universal perfect efficiency.",
+   "Shaft flexibility, resonance, fatigue, thermal rise, detailed clutch transients, and rotor containment strength are outside the basic model.",
+   "Material values are illustrative unless explicitly linked to a documented reference.",
+   "Results are a simplification of a real system and are valid only under the assumptions shown here."
+  ];
+  document.getElementById("assumptionsList").innerHTML = (state.lang==="ID"?listID:listEN).map(x=>`<li>${x}</li>`).join("");
+}
+
+/* ============================= TOOLTIPS ===================================== */
+const tooltipEl = document.getElementById("tooltipEl");
+document.addEventListener("mouseover", e=>{
+  const tgt = e.target.closest("[data-tip]");
+  if (!tgt) return;
+  tooltipEl.textContent = t(tgt.dataset.tip);
+  tooltipEl.classList.remove("hidden");
+});
+document.addEventListener("mousemove", e=>{
+  if (tooltipEl.classList.contains("hidden")) return;
+  tooltipEl.style.left = (e.clientX+14)+"px";
+  tooltipEl.style.top = (e.clientY+14)+"px";
+});
+document.addEventListener("mouseout", e=>{
+  if (e.target.closest("[data-tip]")) tooltipEl.classList.add("hidden");
+});
+
+/* ============================= CANVAS CLICK — INFO PANEL ==================== */
+canvas.addEventListener("click", (e)=>{
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX-rect.left, y = e.clientY-rect.top;
+  showObjectInfo(x,y);
+});
+function showObjectInfo(x,y){
+  document.querySelectorAll(".info-popover").forEach(p=>p.remove());
+  const pop = document.createElement("div"); pop.className="info-popover";
+  pop.style.left = Math.min(x+10, canvas.clientWidth-270)+"px";
+  pop.style.top = Math.min(y+10, canvas.clientHeight-160)+"px";
+  let html;
+  if (state.category==="spring"){
+    const label = state.springType==="compression"? (state.lang==="ID"?"PEGAS TEKAN":"COMPRESSION SPRING")
+                : state.springType==="extension"? (state.lang==="ID"?"PEGAS TARIK":"EXTENSION SPRING")
+                : (state.lang==="ID"?"PEGAS TORSI":"TORSION SPRING");
+    html = `<h4>${label}</h4>
+      <div class="small"><b>${state.lang==="ID"?"FUNGSI":"FUNCTION"}:</b> ${state.lang==="ID"?"Menyimpan energi melalui deformasi elastis.":"Stores energy by elastic deformation."}</div>
+      <div class="small"><b>${state.lang==="ID"?"PARAMETER":"PARAMETERS"}:</b> k, x, F, Us, stroke limit</div>
+      <div class="small"><b>${state.lang==="ID"?"PERSAMAAN":"EQUATION"}:</b> F=kx; Us=½kx²</div>
+      <div class="small"><b>${state.lang==="ID"?"APLIKASI":"APPLICATION"}:</b> Punch return, cam follower, mechanical return mechanism</div>`;
+  } else {
+    const label = state.flywheelType==="rim"? (state.lang==="ID"?"RIM RODA GILA":"FLYWHEEL RIM") : (state.lang==="ID"?"CAKRAM RODA GILA":"FLYWHEEL DISK");
+    html = `<h4>${label}</h4>
+      <div class="small"><b>${state.lang==="ID"?"FUNGSI":"FUNCTION"}:</b> ${state.lang==="ID"?"Menyimpan energi kinetik rotasi.":"Stores rotational kinetic energy."}</div>
+      <div class="small"><b>${state.lang==="ID"?"PARAMETER":"PARAMETERS"}:</b> m, r, I, ω, Ef</div>
+      <div class="small"><b>${state.lang==="ID"?"PERSAMAAN":"EQUATION"}:</b> Ef=½Iω²</div>
+      <div class="small"><b>${state.lang==="ID"?"APLIKASI":"APPLICATION"}:</b> Mechanical press, engine speed smoothing, energy recovery</div>`;
+  }
+  pop.innerHTML = html + `<div class="close">✕</div>`;
+  canvas.parentElement.appendChild(pop);
+  pop.querySelector(".close").addEventListener("click", ()=>pop.remove());
+}
+
+/* ============================= PRINT REPORT ================================= */
+document.getElementById("btnPrintReport").addEventListener("click", ()=>{
+  const el = document.getElementById("printReport");
+  const bal = computeCurrentEnergyBalance();
+  let cardsHtml = document.getElementById("engineeringCards").innerHTML;
+  el.innerHTML = `
+    <h2>${t("appTitle")}</h2>
+    <div class="pr-section"><b>${t("hPresetInfo")}:</b> ${presetName()}<br>${document.getElementById("presetInfoText").innerText}</div>
+    <div class="pr-section"><b>System:</b> ${state.category} / ${state.category==="spring"?state.springType:state.flywheelType} — Control mode: ${state.controlMode}</div>
+    <div class="pr-section"><b>Engineering results</b>${cardsHtml.replace(/class="card"/g,'style="border:1px solid #ccc;padding:8px;margin:6px 0;"').replace(/class="row"/g,'style="display:flex;justify-content:space-between;"').replace(/class="lbl"/g,'').replace(/class="num"/g,'style="font-family:monospace;"')}</div>
+    <div class="pr-section"><b>Energy balance:</b> E(t)-E(0) = Win - Wout - Wloss. Residual R = ${fmt(bal.R,4)} J. Status: ${bal.ok? t("modelReady"):t("modelError")}.</div>
+    <div class="pr-section"><b>Experiment data</b>${document.getElementById("dataTable").outerHTML}</div>
+    <div class="pr-section"><b>Worksheet</b><br>
+      Goal: ${document.getElementById("wsGoal").value||"-"}<br>
+      Independent variable: ${document.getElementById("wsIndep").value||"-"}<br>
+      Controlled variable: ${document.getElementById("wsControlled").value||"-"}<br>
+      Prediction: ${document.getElementById("wsPrediction").value||"-"} | Result: ${document.getElementById("wsResult").value||"-"} | Diff: ${document.getElementById("wsDiff").value||"-"}<br>
+      Conclusion: ${document.getElementById("wsConclusion").value||"-"}
+    </div>
+    <div class="pr-section small">${new Date().toString()}</div>
+  `;
+  window.print();
+});
+
+/* ============================= VERIFICATION TESTS =========================== */
+function runVerificationTests(){
+  const results = [];
+  function check(name, actual, expected, tol){
+    const ok = Math.abs(actual-expected) <= tol;
+    results.push(`${ok?"PASS":"FAIL"} — ${name}: got ${fmt(actual,4)}, expected ${fmt(expected,4)} (tol ${tol})`);
+  }
+  // Spring test
+  {
+    const k=20, x=50; const kSI=k*1000, xSI=x/1000;
+    const F = kSI*xSI, Us = 0.5*kSI*xSI*xSI;
+    check("Spring F (k=20N/mm,x=50mm)", F, 1000, 0.01);
+    check("Spring Us (k=20N/mm,x=50mm)", Us, 25, 0.01);
+  }
+  // Flywheel test
+  {
+    const m=100, r=0.4, N=600;
+    const I = 0.5*m*r*r;
+    const w = rpmToOmega(N);
+    const Ef = 0.5*I*w*w;
+    check("Solid disk I (m=100,r=0.4)", I, 8, 1e-9);
+    check("Ef @600rpm", Ef, 15791.37, 1);
+    const w2 = rpmToOmega(500);
+    const dE = 0.5*I*(w*w-w2*w2);
+    check("ΔEf 600→500rpm", dE, 4825.14, 1);
+    const Ef2x = 0.5*I*Math.pow(rpmToOmega(1200),2);
+    check("Double RPM -> 4x energy", Ef2x/Ef, 4, 0.001);
+  }
+  alert(results.join("\n"));
+}
+document.getElementById("btnVerify").addEventListener("click", runVerificationTests);
+
+/* ============================= LANGUAGE SWITCH =============================== */
+function applyLanguage(){
+  document.documentElement.lang = state.lang.toLowerCase();
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.getElementById("langID").classList.toggle("active", state.lang==="ID");
+  document.getElementById("langEN").classList.toggle("active", state.lang==="EN");
+  populatePresetSelect();
+  rebuildSubtypeSelect();
+  applyPresetInfoOnly();
+  applyVisibility();
+  buildGraphGrid();
+  updateAll();
+  updateStageCaption();
+  renderAssumptions();
+  renderChallenge();
+  renderQuiz();
+}
+function applyPresetInfoOnly(){
+  const p = PRESETS.find(p=>p.id===state.preset);
+  if (p) document.getElementById("presetInfoText").innerHTML = "<p>"+(state.lang==="ID"?p.ctxID:p.ctxEN)+"</p>";
+}
+document.getElementById("langID").addEventListener("click", ()=>{ state.lang="ID"; applyLanguage(); });
+document.getElementById("langEN").addEventListener("click", ()=>{ state.lang="EN"; applyLanguage(); });
+
+/* ============================= INITIALIZATION ================================= */
+function init(){
+  resizeCanvas();
+  setupBindings();
+  populatePresetSelect();
+  applyPreset("pressFlywheel");
+  rebuildCategoryPillsUI();
+  updateStageCaption();
+  renderAssumptions();
+  renderChallenge();
+  renderQuiz();
+  refreshCompareSelectors();
+  // Demo auto-run: kick off charging then a load pulse, then pause, per initial-demonstration spec.
+  setTimeout(()=>{
+    state.fw.motorOn = true; state.fw.phase="charging"; state.running=true; lastFrameTime=null;
+  }, 400);
+  setTimeout(()=>{ state.fw.loadTimeRemaining = state.fw.dtload; }, 4200);
+  setTimeout(()=>{ state.running=false; }, 10500);
+}
+window.addEventListener("load", init);
+</script>
+</body>
+</html>

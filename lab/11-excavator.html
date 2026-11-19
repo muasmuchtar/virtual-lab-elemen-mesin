@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExcaSim HX-220 — Laboratorium Virtual Ekskavator Hidrolik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          basey: '#0a0d12',
+          panel: '#121822',
+          panel2: '#0d131b',
+          edge: '#233041',
+          safety: '#FDB913',
+          hcyan: '#22D3EE',
+          horange: '#FB8B24',
+          danger: '#EF4444',
+          okgreen: '#34D399',
+          warnamber: '#FBBF24',
+          txt: '#E7ECF2',
+          txtmute: '#8493A6'
+        },
+        fontFamily: {
+          ind: ['Oswald', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Oswald', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0d131b; }
+  ::-webkit-scrollbar-thumb { background: #233041; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2c3d52; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: #1b2531; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 3px;
+    background: #FDB913; border: 2px solid #0a0d12;
+    box-shadow: 0 0 0 1px #FDB913; cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 3px;
+    background: #FDB913; border: 2px solid #0a0d12; cursor: pointer;
+  }
+  input[type=range]:disabled { opacity: .35; cursor: not-allowed; }
+  input[type=range]:disabled::-webkit-slider-thumb { background: #5b5b5b; box-shadow:none; }
+  input[type=range]:disabled::-moz-range-thumb { background: #5b5b5b; }
+
+  select:focus, input:focus, button:focus-visible, .toggle-track:focus-visible {
+    outline: 2px solid #22D3EE; outline-offset: 2px;
+  }
+
+  .toggle-track {
+    width: 44px; height: 24px; border-radius: 999px;
+    background: #1b2531; border: 1px solid #233041; position: relative;
+    transition: background .2s; cursor: pointer; flex-shrink:0;
+  }
+  .toggle-track.on { background: #0e5a63; border-color:#0e5a63; }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+    border-radius: 999px; background: #8493A6; transition: transform .2s, background .2s;
+  }
+  .toggle-track.on .toggle-thumb { transform: translateX(20px); background: #22D3EE; }
+
+  @keyframes flashDanger {
+    0%, 100% { box-shadow: inset 0 0 0 3px rgba(239,68,68,0.95), 0 0 22px rgba(239,68,68,0.35); }
+    50% { box-shadow: inset 0 0 0 3px rgba(239,68,68,0.15), 0 0 4px rgba(239,68,68,0.05); }
+  }
+  .flash-danger { animation: flashDanger 0.9s ease-in-out infinite; }
+
+  .stat-num { font-family: 'JetBrains Mono', monospace; }
+  .tick-label { font-family: 'Oswald', sans-serif; letter-spacing: .04em; }
+
+  .btn-industrial { border: 1px solid #233041; background: #161f2b; transition: all .15s; }
+  .btn-industrial:hover:not(:disabled) { border-color: #2c3d52; background: #1a2531; }
+  .btn-industrial:active:not(:disabled) { transform: translateY(1px); }
+  .btn-industrial:disabled { opacity: .4; cursor: not-allowed; }
+
+  .canvas-wrap { background: radial-gradient(ellipse at 50% 15%, #16202c 0%, #0a0d12 78%); }
+</style>
+</head>
+<body class="bg-basey text-txt min-h-screen">
+
+<header class="border-b border-edge bg-panel2/90 backdrop-blur sticky top-0 z-30">
+  <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-sm bg-safety text-basey flex items-center justify-center font-bold text-lg">HX</div>
+      <div>
+        <h1 class="text-xl font-semibold tracking-wide leading-none">EXCASIM <span class="text-safety">HX-220</span></h1>
+        <p class="text-xs text-txtmute tracking-wide">Laboratorium Virtual Ekskavator Hidrolik &middot; Kinematika &amp; Fisika Muatan</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <label class="flex items-center gap-2 text-sm text-txtmute select-none">
+        <span class="tick-label">Bandingkan Eco-Hybrid</span>
+        <span id="compareToggle" class="toggle-track" role="switch" aria-checked="false" tabindex="0">
+          <span class="toggle-thumb"></span>
+        </span>
+      </label>
+      <div id="simClock" class="stat-num text-sm text-hcyan tabular-nums">T+00:00.0</div>
+    </div>
+  </div>
+  <div id="estopBanner" role="alert" class="hidden bg-danger text-basey text-center py-1.5 font-semibold tracking-widest text-sm">
+    🛑 STOP DARURAT AKTIF — SEMUA SISTEM DIHENTIKAN — TEKAN "RESET FISIKA" UNTUK MELANJUTKAN
+  </div>
+  <div id="tipBanner" role="alert" class="hidden bg-danger text-white text-center py-1.5 font-semibold tracking-widest text-sm">
+    ⚠ RISIKO TERGULING KRITIS — KURANGI JANGKAUAN ATAU MUATAN
+  </div>
+</header>
+
+<main class="max-w-[1600px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-[300px_1fr_360px] gap-4">
+
+  <!-- ============ LEFT PANEL ============ -->
+  <section class="space-y-4">
+    <div class="bg-panel border border-edge rounded-md p-4">
+      <h2 class="text-sm tracking-widest text-txtmute mb-3">KINEMATIKA SENDI</h2>
+
+      <div class="mb-4">
+        <div class="flex justify-between text-xs mb-1">
+          <label for="boomAngle" class="tick-label text-txtmute">SUDUT BOOM</label>
+          <span id="boomAngleVal" class="stat-num text-hcyan">35°</span>
+        </div>
+        <input type="range" id="boomAngle" min="-10" max="65" value="35" step="1">
+      </div>
+      <div class="mb-4">
+        <div class="flex justify-between text-xs mb-1">
+          <label for="armAngle" class="tick-label text-txtmute">SUDUT ARM (LIPAT)</label>
+          <span id="armAngleVal" class="stat-num text-hcyan">90°</span>
+        </div>
+        <input type="range" id="armAngle" min="0" max="180" value="90" step="1">
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <label for="bucketAngle" class="tick-label text-txtmute">SUDUT BUCKET (LIPAT)</label>
+          <span id="bucketAngleVal" class="stat-num text-hcyan">90°</span>
+        </div>
+        <input type="range" id="bucketAngle" min="0" max="180" value="90" step="1">
+      </div>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-4">
+      <h2 class="text-sm tracking-widest text-txtmute mb-3">MESIN &amp; HIDROLIK</h2>
+      <div class="mb-4">
+        <div class="flex justify-between text-xs mb-1">
+          <label for="engineRpm" class="tick-label text-txtmute">RPM MESIN</label>
+          <span id="engineRpmVal" class="stat-num text-horange">1600 RPM</span>
+        </div>
+        <input type="range" id="engineRpm" min="1000" max="2200" value="1600" step="50">
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <label for="hydPressure" class="tick-label text-txtmute">TEKANAN JALUR HIDROLIK</label>
+          <span id="hydPressureVal" class="stat-num text-horange">230 bar</span>
+        </div>
+        <input type="range" id="hydPressure" min="100" max="350" value="230" step="5">
+      </div>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-4">
+      <h2 class="text-sm tracking-widest text-txtmute mb-3">PENGATURAN SKENARIO</h2>
+      <div class="mb-4">
+        <label for="soilType" class="tick-label text-xs text-txtmute block mb-1">JENIS TANAH</label>
+        <select id="soilType" class="w-full bg-panel2 border border-edge rounded px-2 py-2 text-sm text-txt">
+          <option value="sand">Pasir (Gembur)</option>
+          <option value="clay" selected>Tanah Liat (Padat)</option>
+          <option value="rock">Batu Keras</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <div class="flex justify-between text-xs mb-1">
+          <label for="groundSlope" class="tick-label text-txtmute">KEMIRINGAN TANAH</label>
+          <span id="groundSlopeVal" class="stat-num text-safety">0°</span>
+        </div>
+        <input type="range" id="groundSlope" min="-15" max="15" value="0" step="1">
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <label for="targetPayload" class="tick-label text-txtmute">TARGET MASSA MUATAN</label>
+          <span id="targetPayloadVal" class="stat-num text-safety">800 kg</span>
+        </div>
+        <input type="range" id="targetPayload" min="0" max="1400" value="800" step="50">
+      </div>
+      <p class="text-[11px] text-txtmute mt-3 leading-relaxed">Kapasitas terpasang bucket: <span class="stat-num text-txt">1400 kg</span>. Batu keras meningkatkan tekanan yang dibutuhkan &amp; memperlambat laju pengisian; pasir terisi paling cepat dengan resistansi terendah.</p>
+    </div>
+  </section>
+
+  <!-- ============ CENTER PANEL ============ -->
+  <section class="space-y-4">
+    <div id="canvasPanel" class="bg-panel border border-edge rounded-md p-3 canvas-wrap">
+      <canvas id="mainCanvas" width="900" height="500" class="w-full h-auto block rounded" style="aspect-ratio:900/500;"></canvas>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-4 flex flex-wrap items-center gap-3">
+      <button id="btnStartCycle" class="btn-industrial px-4 py-2 rounded text-sm font-semibold tracking-wide bg-safety text-basey">▶ MULAI SIKLUS GALI OTOMATIS</button>
+      <button id="btnDump" class="btn-industrial px-4 py-2 rounded text-sm tracking-wide">⤵ TUANG MUATAN</button>
+      <button id="btnReset" class="btn-industrial px-4 py-2 rounded text-sm tracking-wide">⟲ RESET FISIKA</button>
+      <button id="btnEstop" class="btn-industrial px-4 py-2 rounded text-sm font-semibold tracking-wide bg-danger/90 border-danger text-basey ml-auto">■ STOP DARURAT</button>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm tracking-widest text-txtmute">STATUS SIKLUS</h2>
+        <span id="cycleStateLabel" class="stat-num text-xs text-hcyan">DIAM</span>
+      </div>
+      <div class="w-full h-2 bg-panel2 rounded overflow-hidden border border-edge">
+        <div id="cycleProgress" class="h-full bg-hcyan" style="width:0%; transition:width .1s linear;"></div>
+      </div>
+      <p id="cycleDesc" class="text-xs text-txtmute mt-2 leading-relaxed">Mesin dalam keadaan diam. Atur parameter dan mulai siklus gali otomatis, atau geser slider sendi secara manual.</p>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT PANEL ============ -->
+  <section class="space-y-4">
+    <div class="bg-panel border border-edge rounded-md p-4">
+      <h2 class="text-sm tracking-widest text-txtmute mb-3">TELEMETRI LANGSUNG</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-panel2 border border-edge rounded p-3">
+          <p class="text-[10px] tracking-widest text-txtmute tick-label">BERAT MUATAN</p>
+          <p class="mt-1"><span id="hudPayload" class="stat-num text-2xl text-safety">0</span> <span class="text-xs text-txtmute">kg</span></p>
+        </div>
+        <div class="bg-panel2 border border-edge rounded p-3">
+          <p class="text-[10px] tracking-widest text-txtmute tick-label">RISIKO TERGULING</p>
+          <p class="mt-1"><span id="hudTipIndex" class="stat-num text-2xl">0</span><span class="text-xs text-txtmute">%</span></p>
+          <div class="w-full h-1.5 bg-panel rounded overflow-hidden mt-1">
+            <div id="tipBar" class="h-full bg-okgreen" style="width:0%; transition:width .2s;"></div>
+          </div>
+        </div>
+        <div class="bg-panel2 border border-edge rounded p-3">
+          <p class="text-[10px] tracking-widest text-txtmute tick-label">DAYA HIDROLIK</p>
+          <p class="mt-1"><span id="hudPower" class="stat-num text-2xl text-hcyan">0</span> <span class="text-xs text-txtmute">kW</span></p>
+        </div>
+        <div class="bg-panel2 border border-edge rounded p-3">
+          <p class="text-[10px] tracking-widest text-txtmute tick-label">KONSUMSI BAHAN BAKAR</p>
+          <p class="mt-1"><span id="hudFuel" class="stat-num text-2xl text-horange">0</span> <span class="text-xs text-txtmute">L/jam</span></p>
+        </div>
+      </div>
+      <div id="ecoSavingsBox" class="hidden mt-3 bg-panel2 border border-hcyan/40 rounded p-3">
+        <p class="text-[10px] tracking-widest text-hcyan tick-label mb-1">PERBANDINGAN ECO-HYBRID</p>
+        <p id="ecoSavingsText" class="text-xs text-txtmute leading-relaxed"></p>
+      </div>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-3">
+      <h3 class="text-xs tracking-widest text-txtmute mb-1">TEKANAN HIDROLIK (BAR) vs WAKTU</h3>
+      <div style="height:130px;"><canvas id="chartPressure"></canvas></div>
+    </div>
+    <div class="bg-panel border border-edge rounded-md p-3">
+      <h3 class="text-xs tracking-widest text-txtmute mb-1">TORSI SENDI BOOM (kN&middot;m) vs WAKTU</h3>
+      <div style="height:130px;"><canvas id="chartTorque"></canvas></div>
+    </div>
+    <div class="bg-panel border border-edge rounded-md p-3">
+      <h3 class="text-xs tracking-widest text-txtmute mb-1">MUATAN BUCKET (kg) vs WAKTU</h3>
+      <div style="height:130px;"><canvas id="chartPayload"></canvas></div>
+    </div>
+
+    <div class="bg-panel border border-edge rounded-md p-4 flex gap-2">
+      <button id="btnExportReport" class="btn-industrial flex-1 px-3 py-2 rounded text-xs">⇩ EKSPOR LAPORAN (HTML)</button>
+      <button id="btnExportJson" class="btn-industrial flex-1 px-3 py-2 rounded text-xs">⇩ EKSPOR LOG (JSON)</button>
+    </div>
+  </section>
+</main>
+
+<footer class="max-w-[1600px] mx-auto px-4 pb-8 pt-2 text-xs text-txtmute">
+  Simulasi edukatif. Kinematika dan fisika muatan merupakan pendekatan yang disederhanakan untuk tujuan pembelajaran dan tidak mewakili data rekayasa bersertifikat untuk model mesin tertentu.
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ==================================================================
+  // CONSTANTS
+  // ==================================================================
+  const CFG = {
+    boomLenM: 6.0,
+    armLenM: 3.35,
+    bucketLenM: 1.6,
+    bucketCapacityKg: 1400,
+    machineWeightKg: 20000,
+    stabArmM: 1.55,
+    linkageSelfWeightKg: 1900,
+    pumpFlowCoef: 0.062,   // L/min per rpm
+    scalePxPerM: 30
+  };
+
+  const SOIL = {
+    sand: { label: 'Pasir (Gembur)',   resistance: 0.55, fillRateKgS: 230, pressureMult: 0.82, pitGrowth: 9, maxPitPx: 58, colorA: '#cbab72', colorB: '#a5854f', rocky: false },
+    clay: { label: 'Tanah Liat (Padat)', resistance: 1.00, fillRateKgS: 150, pressureMult: 1.05, pitGrowth: 6, maxPitPx: 44, colorA: '#8a6a4c', colorB: '#5f4732', rocky: false },
+    rock: { label: 'Batu Keras',      resistance: 1.85, fillRateKgS: 68,  pressureMult: 1.50, pitGrowth: 3, maxPitPx: 24, colorA: '#797d80', colorB: '#4c4f52', rocky: true }
+  };
+
+  const PHASES = {
+    idle:          { next: null,           dur: 0,    desc: 'Mesin dalam keadaan diam. Atur parameter dan mulai siklus gali otomatis.' },
+    lower_dig:     { next: 'digging',      dur: 1.4,  boom: 14,  arm: 35,  bucket: 150, swing: 0,  desc: 'Menurunkan boom dan memposisikan gigi bucket ke dalam tanah.' },
+    digging:       { next: 'lifting',      dur: null, boom: 10,  arm: 158, bucket: 25,             desc: 'Melipat arm dan bucket menembus material — mengisi muatan.' },
+    lifting:       { next: 'swinging_out', dur: 1.3,  boom: 58,  arm: 150, bucket: 20,             desc: 'Mengangkat boom ke ketinggian transportasi dengan bucket bermuatan.' },
+    swinging_out:  { next: 'dumping',      dur: 1.5,  boom: 58,  arm: 150, bucket: 20,  swing: 90, desc: 'Mengayun rumah (house) menuju tumpukan tanah / truk pengangkut.' },
+    dumping:       { next: 'swinging_back',dur: 1.0,  boom: 58,  arm: 150, bucket: 172, swing: 90, desc: 'Membuka bucket — melepaskan muatan.' },
+    swinging_back: { next: 'returning',    dur: 1.5,  boom: 40,  arm: 110, bucket: 90,  swing: 0,  desc: 'Mengayun rumah kembali ke sisi galian.' },
+    returning:     { next: 'lower_dig',    dur: 1.2,  boom: 35,  arm: 90,  bucket: 90,             desc: 'Kembali ke posisi netral awal penggalian.' }
+  };
+
+  // ==================================================================
+  // STATE
+  // ==================================================================
+  const state = {
+    boomAngle: 35, armAngle: 90, bucketAngle: 90,
+    boomTarget: 35, armTarget: 90, bucketTarget: 90,
+    swingAngle: 0, swingTarget: 0,
+    engineRpm: 1600, hydPressureSet: 230,
+    soil: 'clay', slopeDeg: 0, targetPayload: 800,
+    payload: 0, pitDepthPx: 0, digMarkerX: undefined,
+    pressureDisplay: 0, powerKw: 0, fuelLh: 0, torqueKnm: 0, tipIndex: 0,
+    ecoPressure: 0, ecoPowerKw: 0, ecoFuelLh: 0,
+    cycleState: 'idle', cycleTimer: 0, cyclePhaseDur: 1,
+    autoCycle: false, eStop: false, compareMode: false,
+    resumeAfterDumpAuto: false,
+    simTime: 0, kin: null
+  };
+
+  let telemetry = [];
+  let lastFrameT = performance.now();
+
+  // ==================================================================
+  // DOM REFS
+  // ==================================================================
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    boomAngle: $('boomAngle'), armAngle: $('armAngle'), bucketAngle: $('bucketAngle'),
+    boomAngleVal: $('boomAngleVal'), armAngleVal: $('armAngleVal'), bucketAngleVal: $('bucketAngleVal'),
+    engineRpm: $('engineRpm'), engineRpmVal: $('engineRpmVal'),
+    hydPressure: $('hydPressure'), hydPressureVal: $('hydPressureVal'),
+    soilType: $('soilType'), groundSlope: $('groundSlope'), groundSlopeVal: $('groundSlopeVal'),
+    targetPayload: $('targetPayload'), targetPayloadVal: $('targetPayloadVal'),
+    btnStartCycle: $('btnStartCycle'), btnDump: $('btnDump'), btnReset: $('btnReset'), btnEstop: $('btnEstop'),
+    btnExportReport: $('btnExportReport'), btnExportJson: $('btnExportJson'),
+    compareToggle: $('compareToggle'),
+    estopBanner: $('estopBanner'), tipBanner: $('tipBanner'), canvasPanel: $('canvasPanel'),
+    cycleStateLabel: $('cycleStateLabel'), cycleProgress: $('cycleProgress'), cycleDesc: $('cycleDesc'),
+    hudPayload: $('hudPayload'), hudTipIndex: $('hudTipIndex'), tipBar: $('tipBar'),
+    hudPower: $('hudPower'), hudFuel: $('hudFuel'),
+    ecoSavingsBox: $('ecoSavingsBox'), ecoSavingsText: $('ecoSavingsText'),
+    simClock: $('simClock'),
+    canvas: $('mainCanvas')
+  };
+  const ctx = els.canvas.getContext('2d');
+
+  // ==================================================================
+  // HELPERS
+  // ==================================================================
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function deg2rad(d) { return d * Math.PI / 180; }
+  function lerpPt(a, b, t) { return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }; }
+
+  function kinematics(boomDeg, armDeg, bucketDeg) {
+    const aBoom = deg2rad(boomDeg);
+    const p1 = { x: CFG.boomLenM * Math.cos(aBoom), y: CFG.boomLenM * Math.sin(aBoom) };
+    const worldArm = boomDeg - 180 + armDeg;
+    const aArm = deg2rad(worldArm);
+    const p2 = { x: p1.x + CFG.armLenM * Math.cos(aArm), y: p1.y + CFG.armLenM * Math.sin(aArm) };
+    const worldBucket = worldArm - 180 + bucketDeg;
+    const aBucket = deg2rad(worldBucket);
+    const p3 = { x: p2.x + CFG.bucketLenM * Math.cos(aBucket), y: p2.y + CFG.bucketLenM * Math.sin(aBucket) };
+    return { p1: p1, p2: p2, p3: p3, worldBoom: boomDeg, worldArm: worldArm, worldBucket: worldBucket };
+  }
+
+  function groundYAt(px, W, H) {
+    const baseY = H * 0.74;
+    const cx = W * 0.5;
+    const slopeRad = deg2rad(state.slopeDeg);
+    return baseY + Math.tan(slopeRad) * (px - cx);
+  }
+
+  function pitOffsetAt(px, digX) {
+    const width = 95;
+    const d = Math.abs(px - digX);
+    if (d > width) return 0;
+    const f = 1 - d / width;
+    return state.pitDepthPx * f * f;
+  }
+
+  // ==================================================================
+  // CHART SETUP
+  // ==================================================================
+  Chart.defaults.color = '#8493A6';
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.font.size = 9;
+
+  function makeChart(canvasId, datasets) {
+    const c = document.getElementById(canvasId).getContext('2d');
+    return new Chart(c, {
+      type: 'line',
+      data: { labels: [], datasets: datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: { display: datasets.length > 1, labels: { boxWidth: 10, font: { size: 9 } } },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          x: { grid: { color: '#1b2531' }, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
+          y: { grid: { color: '#1b2531' }, beginAtZero: true, ticks: { font: { size: 9 } } }
+        }
+      }
+    });
+  }
+
+  const chartPressure = makeChart('chartPressure', [
+    { label: 'Standar', data: [], borderColor: '#22D3EE', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3 },
+    { label: 'Eco-Hybrid', data: [], borderColor: '#22D3EE', borderDash: [4, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.3, hidden: true }
+  ]);
+  const chartTorque = makeChart('chartTorque', [
+    { label: 'Torsi', data: [], borderColor: '#FB8B24', backgroundColor: 'rgba(251,139,36,0.08)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3 },
+    { label: 'Batas Aman', data: [], borderColor: '#EF4444', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0 }
+  ]);
+  const chartPayload = makeChart('chartPayload', [
+    { label: 'Muatan', data: [], borderColor: '#FDB913', backgroundColor: 'rgba(253,185,19,0.10)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.25 },
+    { label: 'Target', data: [], borderColor: '#8493A6', borderDash: [4, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0 }
+  ]);
+
+  // ==================================================================
+  // CYCLE STATE MACHINE
+  // ==================================================================
+  function enterPhase(name) {
+    state.cycleState = name;
+    state.cycleTimer = 0;
+    const ph = PHASES[name];
+    if (ph.boom !== undefined) state.boomTarget = ph.boom;
+    if (ph.arm !== undefined) state.armTarget = ph.arm;
+    if (ph.bucket !== undefined) state.bucketTarget = ph.bucket;
+    if (ph.swing !== undefined) state.swingTarget = ph.swing;
+
+    if (name === 'digging') {
+      const soil = SOIL[state.soil];
+      const need = Math.max(50, clamp(state.targetPayload, 0, CFG.bucketCapacityKg) - state.payload);
+      const rate = (soil.fillRateKgS * (state.hydPressureSet / 230)) / soil.resistance;
+      state.cyclePhaseDur = clamp(need / Math.max(rate, 1), 1.2, 8.5);
+    } else {
+      state.cyclePhaseDur = ph.dur;
+    }
+    setJointSlidersEnabled(name === 'idle');
+    const STATE_LABELS_ID = {
+      idle: 'DIAM', lower_dig: 'TURUN GALI', digging: 'MENGGALI', lifting: 'MENGANGKAT',
+      swinging_out: 'AYUN KELUAR', dumping: 'MENUANG', swinging_back: 'AYUN KEMBALI', returning: 'KEMBALI'
+    };
+    els.cycleStateLabel.textContent = STATE_LABELS_ID[name] || name.replace(/_/g, ' ').toUpperCase();
+    els.cycleDesc.textContent = ph.desc;
+  }
+
+  function updateCycle(dt) {
+    if (state.eStop) return;
+    if (state.cycleState === 'idle') return;
+    state.cycleTimer += dt;
+
+    if (state.cycleState === 'digging') {
+      const soil = SOIL[state.soil];
+      const rate = (soil.fillRateKgS * (state.hydPressureSet / 230)) / soil.resistance;
+      const capTarget = clamp(state.targetPayload, 0, CFG.bucketCapacityKg);
+      state.payload = clamp(state.payload + rate * dt, 0, Math.min(capTarget, CFG.bucketCapacityKg));
+      state.pitDepthPx = clamp(state.pitDepthPx + dt * soil.pitGrowth, 0, soil.maxPitPx);
+    }
+    if (state.cycleState === 'dumping') {
+      state.payload = clamp(state.payload - CFG.bucketCapacityKg * dt, 0, CFG.bucketCapacityKg);
+    }
+
+    const progress = clamp(state.cycleTimer / state.cyclePhaseDur, 0, 1);
+    els.cycleProgress.style.width = (progress * 100).toFixed(0) + '%';
+
+    const doneCondition = state.cycleState === 'digging'
+      ? (state.cycleTimer >= state.cyclePhaseDur || state.payload >= Math.min(state.targetPayload, CFG.bucketCapacityKg) - 0.5)
+      : state.cycleTimer >= state.cyclePhaseDur;
+
+    if (doneCondition) {
+      let next;
+      if (state.cycleState === 'dumping') {
+        next = state.resumeAfterDumpAuto ? 'swinging_back' : 'idle';
+      } else if (state.cycleState === 'returning') {
+        next = state.autoCycle ? 'lower_dig' : 'idle';
+      } else {
+        next = PHASES[state.cycleState].next;
+      }
+      if (next) enterPhase(next);
+    }
+  }
+
+  function dumpLoad() {
+    if (state.eStop) return;
+    if (state.payload <= 0) return;
+    state.resumeAfterDumpAuto = state.autoCycle;
+    enterPhase('dumping');
+  }
+
+  function tweenAngles(dt) {
+    const rate = 3.2;
+    const t = 1 - Math.exp(-rate * dt);
+    state.boomAngle = lerp(state.boomAngle, state.boomTarget, t);
+    state.armAngle = lerp(state.armAngle, state.armTarget, t);
+    state.bucketAngle = lerp(state.bucketAngle, state.bucketTarget, t);
+    state.swingAngle = lerp(state.swingAngle, state.swingTarget, t);
+  }
+
+  // ==================================================================
+  // PHYSICS
+  // ==================================================================
+  function updatePhysics(dt) {
+    const soil = SOIL[state.soil];
+    const kin = kinematics(state.boomAngle, state.armAngle, state.bucketAngle);
+    state.kin = kin;
+    const g = 9.81;
+
+    let baseTarget;
+    switch (state.cycleState) {
+      case 'digging': baseTarget = state.hydPressureSet * soil.pressureMult * 1.18; break;
+      case 'lower_dig':
+      case 'lifting': baseTarget = state.hydPressureSet * 0.72; break;
+      case 'swinging_out':
+      case 'swinging_back': baseTarget = state.hydPressureSet * 0.55; break;
+      case 'dumping': baseTarget = state.hydPressureSet * 0.6; break;
+      case 'returning': baseTarget = state.hydPressureSet * 0.5; break;
+      default: baseTarget = state.hydPressureSet * 0.32;
+    }
+    if (state.eStop) baseTarget = 0;
+    const jitter = state.eStop ? 0 : Math.sin(state.simTime * 7.3) * state.hydPressureSet * 0.012;
+    state.pressureDisplay = Math.max(0, lerp(state.pressureDisplay, baseTarget + jitter, 1 - Math.exp(-2.5 * dt)));
+
+    const digResistKg = state.cycleState === 'digging' ? soil.resistance * 420 : 0;
+    const torqueNm = g * ((state.payload + digResistKg) * Math.max(0, kin.p3.x) + CFG.linkageSelfWeightKg * 0.55 * Math.max(0, kin.p2.x));
+    state.torqueKnm = torqueNm / 1000;
+
+    const reach3 = Math.max(0, kin.p3.x);
+    const reach2 = Math.max(0, kin.p2.x);
+    const tippingMoment = g * (state.payload * reach3 + CFG.linkageSelfWeightKg * 0.55 * reach2);
+    const slopeAdj = 1 + (state.slopeDeg / 15) * 0.4;
+    const stabMoment = CFG.machineWeightKg * g * CFG.stabArmM;
+    state.tipIndex = clamp((tippingMoment / stabMoment) * 100 * slopeAdj, 0, 140);
+
+    const flowLpm = state.eStop ? 0 : state.engineRpm * CFG.pumpFlowCoef;
+    state.powerKw = (state.pressureDisplay * flowLpm) / 600;
+    state.fuelLh = state.eStop ? 0 : 3.4 + ((state.engineRpm - 1000) / 1200) * 5.6 + state.powerKw * 0.155;
+
+    state.ecoPressure = state.pressureDisplay * 0.87;
+    state.ecoPowerKw = state.powerKw * 0.76;
+    state.ecoFuelLh = state.fuelLh * 0.73;
+
+    if (!state.eStop) state.simTime += dt;
+  }
+
+  // ==================================================================
+  // DRAWING HELPERS
+  // ==================================================================
+  function roundRectPath(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawLimb(c, pA, pB, wA, wB, fill, stroke) {
+    const dx = pB.x - pA.x, dy = pB.y - pA.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    c.beginPath();
+    c.moveTo(pA.x + nx * wA / 2, pA.y + ny * wA / 2);
+    c.lineTo(pB.x + nx * wB / 2, pB.y + ny * wB / 2);
+    c.lineTo(pB.x - nx * wB / 2, pB.y - ny * wB / 2);
+    c.lineTo(pA.x - nx * wA / 2, pA.y - ny * wA / 2);
+    c.closePath();
+    c.fillStyle = fill; c.fill();
+    c.lineWidth = 2; c.strokeStyle = stroke || 'rgba(0,0,0,0.35)'; c.stroke();
+  }
+
+  function drawCylinder(c, a, b, extendFrac) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const midx = a.x + dx * extendFrac, midy = a.y + dy * extendFrac;
+    c.lineCap = 'round';
+    c.lineWidth = 6; c.strokeStyle = '#4a5561';
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+    c.lineWidth = 3.2; c.strokeStyle = '#c7ccd1';
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(midx, midy); c.stroke();
+    c.beginPath(); c.arc(a.x, a.y, 4, 0, Math.PI * 2); c.fillStyle = '#2b2f36'; c.fill();
+    c.beginPath(); c.arc(b.x, b.y, 4, 0, Math.PI * 2); c.fill();
+  }
+
+  function drawBucket(c, pFrom, pTo, payloadKg, soil) {
+    const angle = Math.atan2(pTo.y - pFrom.y, pTo.x - pFrom.x);
+    const len = Math.hypot(pTo.x - pFrom.x, pTo.y - pFrom.y);
+    c.save();
+    c.translate(pFrom.x, pFrom.y);
+    c.rotate(angle);
+
+    c.beginPath();
+    c.moveTo(0, -9);
+    c.lineTo(len * 0.55, -15);
+    c.lineTo(len * 0.92, -11);
+    c.lineTo(len, 0);
+    c.lineTo(len * 0.92, 11);
+    c.lineTo(len * 0.5, 16);
+    c.lineTo(0, 9);
+    c.closePath();
+    c.fillStyle = '#d99a0d'; c.fill();
+    c.strokeStyle = '#7a5c0f'; c.lineWidth = 2; c.stroke();
+
+    c.fillStyle = '#3a3d42';
+    for (let i = 0; i < 4; i++) {
+      const tx = len * 0.9 - i * (len * 0.08);
+      c.beginPath();
+      c.moveTo(tx, 8 + i * 0.4);
+      c.lineTo(tx + len * 0.09, 2);
+      c.lineTo(tx, -2);
+      c.closePath(); c.fill();
+    }
+
+    const fillFrac = clamp(payloadKg / CFG.bucketCapacityKg, 0, 1);
+    if (fillFrac > 0.02) {
+      c.fillStyle = soil.colorA;
+      const cx0 = len * 0.42, cy0 = -2;
+      const bumps = 5;
+      c.beginPath();
+      for (let i = 0; i < bumps; i++) {
+        const t = i / (bumps - 1);
+        const bx = cx0 + (t - 0.5) * len * 0.55 * fillFrac * 1.3;
+        const by = cy0 - 4 - Math.sin(t * Math.PI) * 7 * fillFrac;
+        c.moveTo(bx + (5 + 7 * fillFrac), by);
+        c.arc(bx, by, 5 + 7 * fillFrac, 0, Math.PI * 2);
+      }
+      c.fill();
+    }
+    c.restore();
+  }
+
+  function drawArrow(c, from, to, color) {
+    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(from.x, from.y); c.lineTo(to.x, to.y); c.stroke();
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    c.beginPath();
+    c.moveTo(to.x, to.y);
+    c.lineTo(to.x - 9 * Math.cos(angle - 0.4), to.y - 9 * Math.sin(angle - 0.4));
+    c.lineTo(to.x - 9 * Math.cos(angle + 0.4), to.y - 9 * Math.sin(angle + 0.4));
+    c.closePath(); c.fill();
+  }
+
+  function drawAngleBadge(c, p, angle, label) {
+    c.font = '9px "JetBrains Mono", monospace';
+    const txt = label + ' ' + angle.toFixed(0) + '°';
+    const w = c.measureText(txt).width + 8;
+    c.fillStyle = 'rgba(10,13,18,0.75)';
+    roundRectPath(c, p.x - w / 2, p.y - 26, w, 15, 3); c.fill();
+    c.fillStyle = '#22D3EE';
+    c.textAlign = 'center';
+    c.fillText(txt, p.x, p.y - 15);
+    c.textAlign = 'left';
+  }
+
+  function drawSwingGauge(c, cx, cy, r) {
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(18,24,34,0.85)'; c.fill();
+    c.strokeStyle = '#233041'; c.lineWidth = 2; c.stroke();
+    c.beginPath(); c.arc(cx, cy, r - 6, Math.PI, 2 * Math.PI);
+    c.strokeStyle = '#2c3d52'; c.lineWidth = 3; c.stroke();
+    const needleDeg = 180 - (state.swingAngle / 90) * 160;
+    const rad = deg2rad(needleDeg);
+    const nx = cx + Math.cos(rad) * (r - 10), ny = cy - Math.sin(rad) * (r - 10);
+    c.strokeStyle = '#22D3EE'; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(cx, cy); c.lineTo(nx, ny); c.stroke();
+    c.beginPath(); c.arc(cx, cy, 3, 0, Math.PI * 2); c.fillStyle = '#22D3EE'; c.fill();
+    c.fillStyle = '#8493A6'; c.font = '8px "JetBrains Mono", monospace'; c.textAlign = 'center';
+    c.fillText('AYUN', cx, cy + r + 11);
+    c.textAlign = 'left';
+  }
+
+  // ==================================================================
+  // RENDER
+  // ==================================================================
+  function render() {
+    const W = els.canvas.width, H = els.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+    skyGrad.addColorStop(0, '#0d1420');
+    skyGrad.addColorStop(1, '#141c28');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    const soil = SOIL[state.soil];
+    const houseX = W * 0.34;
+    const groundYHouse = groundYAt(houseX, W, H);
+    const trackH = 24, trackW = 185, houseW = 132, houseH = 64;
+    const trackTopY = groundYHouse - trackH;
+    const houseBottomY = trackTopY;
+    const houseTopY = houseBottomY - houseH;
+    const pivotPx = { x: houseX + 22, y: houseTopY + houseH * 0.42 };
+
+    function toPx(m) { return { x: pivotPx.x + m.x * CFG.scalePxPerM, y: pivotPx.y - m.y * CFG.scalePxPerM }; }
+
+    const kin = state.kin || kinematics(state.boomAngle, state.armAngle, state.bucketAngle);
+    const p0px = pivotPx, p1px = toPx(kin.p1), p2px = toPx(kin.p2), p3px = toPx(kin.p3);
+
+    if (state.cycleState === 'digging') state.digMarkerX = p3px.x;
+    if (state.digMarkerX === undefined) state.digMarkerX = pivotPx.x + 230;
+    const digX = state.digMarkerX;
+
+    // ---- ground base layer ----
+    ctx.beginPath();
+    ctx.moveTo(0, groundYAt(0, W, H));
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, groundYAt(x, W, H) + pitOffsetAt(x, digX));
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    ctx.fillStyle = soil.colorB; ctx.fill();
+
+    // ---- topsoil band ----
+    ctx.beginPath();
+    ctx.moveTo(0, groundYAt(0, W, H));
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, groundYAt(x, W, H) + pitOffsetAt(x, digX));
+    for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, groundYAt(x, W, H) + pitOffsetAt(x, digX) + 34);
+    ctx.closePath();
+    ctx.fillStyle = soil.colorA; ctx.fill();
+
+    if (soil.rocky) {
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      for (let x = 10; x < W; x += 27) {
+        const seed = Math.abs(Math.sin(x * 12.9898) * 43758.5453) % 1;
+        const y = groundYAt(x, W, H) + pitOffsetAt(x, digX) + 10 + seed * 18;
+        ctx.beginPath(); ctx.ellipse(x, y, 5 + seed * 4, 3 + seed * 2, 0, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(0, groundYAt(0, W, H));
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, groundYAt(x, W, H) + pitOffsetAt(x, digX));
+    ctx.strokeStyle = '#3a2f22'; ctx.lineWidth = 2; ctx.stroke();
+
+    // ---- dig zone marker ----
+    ctx.save();
+    ctx.strokeStyle = 'rgba(34,211,238,0.30)'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(digX, 0); ctx.lineTo(digX, H); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(34,211,238,0.55)'; ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillText('ZONA GALI', digX + 6, 18);
+
+    // ---- tracks ----
+    ctx.fillStyle = '#23262b';
+    roundRectPath(ctx, houseX - trackW / 2, trackTopY, trackW, trackH, trackH / 2); ctx.fill();
+    ctx.fillStyle = '#14161a';
+    for (let i = 0; i < 7; i++) {
+      const cx = houseX - trackW / 2 + 14 + i * ((trackW - 28) / 6);
+      ctx.beginPath(); ctx.arc(cx, trackTopY + trackH / 2, trackH * 0.32, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // ---- counterweight ----
+    ctx.fillStyle = '#31363d';
+    roundRectPath(ctx, houseX - 58, houseTopY + 8, 46, houseH - 16, 6); ctx.fill();
+    ctx.strokeStyle = '#1a1d21'; ctx.lineWidth = 1.5;
+    roundRectPath(ctx, houseX - 58, houseTopY + 8, 46, houseH - 16, 6); ctx.stroke();
+
+    // ---- house body ----
+    ctx.fillStyle = '#FDB913';
+    roundRectPath(ctx, houseX - 6, houseTopY, houseW, houseH, 8); ctx.fill();
+    ctx.strokeStyle = '#8a6a12'; ctx.lineWidth = 2;
+    roundRectPath(ctx, houseX - 6, houseTopY, houseW, houseH, 8); ctx.stroke();
+
+    // ---- cabin window ----
+    ctx.fillStyle = '#1c2a35';
+    roundRectPath(ctx, houseX + 40, houseTopY + 10, 46, 30, 4); ctx.fill();
+    ctx.strokeStyle = '#22D3EE'; ctx.lineWidth = 1.5;
+    roundRectPath(ctx, houseX + 40, houseTopY + 10, 46, 30, 4); ctx.stroke();
+
+    // ---- hydraulic cylinders ----
+    drawCylinder(ctx, { x: pivotPx.x - 10, y: pivotPx.y + 30 }, lerpPt(p0px, p1px, 0.46), clamp((state.boomAngle + 10) / 75, 0.1, 0.95));
+    drawCylinder(ctx, lerpPt(p0px, p1px, 0.72), lerpPt(p1px, p2px, 0.32), clamp(state.armAngle / 180, 0.1, 0.95));
+    drawCylinder(ctx, lerpPt(p1px, p2px, 0.62), lerpPt(p2px, p3px, 0.25), clamp(state.bucketAngle / 180, 0.1, 0.95));
+
+    // ---- boom & arm ----
+    drawLimb(ctx, p0px, p1px, 24, 17, '#e0a90f', '#7a5c0f');
+    drawLimb(ctx, p1px, p2px, 19, 13, '#e0a90f', '#7a5c0f');
+
+    // ---- bucket ----
+    drawBucket(ctx, p2px, p3px, state.payload, soil);
+
+    // ---- pin joints ----
+    [p0px, p1px, p2px].forEach(function (p) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#2b2f36'; ctx.fill();
+      ctx.strokeStyle = '#0a0d12'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+
+    // ---- load force vector ----
+    if (state.payload > 5) {
+      const forceLen = 22 + (state.payload / CFG.bucketCapacityKg) * 80;
+      drawArrow(ctx, p3px, { x: p3px.x, y: p3px.y + forceLen }, '#FB8B24');
+      ctx.fillStyle = '#FB8B24'; ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillText((state.payload * 9.81 / 1000).toFixed(1) + ' kN', p3px.x + 8, p3px.y + forceLen * 0.6);
+    }
+
+    // ---- angle badges ----
+    drawAngleBadge(ctx, p0px, state.boomAngle, 'BOOM');
+    drawAngleBadge(ctx, p1px, state.armAngle, 'ARM');
+    drawAngleBadge(ctx, p2px, state.bucketAngle, 'BKT');
+
+    // ---- swing gauge widget ----
+    drawSwingGauge(ctx, 46, 46, 30);
+  }
+
+  // ==================================================================
+  // HUD / TELEMETRY
+  // ==================================================================
+  function updateHUD() {
+    els.hudPayload.textContent = state.payload.toFixed(0);
+    els.hudTipIndex.textContent = Math.min(999, state.tipIndex).toFixed(0);
+    els.hudPower.textContent = state.powerKw.toFixed(1);
+    els.hudFuel.textContent = state.fuelLh.toFixed(1);
+
+    const tipPct = clamp(state.tipIndex, 0, 100);
+    els.tipBar.style.width = tipPct + '%';
+    els.tipBar.style.background = state.tipIndex > 80 ? '#EF4444' : (state.tipIndex > 50 ? '#FBBF24' : '#34D399');
+
+    const critical = state.tipIndex > 80;
+    els.tipBanner.classList.toggle('hidden', !critical || state.eStop);
+    els.estopBanner.classList.toggle('hidden', !state.eStop);
+    els.canvasPanel.classList.toggle('flash-danger', state.eStop || critical);
+
+    if (state.compareMode) {
+      const savings = state.fuelLh > 0 ? ((state.fuelLh - state.ecoFuelLh) / state.fuelLh * 100) : 0;
+      els.ecoSavingsBox.classList.remove('hidden');
+      els.ecoSavingsText.textContent = 'Mode Eco-Hybrid menghemat ~' + savings.toFixed(0) + '% bahan bakar (' + state.ecoFuelLh.toFixed(1) + ' vs ' + state.fuelLh.toFixed(1) + ' L/jam) dan ' + Math.max(0, state.powerKw - state.ecoPowerKw).toFixed(1) + ' kW puncak daya hidrolik lebih rendah.';
+    } else {
+      els.ecoSavingsBox.classList.add('hidden');
+    }
+
+    const mm = Math.floor(state.simTime / 60).toString().padStart(2, '0');
+    const ss = (state.simTime % 60).toFixed(1).padStart(4, '0');
+    els.simClock.textContent = 'T+' + mm + ':' + ss;
+  }
+
+  function sampleTelemetry() {
+    if (state.eStop) return;
+    telemetry.push({
+      t: state.simTime,
+      pressure: state.pressureDisplay,
+      ecoPressure: state.ecoPressure,
+      torque: state.torqueKnm,
+      payload: state.payload,
+      target: state.targetPayload
+    });
+    if (telemetry.length > 50) telemetry.shift();
+
+    const labels = telemetry.map(function (r) { return r.t.toFixed(1); });
+
+    chartPressure.data.labels = labels;
+    chartPressure.data.datasets[0].data = telemetry.map(function (r) { return r.pressure.toFixed(1); });
+    chartPressure.data.datasets[1].data = telemetry.map(function (r) { return r.ecoPressure.toFixed(1); });
+    chartPressure.data.datasets[1].hidden = !state.compareMode;
+    chartPressure.update('none');
+
+    chartTorque.data.labels = labels;
+    chartTorque.data.datasets[0].data = telemetry.map(function (r) { return r.torque.toFixed(1); });
+    chartTorque.data.datasets[1].data = telemetry.map(function () { return 55; });
+    chartTorque.update('none');
+
+    chartPayload.data.labels = labels;
+    chartPayload.data.datasets[0].data = telemetry.map(function (r) { return r.payload.toFixed(0); });
+    chartPayload.data.datasets[1].data = telemetry.map(function (r) { return r.target.toFixed(0); });
+    chartPayload.update('none');
+  }
+
+  // ==================================================================
+  // MAIN LOOP
+  // ==================================================================
+  function frame(now) {
+    let dt = (now - lastFrameT) / 1000;
+    dt = Math.min(dt, 0.05);
+    lastFrameT = now;
+
+    if (!state.eStop) updateCycle(dt);
+    tweenAngles(dt);
+    updatePhysics(dt);
+    render();
+    updateHUD();
+    requestAnimationFrame(frame);
+  }
+
+  setInterval(sampleTelemetry, 260);
+
+  // ==================================================================
+  // UI CONTROL
+  // ==================================================================
+  function setJointSlidersEnabled(en) {
+    els.boomAngle.disabled = !en;
+    els.armAngle.disabled = !en;
+    els.bucketAngle.disabled = !en;
+  }
+
+  els.boomAngle.addEventListener('input', function (e) {
+    const v = parseFloat(e.target.value);
+    els.boomAngleVal.textContent = v.toFixed(0) + '°';
+    if (state.cycleState === 'idle') state.boomTarget = v;
+  });
+  els.armAngle.addEventListener('input', function (e) {
+    const v = parseFloat(e.target.value);
+    els.armAngleVal.textContent = v.toFixed(0) + '°';
+    if (state.cycleState === 'idle') state.armTarget = v;
+  });
+  els.bucketAngle.addEventListener('input', function (e) {
+    const v = parseFloat(e.target.value);
+    els.bucketAngleVal.textContent = v.toFixed(0) + '°';
+    if (state.cycleState === 'idle') state.bucketTarget = v;
+  });
+  els.engineRpm.addEventListener('input', function (e) {
+    state.engineRpm = parseFloat(e.target.value);
+    els.engineRpmVal.textContent = state.engineRpm + ' RPM';
+  });
+  els.hydPressure.addEventListener('input', function (e) {
+    state.hydPressureSet = parseFloat(e.target.value);
+    els.hydPressureVal.textContent = state.hydPressureSet + ' bar';
+  });
+  els.soilType.addEventListener('change', function (e) { state.soil = e.target.value; });
+  els.groundSlope.addEventListener('input', function (e) {
+    const v = parseFloat(e.target.value);
+    state.slopeDeg = v;
+    els.groundSlopeVal.textContent = v + '°';
+  });
+  els.targetPayload.addEventListener('input', function (e) {
+    const v = parseFloat(e.target.value);
+    state.targetPayload = v;
+    els.targetPayloadVal.textContent = v + ' kg';
+  });
+
+  els.btnStartCycle.addEventListener('click', function () {
+    if (state.eStop) return;
+    if (!state.autoCycle) {
+      state.autoCycle = true;
+      els.btnStartCycle.textContent = '⏸ HENTIKAN SIKLUS GALI OTOMATIS';
+      els.btnStartCycle.classList.remove('bg-safety', 'text-basey');
+      els.btnStartCycle.classList.add('bg-danger', 'text-basey');
+      if (state.cycleState === 'idle') enterPhase('lower_dig');
+    } else {
+      state.autoCycle = false;
+      els.btnStartCycle.textContent = '▶ MULAI SIKLUS GALI OTOMATIS';
+      els.btnStartCycle.classList.remove('bg-danger');
+      els.btnStartCycle.classList.add('bg-safety', 'text-basey');
+    }
+  });
+
+  els.btnDump.addEventListener('click', dumpLoad);
+  els.btnReset.addEventListener('click', resetAll);
+
+  els.btnEstop.addEventListener('click', function () {
+    if (state.eStop) return;
+    state.eStop = true;
+    state.autoCycle = false;
+    els.btnStartCycle.textContent = '▶ MULAI SIKLUS GALI OTOMATIS';
+    els.btnStartCycle.classList.remove('bg-danger');
+    els.btnStartCycle.classList.add('bg-safety', 'text-basey');
+    els.btnEstop.textContent = '■ DIHENTIKAN — RESET UNTUK LANJUT';
+    els.btnEstop.disabled = true;
+    setJointSlidersEnabled(false);
+  });
+
+  function setCompare(on) {
+    state.compareMode = on;
+    els.compareToggle.classList.toggle('on', on);
+    els.compareToggle.setAttribute('aria-checked', on ? 'true' : 'false');
+    chartPressure.data.datasets[1].hidden = !on;
+    chartPressure.update();
+  }
+  els.compareToggle.addEventListener('click', function () { setCompare(!state.compareMode); });
+  els.compareToggle.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompare(!state.compareMode); }
+  });
+
+  function resetAll() {
+    state.boomAngle = state.boomTarget = 35;
+    state.armAngle = state.armTarget = 90;
+    state.bucketAngle = state.bucketTarget = 90;
+    state.swingAngle = state.swingTarget = 0;
+    state.payload = 0; state.pitDepthPx = 0; state.digMarkerX = undefined;
+    state.pressureDisplay = 0; state.powerKw = 0; state.fuelLh = 0; state.torqueKnm = 0; state.tipIndex = 0;
+    state.cycleState = 'idle'; state.cycleTimer = 0; state.autoCycle = false; state.eStop = false;
+    state.simTime = 0; state.resumeAfterDumpAuto = false;
+    telemetry = [];
+
+    [chartPressure, chartTorque, chartPayload].forEach(function (c) {
+      c.data.labels = [];
+      c.data.datasets.forEach(function (ds) { ds.data = []; });
+      c.update();
+    });
+
+    els.boomAngle.value = 35; els.boomAngleVal.textContent = '35°';
+    els.armAngle.value = 90; els.armAngleVal.textContent = '90°';
+    els.bucketAngle.value = 90; els.bucketAngleVal.textContent = '90°';
+    setJointSlidersEnabled(true);
+
+    els.btnStartCycle.textContent = '▶ MULAI SIKLUS GALI OTOMATIS';
+    els.btnStartCycle.classList.remove('bg-danger');
+    els.btnStartCycle.classList.add('bg-safety', 'text-basey');
+    els.btnEstop.disabled = false; els.btnEstop.textContent = '■ STOP DARURAT';
+
+    els.cycleStateLabel.textContent = 'DIAM';
+    els.cycleProgress.style.width = '0%';
+    els.cycleDesc.textContent = PHASES.idle.desc;
+    els.tipBanner.classList.add('hidden');
+    els.estopBanner.classList.add('hidden');
+    els.canvasPanel.classList.remove('flash-danger');
+  }
+
+  // ==================================================================
+  // EXPORT
+  // ==================================================================
+  function buildConfigSnapshot() {
+    return {
+      timestamp: new Date().toISOString(),
+      simTimeSeconds: +state.simTime.toFixed(1),
+      jointAngles: { boomDeg: +state.boomAngle.toFixed(1), armDeg: +state.armAngle.toFixed(1), bucketDeg: +state.bucketAngle.toFixed(1) },
+      engineRpm: state.engineRpm,
+      hydraulicPressureSetBar: state.hydPressureSet,
+      soilType: SOIL[state.soil].label,
+      groundSlopeDeg: state.slopeDeg,
+      targetPayloadKg: state.targetPayload,
+      currentPayloadKg: +state.payload.toFixed(1),
+      tipOverRiskPct: +state.tipIndex.toFixed(1),
+      hydraulicPowerKw: +state.powerKw.toFixed(2),
+      fuelBurnLh: +state.fuelLh.toFixed(2),
+      boomTorqueKnm: +state.torqueKnm.toFixed(2),
+      compareMode: state.compareMode,
+      ecoHybrid: state.compareMode ? { pressureBar: +state.ecoPressure.toFixed(1), powerKw: +state.ecoPowerKw.toFixed(2), fuelLh: +state.ecoFuelLh.toFixed(2) } : null
+    };
+  }
+
+  function downloadBlob(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  els.btnExportJson.addEventListener('click', function () {
+    const data = { config: buildConfigSnapshot(), telemetryLog: telemetry };
+    downloadBlob('excasim-log-' + Date.now() + '.json', JSON.stringify(data, null, 2), 'application/json');
+  });
+
+  els.btnExportReport.addEventListener('click', function () {
+    const cfg = buildConfigSnapshot();
+    const canvasImg = els.canvas.toDataURL('image/png');
+    const pImg = document.getElementById('chartPressure').toDataURL('image/png');
+    const tImg = document.getElementById('chartTorque').toDataURL('image/png');
+    const wImg = document.getElementById('chartPayload').toDataURL('image/png');
+    const rows = telemetry.map(function (r) {
+      return '<tr><td>' + r.t.toFixed(1) + '</td><td>' + r.pressure.toFixed(1) + '</td><td>' + r.torque.toFixed(1) + '</td><td>' + r.payload.toFixed(0) + '</td></tr>';
+    }).join('');
+
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ExcaSim HX-220 Report</title>' +
+      '<style>' +
+      'body{font-family:Arial,sans-serif;background:#0a0d12;color:#E7ECF2;padding:24px;}' +
+      'h1{color:#FDB913} h2{color:#22D3EE;border-bottom:1px solid #233041;padding-bottom:4px;margin-top:32px}' +
+      'table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}' +
+      'th,td{border:1px solid #233041;padding:4px 8px;text-align:right}' +
+      'th{background:#121822;color:#8493A6} img{max-width:100%;border:1px solid #233041;border-radius:4px;margin-top:8px}' +
+      '.cfg{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;background:#121822;padding:12px;border-radius:6px;font-size:13px}' +
+      '</style></head><body>' +
+      '<h1>ExcaSim HX-220 — Laporan Simulasi</h1>' +
+      '<p>Dibuat ' + cfg.timestamp + '</p>' +
+      '<h2>Cuplikan Konfigurasi</h2>' +
+      '<div class="cfg">' +
+      '<div>Sudut Boom: ' + cfg.jointAngles.boomDeg + '&deg;</div><div>Sudut Arm: ' + cfg.jointAngles.armDeg + '&deg;</div>' +
+      '<div>Sudut Bucket: ' + cfg.jointAngles.bucketDeg + '&deg;</div><div>RPM Mesin: ' + cfg.engineRpm + '</div>' +
+      '<div>Tekanan Hidrolik Diset: ' + cfg.hydraulicPressureSetBar + ' bar</div><div>Jenis Tanah: ' + cfg.soilType + '</div>' +
+      '<div>Kemiringan Tanah: ' + cfg.groundSlopeDeg + '&deg;</div><div>Target Muatan: ' + cfg.targetPayloadKg + ' kg</div>' +
+      '<div>Muatan Saat Ini: ' + cfg.currentPayloadKg + ' kg</div><div>Risiko Terguling: ' + cfg.tipOverRiskPct + '%</div>' +
+      '<div>Daya Hidrolik: ' + cfg.hydraulicPowerKw + ' kW</div><div>Konsumsi BBM: ' + cfg.fuelBurnLh + ' L/jam</div>' +
+      '<div>Torsi Boom: ' + cfg.boomTorqueKnm + ' kN&middot;m</div><div>Mode Perbandingan: ' + (cfg.compareMode ? 'Eco-Hybrid AKTIF' : 'Standar') + '</div>' +
+      '</div>' +
+      '<h2>Cuplikan Mesin</h2><img src="' + canvasImg + '" alt="Cuplikan ekskavator">' +
+      '<h2>Tekanan Hidrolik</h2><img src="' + pImg + '" alt="Grafik tekanan">' +
+      '<h2>Torsi Boom</h2><img src="' + tImg + '" alt="Grafik torsi">' +
+      '<h2>Muatan</h2><img src="' + wImg + '" alt="Grafik muatan">' +
+      '<h2>Log Telemetri</h2>' +
+      '<table><thead><tr><th>t (dtk)</th><th>Tekanan (bar)</th><th>Torsi (kN&middot;m)</th><th>Muatan (kg)</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<script>window.REPORT_DATA = ' + JSON.stringify({ config: cfg, telemetryLog: telemetry }) + ';<\/script>' +
+      '</body></html>';
+
+    downloadBlob('excasim-report-' + Date.now() + '.html', html, 'text/html');
+  });
+
+  // ==================================================================
+  // INIT
+  // ==================================================================
+  enterPhase('idle');
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Struktur Teknik: Rangka, Casing, dan Bejana Tekan</title>
+<style>
+:root{
+  --bg:#0a141f;
+  --bg2:#0d1a28;
+  --panel:#101f30;
+  --panel2:#14293c;
+  --steel:#25384a;
+  --border:#22384a;
+  --text:#e7eef5;
+  --text-dim:#93aac0;
+  --cyan:#3ecbe8;
+  --cyan-dim:#1c7f96;
+  --warn:#f0a83c;
+  --danger:#e6584c;
+  --safe:#49c98d;
+  --mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --sans: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+body{-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45;}
+h1,h2,h3,h4{font-family:var(--sans);margin:0 0 6px 0;font-weight:600;}
+button{
+  font-family:var(--sans);cursor:pointer;background:var(--steel);color:var(--text);
+  border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:12.5px;
+  transition:background .15s, border-color .15s;
+}
+button:hover{background:var(--cyan-dim);border-color:var(--cyan);}
+button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+button.primary{background:var(--cyan-dim);border-color:var(--cyan);}
+button.on{background:var(--cyan);color:#04222b;border-color:var(--cyan);}
+button:disabled{opacity:.4;cursor:not-allowed;}
+select, input[type="number"], input[type="text"]{
+  font-family:var(--mono);background:var(--bg2);color:var(--text);border:1px solid var(--border);
+  border-radius:4px;padding:4px 6px;font-size:12.5px;width:100%;
+}
+input[type="range"]{width:100%;accent-color:var(--cyan);}
+label.field{display:block;margin:8px 0;}
+label.field .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--text-dim);margin-bottom:3px;}
+.row2{display:grid;grid-template-columns:1fr 90px;gap:6px;align-items:center;}
+hr.rule{border:none;border-top:1px solid var(--border);margin:10px 0;}
+
+/* header */
+#appHeader{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;background:linear-gradient(180deg,#0d1e2e,#0a141f);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:wrap;gap:10px;
+}
+#appHeader .brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+#appHeader h1{font-size:16px;color:var(--cyan);letter-spacing:.2px;}
+#appHeader .preset-select{display:flex;align-items:center;gap:6px;}
+#appHeader .preset-select select{width:auto;min-width:230px;}
+.lang-switch{display:flex;gap:4px;}
+.lang-switch button{min-width:36px;}
+
+/* layout */
+.layout{display:grid;grid-template-columns:280px 1fr 300px;gap:10px;padding:10px;align-items:start;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.panel h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--cyan);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:8px;}
+
+.center-panel{display:flex;flex-direction:column;gap:10px;}
+.stage-tabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px;}
+.stage-tabs button{flex:1;min-width:120px;}
+.canvas-wrap{background:radial-gradient(circle at 30% 20%, #102337, #081119 70%);border:1px solid var(--border);border-radius:6px;padding:6px;}
+#mainSvg{width:100%;height:360px;display:block;}
+.caption{font-size:11.5px;color:var(--text-dim);text-align:center;padding:4px 0 0;}
+.sim-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px;}
+.sim-controls .grp{display:flex;gap:4px;}
+.sim-controls .slidergrp{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim);}
+.sim-controls .slidergrp input{width:110px;}
+#statusBar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--mono);font-size:11.5px;
+}
+#statusBar .stat{padding:4px 6px;border-left:3px solid var(--steel);}
+#statusBar .stat b{display:block;color:var(--text-dim);font-family:var(--sans);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;}
+.stat.safe{border-color:var(--safe);}
+.stat.warn{border-color:var(--warn);}
+.stat.danger{border-color:var(--danger);}
+
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:8px 10px;margin-bottom:8px;}
+.card .k{font-size:11px;color:var(--text-dim);}
+.card .v{font-family:var(--mono);font-size:16px;color:var(--cyan);}
+.card .u{font-size:11px;color:var(--text-dim);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--sans);}
+.badge.safe{background:rgba(73,201,141,.15);color:var(--safe);}
+.badge.warn{background:rgba(240,168,60,.15);color:var(--warn);}
+.badge.danger{background:rgba(230,88,76,.15);color:var(--danger);}
+.badge.na{background:rgba(147,170,192,.15);color:var(--text-dim);}
+
+.tip{border-bottom:1px dotted var(--cyan-dim);cursor:help;color:var(--cyan);position:relative;}
+#tooltipBox{
+  position:fixed;max-width:260px;background:#04222b;border:1px solid var(--cyan);color:var(--text);
+  padding:8px 10px;border-radius:5px;font-size:12px;z-index:999;display:none;pointer-events:none;
+  box-shadow:0 6px 18px rgba(0,0,0,.4);
+}
+
+/* bottom */
+.bottom-panel{padding:0 10px 10px;display:flex;flex-direction:column;gap:10px;}
+.calc-panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.calc-panel .step{font-family:var(--mono);font-size:12.5px;margin:3px 0;padding:2px 0;}
+.calc-panel .step b{color:var(--cyan);}
+.graphs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.graph-box{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px;}
+.graph-box h3{font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+canvas{width:100%;height:190px;display:block;}
+
+details.section{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:0;}
+details.section summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--cyan);list-style:none;display:flex;justify-content:space-between;align-items:center;}
+details.section summary::-webkit-details-marker{display:none;}
+details.section summary:after{content:"+";font-size:16px;color:var(--text-dim);}
+details.section[open] summary:after{content:"–";}
+details.section .body{padding:0 14px 14px;}
+
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+table th, table td{border:1px solid var(--border);padding:5px 7px;text-align:right;}
+table th{background:var(--panel2);text-align:center;color:var(--cyan);font-family:var(--sans);font-size:10.5px;text-transform:uppercase;}
+table td:first-child, table th:first-child{text-align:center;}
+.table-controls{display:flex;gap:8px;margin-top:8px;}
+.table-scroll{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:5px;}
+
+.assump-list{margin:0;padding-left:18px;font-size:12.5px;color:var(--text-dim);}
+.assump-list li{margin-bottom:6px;}
+
+.qcard{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:10px;}
+.qcard .opt{display:block;margin:4px 0;font-size:12.5px;}
+.qcard .fb{margin-top:6px;font-size:12.5px;padding:6px;border-radius:4px;display:none;}
+.qcard .fb.correct{background:rgba(73,201,141,.12);color:var(--safe);display:block;}
+.qcard .fb.wrong{background:rgba(230,88,76,.12);color:var(--danger);display:block;}
+
+.challenge-box{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:12px;}
+.challenge-box .cres{margin-top:8px;font-size:12.5px;}
+
+.comp-table td, .comp-table th{text-align:center;}
+
+footer.appfoot{padding:16px;text-align:center;color:var(--text-dim);font-size:11px;}
+
+@media (max-width: 980px){
+  .layout{grid-template-columns:1fr;}
+  .graphs{grid-template-columns:1fr;}
+  #statusBar{grid-template-columns:repeat(2,1fr);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;}
+}
+@media print{
+  #appHeader, .left-panel, .stage-tabs, .sim-controls,
+  .table-controls, details.section:not(.print-include), #tooltipBox, .no-print{display:none !important;}
+  html, body{background:#fff !important; color:#000 !important;}
+  .layout{grid-template-columns:1fr !important;}
+  .panel, .graph-box, .calc-panel, .card, #statusBar, .canvas-wrap, table, details.section,
+  .qcard, .challenge-box, .comp-table{
+    background:#fff !important; color:#000 !important; border-color:#aaa !important;
+    box-shadow:none !important;
+  }
+  .card .v, #statusBar b, .caption, .step b{color:#0a5b73 !important;}
+  #statusBar .stat{border-left-color:#888 !important;}
+  table th{background:#eef3f7 !important; color:#0a5b73 !important;}
+  .badge.safe{background:#e3f7ee !important; color:#1e8f5f !important;}
+  .badge.warn{background:#fdf1de !important; color:#a86a12 !important;}
+  .badge.danger{background:#fbe6e4 !important; color:#b6362a !important;}
+  canvas{filter:none;}
+  details.section summary:after{display:none;}
+  details.section summary{color:#0a5b73 !important;}
+}
+</style>
+</head>
+<body>
+
+<header id="appHeader">
+  <div class="brand">
+    <h1 data-i18n="appTitle">STRUKTUR TEKNIK: RANGKA, CASING, DAN BEJANA TEKAN</h1>
+    <div class="preset-select">
+      <label data-i18n="presetLabel">Preset</label>
+      <select id="presetSelect"></select>
+    </div>
+  </div>
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button id="langId" class="on" data-lang="id">ID</button>
+    <button id="langEn" data-lang="en">EN</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="panel left-panel">
+    <h2 data-i18n="controlsTitle">Experiment Controls</h2>
+    <label class="field">
+      <span class="lbl" data-i18n="systemTypeLabel">System Type</span>
+      <select id="systemTypeSelect"></select>
+    </label>
+    <div id="dynamicControls"></div>
+    <hr class="rule">
+    <label class="field">
+      <span class="lbl" data-i18n="learningLevelLabel">Learning Mode</span>
+      <select id="learningLevelSelect">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate" selected>Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </label>
+  </aside>
+
+  <section class="center-panel">
+    <div class="stage-tabs">
+      <button id="stageBtn1" data-i18n="stage1Btn">1. REAL SYSTEM</button>
+      <button id="stageBtn2" data-i18n="stage2Btn">2. ENGINEERING MODEL</button>
+      <button id="stageBtn3" data-i18n="stage3Btn">3. STRESS MODEL</button>
+      <button id="autoConvertBtn" data-i18n="autoConvertBtn">AUTO CONVERT</button>
+    </div>
+    <div class="canvas-wrap">
+      <svg id="mainSvg" viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="caption" id="stageCaption"></div>
+    </div>
+    <div class="sim-controls">
+      <div class="grp">
+        <button id="playBtn" data-i18n="playBtn">PLAY</button>
+        <button id="pauseBtn" data-i18n="pauseBtn">PAUSE</button>
+        <button id="stepBtn" data-i18n="stepBtn">STEP</button>
+        <button id="resetBtn" data-i18n="resetBtn">RESET</button>
+      </div>
+      <div class="grp">
+        <button id="loadBtn" data-i18n="loadBtn">LOAD</button>
+        <button id="holdBtnCtl" data-i18n="holdBtn">HOLD</button>
+        <button id="unloadBtn" data-i18n="unloadBtn">UNLOAD</button>
+      </div>
+      <div class="slidergrp"><span data-i18n="animSpeedLabel">Animation Speed</span><input type="range" id="animSpeedSlider" min="0.25" max="3" step="0.25" value="1"></div>
+      <div class="slidergrp"><span data-i18n="defScaleLabel">Deformation Scale</span><input type="range" id="defScaleSlider" min="1" max="50" step="1" value="10"></div>
+    </div>
+    <div id="statusBar"></div>
+  </section>
+
+  <aside class="panel right-panel">
+    <h2 data-i18n="engCardsTitle">Engineering Information</h2>
+    <div id="engCards"></div>
+    <details class="section" style="margin-top:8px;">
+      <summary data-i18n="assumptionsTitle">Assumptions</summary>
+      <div class="body"><ul class="assump-list" id="assumptionsPanel"></ul></div>
+    </details>
+  </aside>
+</main>
+
+<section class="bottom-panel">
+  <div class="calc-panel">
+    <h2 data-i18n="calcTitle" style="color:var(--cyan);font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);padding-bottom:6px;">Engineering Calculation</h2>
+    <div id="calcPanel"></div>
+  </div>
+
+  <div class="graphs">
+    <div class="graph-box">
+      <h3 id="graphTitle1" data-i18n="graphLoadDefTitle">Load vs Deformation</h3>
+      <canvas id="graphLoadDef"></canvas>
+    </div>
+    <div class="graph-box">
+      <h3 id="graphTitle2" data-i18n="graphStressStrainTitle">Stress vs Strain</h3>
+      <canvas id="graphStressStrain"></canvas>
+    </div>
+    <div class="graph-box">
+      <h3 data-i18n="graphTimeTitle">Stress / Safety Factor vs Time</h3>
+      <canvas id="graphTime"></canvas>
+    </div>
+  </div>
+
+  <details class="section print-include" open>
+    <summary data-i18n="dataTableTitle">Experiment Data</summary>
+    <div class="body">
+      <div class="table-scroll"><table id="dataTable"></table></div>
+      <div class="table-controls">
+        <button id="recordBtn" data-i18n="recordBtn">RECORD DATA</button>
+        <button id="clearBtn" data-i18n="clearBtn">CLEAR DATA</button>
+        <button id="exportCsvBtn" data-i18n="exportCsvBtn">EXPORT CSV</button>
+        <button id="printBtn" data-i18n="printBtn">PRINT LAB REPORT</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="section">
+    <summary data-i18n="worksheetTitle">Virtual Lab Worksheet</summary>
+    <div class="body" id="worksheetBody"></div>
+  </details>
+
+  <details class="section">
+    <summary data-i18n="comparisonTitle">Compare Structural Elements</summary>
+    <div class="body" id="comparisonBody"></div>
+  </details>
+
+  <details class="section">
+    <summary data-i18n="challengeTitle">Challenge Mode</summary>
+    <div class="body" id="challengeBody"></div>
+  </details>
+
+  <details class="section">
+    <summary data-i18n="quizTitle">Concept Questions</summary>
+    <div class="body" id="quizBody"></div>
+  </details>
+</section>
+
+<div id="tooltipBox"></div>
+<footer class="appfoot no-print">Virtual Lab — Struktur Teknik: Rangka, Casing, dan Bejana Tekan / Engineering Structures: Frames, Casings, and Pressure Vessels. Educational simulator, not a substitute for certified design validation.</footer>
+
+<script>
+/* =========================================================
+   STRUKTUR TEKNIK: RANGKA, CASING, DAN BEJANA TEKAN
+   Virtual Lab - Engineering Simulator
+   ========================================================= */
+
+/* ---------- i18n dictionary ---------- */
+const I18N = {
+id: {
+  appTitle:"STRUKTUR TEKNIK: RANGKA, CASING, DAN BEJANA TEKAN",
+  presetLabel:"Preset",
+  controlsTitle:"Kontrol Eksperimen",
+  systemTypeLabel:"Jenis Sistem",
+  learningLevelLabel:"Mode Belajar",
+  stage1Btn:"1. SISTEM NYATA",
+  stage2Btn:"2. MODEL TEKNIK",
+  stage3Btn:"3. MODEL TEGANGAN",
+  autoConvertBtn:"KONVERSI OTOMATIS",
+  playBtn:"MAIN", pauseBtn:"JEDA", stepBtn:"LANGKAH", resetBtn:"RESET",
+  loadBtn:"BEBANI", holdBtn:"TAHAN", unloadBtn:"LEPAS BEBAN",
+  animSpeedLabel:"Kecepatan Animasi", defScaleLabel:"Skala Deformasi",
+  engCardsTitle:"Informasi Teknik",
+  assumptionsTitle:"Asumsi Teknik",
+  calcTitle:"Perhitungan Teknik",
+  graphLoadDefTitle:"Grafik Gaya vs Deformasi",
+  graphStressStrainTitle:"Grafik Tegangan vs Regangan",
+  graphTimeTitle:"Grafik Tegangan / Faktor Keamanan vs Waktu",
+  dataTableTitle:"Data Eksperimen",
+  recordBtn:"REKAM DATA", clearBtn:"HAPUS DATA", exportCsvBtn:"EKSPOR CSV", printBtn:"CETAK LAPORAN LAB",
+  worksheetTitle:"Lembar Kerja Lab Virtual",
+  comparisonTitle:"Bandingkan Elemen Struktur",
+  challengeTitle:"Mode Tantangan",
+  quizTitle:"Pertanyaan Konseptual",
+  systemTruss:"Batang Rangka (Truss)",
+  systemFrame:"Elemen Rangka Kaku (Frame)",
+  systemBeam:"Elemen Balok (Beam)",
+  systemCyl:"Bejana Tekan Silinder",
+  systemSph:"Bejana Tekan Bola",
+  systemCasing:"Casing / Rumah Mesin",
+  modeForce:"Force-controlled", modeDisp:"Displacement-controlled",
+  modeAnalysis:"Analisis (p,d,t diketahui)", modeDesign:"Desain (hitung tebal)",
+  supportSimple:"Simply Supported", supportCantilever:"Cantilever",
+  tensionOpt:"Tarik (Tension)", compressionOpt:"Tekan (Compression)",
+  statSystem:"SISTEM", statMode:"MODE", statModel:"MODEL", statBalance:"NERACA GAYA",
+  statStress:"TEGANGAN", statDeform:"DEFORMASI", statSafety:"KEAMANAN", statTime:"WAKTU",
+  phaseIdle:"Diam", phaseLoading:"Pembebanan", phaseHolding:"Ditahan", phaseUnloading:"Pelepasan", phaseRecovery:"Pemulihan",
+  balanceOk:"Terpenuhi", balanceErr:"Error",
+  modelValid:"Valid", modelInvalid:"Input tidak valid", modelLimit:"Batas Model Terlampaui",
+  safeS:"AMAN", warnS:"WASPADA", critS:"KRITIS", limitS:"BATAS TERCAPAI", naS:"Belum Dievaluasi",
+  notEval:"Belum dievaluasi",
+  fieldForce:"Gaya F", fieldForceAxial:"Gaya Aksial Fa", fieldForceLateral:"Gaya Lateral Fb", fieldDispTarget:"Target Deformasi δ",
+  fieldArea:"Luas Penampang A", fieldLength:"Panjang L", fieldEffLength:"Panjang Efektif Le",
+  fieldModulus:"Modulus Elastisitas E", fieldYield:"Tegangan Luluh σyield", fieldAllow:"Tegangan Izin σallow",
+  fieldInertia:"Momen Inersia I", fieldDistC:"Jarak ke Serat Terluar c", fieldSupport:"Kondisi Tumpuan",
+  fieldAxialMode:"Mode Aksial", fieldMemberState:"Kondisi Batang",
+  fieldPressure:"Tekanan Internal p", fieldDiameter:"Diameter d", fieldThickness:"Tebal Dinding t",
+  fieldJointEff:"Efisiensi Sambungan Ej", fieldVesselMode:"Mode Bejana Tekan", fieldGeometry:"Geometri",
+  fieldPressurized:"Casing Bertekanan?",
+  yesOpt:"Ya", noOpt:"Tidak",
+  cardAxialForce:"Gaya Aksial", cardMoment:"Momen Lentur",
+  cardStress:"Tegangan", cardStrain:"Regangan", cardDeform:"Deformasi", cardStrainEnergy:"Energi Regangan",
+  cardBuckling:"Beban Kritis Tekuk", cardSafety:"Faktor Keamanan", cardUtil:"Utilisasi",
+  cardHoop:"Tegangan Keliling σh", cardLong:"Tegangan Memanjang σl", cardReqThk:"Tebal Minimum",
+  cardThinWall:"Validitas Dinding Tipis", validYes:"VALID", validNo:"TIDAK VALID (gunakan model tebal)",
+  cardStructStress:"Tegangan Struktural", cardPressStress:"Tegangan Tekanan",
+  assumTruss:[
+    "Elemen elastis linear dalam rentang tegangan yang diizinkan.",
+    "Batang rangka bersendi (pin-jointed) dan dua-gaya (two-force member).",
+    "Beban statis atau kuasi-statis diterapkan sepanjang sumbu batang.",
+    "Tekuk (buckling) dievaluasi terpisah dari kegagalan tegangan pada batang tekan.",
+  ],
+  assumFrame:[
+    "Sambungan kaku (rigid joint); kombinasi tegangan aksial dan lentur dijumlahkan sebagai σ = Fa/A ± Mc/I.",
+    "Model kolom kantilever untuk beban lateral penyebab momen.",
+    "Material elastis linear, homogen, dan isotropik.",
+  ],
+  assumBeam:[
+    "Elemen lentur murni; σ = Mc/I berlaku pada penampang yang direncanakan.",
+    "Kondisi tumpuan (simply supported/cantilever) ditentukan secara eksplisit.",
+    "Tidak ada konsentrasi tegangan pada lubang/notch kecuali dimodelkan.",
+  ],
+  assumVessel:[
+    "Rumus dinding tipis berlaku hanya untuk t/d ≤ 1/10.",
+    "Tegangan radial diabaikan pada model dinding tipis.",
+    "Tekanan bekerja kuasi-statis; efek dinamis (water hammer, kejut tekanan) tidak dimodelkan kecuali dinyatakan.",
+    "Material isotropik dan homogen; sambungan las diasumsikan seideal efisiensi sambungan Ej yang dimasukkan.",
+  ],
+  assumCasing:[
+    "Model gabungan: tegangan struktural (rangka casing) dan tegangan tekanan (dinding) dihitung dan ditampilkan terpisah.",
+    "Kedua komponen tegangan TIDAK dijumlahkan langsung kecuali arah dan bidang tegangannya konsisten.",
+    "Getaran mesin, fatigue, dan sambungan baut detail berada di luar model dasar.",
+  ],
+  assumGeneral:[
+    "Nilai material bersifat ilustratif untuk pembelajaran, bukan sertifikasi produk nyata.",
+    "Hasil merupakan penyederhanaan sistem nyata dan hanya valid untuk asumsi yang ditampilkan.",
+  ],
+  notEvaluated:"Belum dievaluasi",
+  footerNote:"Simulator edukasi, bukan pengganti validasi desain, analisis fatigue, atau kode desain bejana tekan bersertifikasi.",
+  deformNote:"Deformasi diperbesar secara visual untuk tujuan pembelajaran.",
+},
+en: {
+  appTitle:"ENGINEERING STRUCTURES: FRAMES, CASINGS, AND PRESSURE VESSELS",
+  presetLabel:"Preset",
+  controlsTitle:"Experiment Controls",
+  systemTypeLabel:"System Type",
+  learningLevelLabel:"Learning Mode",
+  stage1Btn:"1. REAL SYSTEM",
+  stage2Btn:"2. ENGINEERING MODEL",
+  stage3Btn:"3. STRESS MODEL",
+  autoConvertBtn:"AUTO CONVERT",
+  playBtn:"PLAY", pauseBtn:"PAUSE", stepBtn:"STEP", resetBtn:"RESET",
+  loadBtn:"LOAD", holdBtn:"HOLD", unloadBtn:"UNLOAD",
+  animSpeedLabel:"Animation Speed", defScaleLabel:"Deformation Scale",
+  engCardsTitle:"Engineering Information",
+  assumptionsTitle:"Engineering Assumptions",
+  calcTitle:"Engineering Calculation",
+  graphLoadDefTitle:"Load vs Deformation",
+  graphStressStrainTitle:"Stress vs Strain",
+  graphTimeTitle:"Stress / Safety Factor vs Time",
+  dataTableTitle:"Experiment Data",
+  recordBtn:"RECORD DATA", clearBtn:"CLEAR DATA", exportCsvBtn:"EXPORT CSV", printBtn:"PRINT LAB REPORT",
+  worksheetTitle:"Virtual Lab Worksheet",
+  comparisonTitle:"Compare Structural Elements",
+  challengeTitle:"Challenge Mode",
+  quizTitle:"Concept Questions",
+  systemTruss:"Truss Member",
+  systemFrame:"Frame Member (Portal Frame)",
+  systemBeam:"Beam Element",
+  systemCyl:"Cylindrical Pressure Vessel",
+  systemSph:"Spherical Pressure Vessel",
+  systemCasing:"Casing / Machine Housing",
+  modeForce:"Force-controlled", modeDisp:"Displacement-controlled",
+  modeAnalysis:"Analysis (p,d,t known)", modeDesign:"Design (compute thickness)",
+  supportSimple:"Simply Supported", supportCantilever:"Cantilever",
+  tensionOpt:"Tension", compressionOpt:"Compression",
+  statSystem:"SYSTEM", statMode:"MODE", statModel:"MODEL", statBalance:"FORCE BALANCE",
+  statStress:"STRESS", statDeform:"DEFORMATION", statSafety:"SAFETY", statTime:"TIME",
+  phaseIdle:"Idle", phaseLoading:"Loading", phaseHolding:"Holding", phaseUnloading:"Unloading", phaseRecovery:"Recovery",
+  balanceOk:"Satisfied", balanceErr:"Error",
+  modelValid:"Valid", modelInvalid:"Invalid input", modelLimit:"Model Limit Exceeded",
+  safeS:"SAFE", warnS:"WARNING", critS:"CRITICAL", limitS:"LIMIT REACHED", naS:"Not Evaluated",
+  notEval:"Not evaluated",
+  fieldForce:"Force F", fieldForceAxial:"Axial Force Fa", fieldForceLateral:"Lateral Force Fb", fieldDispTarget:"Target Deformation δ",
+  fieldArea:"Cross-section Area A", fieldLength:"Length L", fieldEffLength:"Effective Length Le",
+  fieldModulus:"Modulus of Elasticity E", fieldYield:"Yield Stress σyield", fieldAllow:"Allowable Stress σallow",
+  fieldInertia:"Moment of Inertia I", fieldDistC:"Distance to Extreme Fiber c", fieldSupport:"Support Condition",
+  fieldAxialMode:"Axial Mode", fieldMemberState:"Member State",
+  fieldPressure:"Internal Pressure p", fieldDiameter:"Diameter d", fieldThickness:"Wall Thickness t",
+  fieldJointEff:"Joint Efficiency Ej", fieldVesselMode:"Pressure Vessel Mode", fieldGeometry:"Geometry",
+  fieldPressurized:"Pressurized Casing?",
+  yesOpt:"Yes", noOpt:"No",
+  cardAxialForce:"Axial Force", cardMoment:"Bending Moment",
+  cardStress:"Stress", cardStrain:"Strain", cardDeform:"Deformation", cardStrainEnergy:"Strain Energy",
+  cardBuckling:"Critical Buckling Load", cardSafety:"Safety Factor", cardUtil:"Utilization",
+  cardHoop:"Hoop Stress σh", cardLong:"Longitudinal Stress σl", cardReqThk:"Required Thickness",
+  cardThinWall:"Thin-Wall Validity", validYes:"VALID", validNo:"NOT VALID (use thick-wall model)",
+  cardStructStress:"Structural Stress", cardPressStress:"Pressure Stress",
+  assumTruss:[
+    "Linear elastic element within its permitted stress range.",
+    "Pin-jointed, two-force truss member.",
+    "Static or quasi-static load applied along the member axis.",
+    "Buckling is evaluated separately from stress failure on compression members.",
+  ],
+  assumFrame:[
+    "Rigid joint; combined axial and bending stress summed as σ = Fa/A ± Mc/I.",
+    "Cantilever column model for the lateral load causing bending.",
+    "Linear elastic, homogeneous, isotropic material.",
+  ],
+  assumBeam:[
+    "Pure bending element; σ = Mc/I applies on the designed cross-section.",
+    "Support condition (simply supported/cantilever) is explicitly defined.",
+    "No stress concentration at holes/notches unless modeled.",
+  ],
+  assumVessel:[
+    "Thin-wall formula applies only for t/d ≤ 1/10.",
+    "Radial stress is neglected in the thin-wall model.",
+    "Pressure acts quasi-statically; dynamic effects (water hammer, pressure surge) are not modeled unless stated.",
+    "Isotropic, homogeneous material; welded joints assumed as ideal as the entered joint efficiency Ej.",
+  ],
+  assumCasing:[
+    "Combined model: structural stress (casing frame) and pressure stress (wall) are computed and shown separately.",
+    "Both stress components are NOT summed directly unless their direction and plane are consistent.",
+    "Machine vibration, fatigue, and detailed bolted-joint behavior are outside the basic model.",
+  ],
+  assumGeneral:[
+    "Material values are illustrative for learning, not certified real-product data.",
+    "Results are a simplification of the real system and are valid only for the assumptions shown.",
+  ],
+  notEvaluated:"Not evaluated",
+  footerNote:"Educational simulator, not a substitute for certified design validation, fatigue analysis, or pressure vessel design codes.",
+  deformNote:"Deformation is visually exaggerated for educational purposes.",
+}
+};
+
+function t(key){ return (I18N[state.lang] && I18N[state.lang][key]) || key; }
+function tArr(key){ return (I18N[state.lang] && I18N[state.lang][key]) || []; }
+
+/* ---------- Presets ---------- */
+const PRESETS = {
+  p1:{ nameId:"Rangka Atap/Jembatan", nameEn:"Roof/Bridge Truss", systemType:"truss",
+       vals:{F:50, A:500, L:2000, E:200, I:4, Le:2000, sigmaYield:250, sigmaAllow:150, axialState:"tension"} },
+  p2:{ nameId:"Rangka Mesin/Crane", nameEn:"Machine/Crane Frame", systemType:"frame",
+       vals:{Fa:10, Fb:4, A:1200, L:1500, I:6, c:120, E:200, sigmaYield:250, sigmaAllow:150} },
+  p3:{ nameId:"Balok Penopang Lentur", nameEn:"Support Beam Under Bending", systemType:"beam",
+       vals:{F:10, L:2000, I:4, c:100, E:200, support:"simple", sigmaYield:250, sigmaAllow:150} },
+  p4:{ nameId:"Tangki Penyimpanan Silinder", nameEn:"Cylindrical Storage Tank", systemType:"cyl",
+       vals:{p:1.5, d:1000, t:10, Ej:1, sigmaYield:250, sigmaAllow:100} },
+  p5:{ nameId:"Casing Kompresor/Pompa", nameEn:"Compressor/Pump Casing", systemType:"casing",
+       vals:{pressurized:true, p:1.0, d:400, t:8, Fa:8, Fb:6, A:1200, L:600, I:3, c:60, E:200, sigmaYield:250, sigmaAllow:120} },
+  p6:{ nameId:"Sistem Perpipaan Bertekanan", nameEn:"Pressurized Piping System", systemType:"cyl",
+       vals:{p:4, d:200, t:6, Ej:1, sigmaYield:235, sigmaAllow:110} },
+};
+const PRESET_ORDER = ["p1","p2","p3","p4","p5","p6"];
+
+/* ---------- Global State ---------- */
+const state = {
+  lang:"id",
+  preset:"p4",
+  systemType:"cyl",
+  stage:1,
+  learningLevel:"intermediate",
+
+  // structural (axial family)
+  axialMode:"force",     // force | displacement
+  axialState:"tension",  // tension | compression (truss only)
+  F:50,      // kN (truss/beam point load)
+  Fa:15, Fb:8, // kN (frame / casing structural)
+  deltaTarget:1, // mm (displacement-controlled input)
+  A:500,     // mm^2
+  L:2000,    // mm
+  Le:2000,   // mm (effective length for buckling)
+  E:200,     // GPa
+  I:4,       // x1e6 mm^4
+  c:100,     // mm
+  support:"simple", // simple | cantilever
+  sigmaYield:250, // MPa
+  sigmaAllow:100, // MPa
+
+  // pressure vessel
+  vesselMode:"analysis", // analysis | design
+  geometry:"cyl", // cyl | sph
+  p:1.5,     // MPa
+  d:1000,    // mm
+  t:10,      // mm
+  Ej:1,      // joint efficiency
+
+  // casing
+  pressurized:true,
+
+  // dynamic
+  phase:"idle", running:false, time:0, dt:0.05,
+  loadFrac:0, // 0..1 fraction of target load currently applied
+  loadingTime:2.5, holdTime:2.0, unloadTime:2.0,
+  animSpeed:1, defScale:10,
+
+  history:{t:[], loadFrac:[], sigma:[], nSF:[]},
+  trials:[],
+  trialCounter:0,
+};
+
+/* ---------- Unit-consistent Calculation Engine (N, mm, MPa) ---------- */
+
+function calcAxial(A, L, E_MPa, F_N){
+  // sigma [MPa], strain [-], delta [mm], k [N/mm], U [J]
+  if(A<=0 || L<=0 || E_MPa<=0) return null;
+  const sigma = F_N / A;
+  const strain = sigma / E_MPa;
+  const delta = strain * L;
+  const k = A * E_MPa / L;
+  const U = 0.5 * F_N * delta / 1000; // N*mm -> J
+  return {sigma, strain, delta, k, U};
+}
+
+function calcAxialFromDisplacement(A, L, E_MPa, delta_mm){
+  if(A<=0 || L<=0 || E_MPa<=0) return null;
+  const k = A * E_MPa / L;
+  const F_N = k * delta_mm;
+  const sigma = F_N / A;
+  const strain = sigma / E_MPa;
+  const U = 0.5 * F_N * delta_mm / 1000;
+  return {sigma, strain, delta:delta_mm, k, U, F_N};
+}
+
+function calcBuckling(E_MPa, I_mm4, Le_mm){
+  if(E_MPa<=0 || I_mm4<=0 || Le_mm<=0) return null;
+  return Math.PI*Math.PI*E_MPa*I_mm4/(Le_mm*Le_mm); // N
+}
+
+function calcBeam(F_N, L_mm, E_MPa, I_mm4, c_mm, support){
+  if(L_mm<=0 || E_MPa<=0 || I_mm4<=0 || c_mm<=0) return null;
+  let M, delta;
+  if(support === "cantilever"){
+    M = F_N * L_mm;
+    delta = F_N * Math.pow(L_mm,3) / (3*E_MPa*I_mm4);
+  } else {
+    M = F_N * L_mm / 4; // simply supported, center point load
+    delta = F_N * Math.pow(L_mm,3) / (48*E_MPa*I_mm4);
+  }
+  const sigma = M * c_mm / I_mm4;
+  return {M, sigma, delta};
+}
+
+function calcFrame(Fa_N, Fb_N, A, L, I_mm4, c_mm, E_MPa){
+  if(A<=0 || L<=0 || I_mm4<=0 || c_mm<=0 || E_MPa<=0) return null;
+  const sigmaAxial = Fa_N / A;
+  const M = Fb_N * L; // cantilever column model
+  const sigmaBend = M * c_mm / I_mm4;
+  const sigmaTotal = sigmaAxial + sigmaBend;
+  const deltaAxial = sigmaAxial/E_MPa * L;
+  const deltaBend = Fb_N * Math.pow(L,3) / (3*E_MPa*I_mm4);
+  return {sigmaAxial, sigmaBend, sigmaTotal, M, deltaAxial, deltaBend};
+}
+
+function calcThinWallCyl(p_MPa, d_mm, t_mm, Ej){
+  if(d_mm<=0 || t_mm<=0 || p_MPa<0) return null;
+  const ej = (Ej && Ej>0) ? Ej : 1;
+  const sigmaH = p_MPa*d_mm/(2*t_mm*ej);
+  const sigmaL = p_MPa*d_mm/(4*t_mm*ej);
+  return {sigmaH, sigmaL};
+}
+
+function calcThinWallSph(p_MPa, d_mm, t_mm, Ej){
+  if(d_mm<=0 || t_mm<=0 || p_MPa<0) return null;
+  const ej = (Ej && Ej>0) ? Ej : 1;
+  const sigma = p_MPa*d_mm/(4*t_mm*ej);
+  return {sigma};
+}
+
+function calcRequiredThickness(p_MPa, d_mm, sigmaAllow_MPa, Ej){
+  if(d_mm<=0 || sigmaAllow_MPa<=0 || p_MPa<0) return null;
+  const ej = (Ej && Ej>0) ? Ej : 1;
+  return p_MPa*d_mm/(2*sigmaAllow_MPa*ej);
+}
+
+function calcRequiredThicknessSph(p_MPa, d_mm, sigmaAllow_MPa, Ej){
+  if(d_mm<=0 || sigmaAllow_MPa<=0 || p_MPa<0) return null;
+  const ej = (Ej && Ej>0) ? Ej : 1;
+  return p_MPa*d_mm/(4*sigmaAllow_MPa*ej);
+}
+
+function checkThinWallValid(t_mm, d_mm){
+  if(d_mm<=0) return false;
+  return (t_mm/d_mm) <= 0.1;
+}
+
+function calcSafetyFactor(sigmaYield_MPa, sigmaActual_MPa){
+  if(!isFinite(sigmaActual_MPa) || sigmaActual_MPa<=0) return Infinity;
+  if(!isFinite(sigmaYield_MPa) || sigmaYield_MPa<=0) return NaN;
+  return sigmaYield_MPa/sigmaActual_MPa;
+}
+
+function safetyStatus(nSF, utilization){
+  // utilization = sigmaActual/sigmaAllow (or comparable ratio), 0..1+ expected
+  if(!isFinite(utilization) || isNaN(utilization)) return "na";
+  if(utilization >= 1.0) return "critical";
+  if(utilization >= 0.8) return "warning";
+  return "safe";
+}
+/* ---------- Aggregate compute() : reads state, returns normalized result ---------- */
+function compute(loadFrac){
+  if(loadFrac === undefined) loadFrac = (state.running || state.phase!=="idle") ? state.loadFrac : 1;
+  const sys = state.systemType;
+  const E_MPa = state.E*1000;
+  const I_mm4 = state.I*1e6;
+
+  if(sys === "truss"){
+    const Ftarget_N = state.F*1000*(state.axialState==="compression"?-1:1);
+    let r;
+    if(state.axialMode === "displacement"){
+      const deltaTarget = state.deltaTarget*(state.axialState==="compression"?-1:1)*loadFrac;
+      r = calcAxialFromDisplacement(state.A, state.L, E_MPa, deltaTarget);
+      if(!r) return null;
+      r.F_N = r.F_N;
+    } else {
+      r = calcAxial(state.A, state.L, E_MPa, Ftarget_N*loadFrac);
+      if(!r) return null;
+      r.F_N = Ftarget_N*loadFrac;
+    }
+    const sigmaAbs = Math.abs(r.sigma);
+    const nSF = calcSafetyFactor(state.sigmaYield, sigmaAbs);
+    const util = sigmaAbs/state.sigmaAllow;
+    let Pcr=null, bucklingNote=null;
+    if(state.axialState==="compression" && state.I>0){
+      Pcr = calcBuckling(E_MPa, I_mm4, state.Le);
+    }
+    return {
+      kind:"axial", label:"truss",
+      F:r.F_N, sigma:r.sigma, sigmaAbs, strain:r.strain, delta:r.delta, U:r.U, k:r.k,
+      nSF, util, Pcr, status: safetyStatus(nSF,util),
+      thinWallValid:null
+    };
+  }
+
+  if(sys === "frame"){
+    const Fa_N = state.Fa*1000*loadFrac;
+    const Fb_N = state.Fb*1000*loadFrac;
+    const r = calcFrame(Fa_N, Fb_N, state.A, state.L, I_mm4, state.c, E_MPa);
+    if(!r) return null;
+    const sigmaAbs = Math.abs(r.sigmaTotal);
+    const nSF = calcSafetyFactor(state.sigmaYield, sigmaAbs);
+    const util = sigmaAbs/state.sigmaAllow;
+    const Pcr = state.I>0 ? calcBuckling(E_MPa, I_mm4, state.L) : null;
+    return {
+      kind:"frame", label:"frame",
+      Fa:Fa_N, Fb:Fb_N, M:r.M, sigmaAxial:r.sigmaAxial, sigmaBend:r.sigmaBend, sigma:r.sigmaTotal, sigmaAbs,
+      delta:r.deltaBend, deltaAxial:r.deltaAxial, nSF, util, Pcr, status: safetyStatus(nSF,util)
+    };
+  }
+
+  if(sys === "beam"){
+    const F_N = state.F*1000*loadFrac;
+    const r = calcBeam(F_N, state.L, E_MPa, I_mm4, state.c, state.support);
+    if(!r) return null;
+    const sigmaAbs = Math.abs(r.sigma);
+    const nSF = calcSafetyFactor(state.sigmaYield, sigmaAbs);
+    const util = sigmaAbs/state.sigmaAllow;
+    return {
+      kind:"beam", label:"beam",
+      F:F_N, M:r.M, sigma:r.sigma, sigmaAbs, delta:r.delta,
+      nSF, util, status: safetyStatus(nSF,util)
+    };
+  }
+
+  if(sys === "cyl" || sys === "sph"){
+    const p = state.p*loadFrac;
+    let tUsed = state.t;
+    let treq = null;
+    if(state.vesselMode === "design"){
+      treq = (sys==="cyl") ? calcRequiredThickness(state.p, state.d, state.sigmaAllow, state.Ej)
+                           : calcRequiredThicknessSph(state.p, state.d, state.sigmaAllow, state.Ej);
+      tUsed = treq;
+    }
+    const valid = checkThinWallValid(tUsed, state.d);
+    let sigmaH=null, sigmaL=null, sigma=null;
+    if(sys==="cyl"){
+      const r = calcThinWallCyl(p, state.d, tUsed, state.Ej);
+      if(!r) return null;
+      sigmaH=r.sigmaH; sigmaL=r.sigmaL; sigma=sigmaH;
+    } else {
+      const r = calcThinWallSph(p, state.d, tUsed, state.Ej);
+      if(!r) return null;
+      sigma=r.sigma;
+    }
+    const nSF = calcSafetyFactor(state.sigmaYield, sigma);
+    const util = sigma/state.sigmaAllow;
+    return {
+      kind:"vessel", label:sys,
+      p, t:tUsed, treq, sigmaH, sigmaL, sigma, sigmaAbs:sigma,
+      nSF, util, status: valid ? safetyStatus(nSF,util) : "modelLimit",
+      thinWallValid: valid
+    };
+  }
+
+  if(sys === "casing"){
+    const Fa_N = state.Fa*1000*loadFrac;
+    const Fb_N = state.Fb*1000*loadFrac;
+    const structR = calcFrame(Fa_N, Fb_N, state.A, state.L, I_mm4, state.c, E_MPa);
+    let pressR = null, valid = null, p=0, tUsed=state.t;
+    if(state.pressurized){
+      p = state.p*loadFrac;
+      valid = checkThinWallValid(state.t, state.d);
+      pressR = calcThinWallCyl(p, state.d, state.t, state.Ej);
+    }
+    const structSigma = structR ? Math.abs(structR.sigmaTotal) : 0;
+    const pressSigma = pressR ? pressR.sigmaH : 0;
+    const governingSigma = Math.max(structSigma, pressSigma);
+    const nSF = calcSafetyFactor(state.sigmaYield, governingSigma);
+    const util = governingSigma/state.sigmaAllow;
+    let status = safetyStatus(nSF, util);
+    if(state.pressurized && valid===false) status = "modelLimit";
+    return {
+      kind:"casing", label:"casing",
+      Fa:Fa_N, Fb:Fb_N, structSigma, M: structR? structR.M:0,
+      p, pressSigma, sigmaH: pressR? pressR.sigmaH:null, sigmaL: pressR? pressR.sigmaL:null,
+      sigma: governingSigma, sigmaAbs: governingSigma,
+      nSF, util, status, thinWallValid: valid, pressurized: state.pressurized
+    };
+  }
+
+  return null;
+}
+
+/* ---------- Phase / dynamic loop ---------- */
+function resetSimulation(){
+  state.phase = "idle";
+  state.running = false;
+  state.time = 0;
+  state.simTime = 0;
+  state.loadFrac = 0;
+  state.history = {t:[], loadFrac:[], sigma:[], nSF:[]};
+  refreshAll();
+}
+
+function startPhaseSequence(){
+  state.phase = "loading";
+  state.running = true;
+  state.time = 0;
+}
+
+function stepSimulation(dtReal){
+  if(!state.running) return;
+  const dt = dtReal * state.animSpeed;
+  state.time += dt;
+  state.simTime = (state.simTime||0) + dt;
+  if(state.phase === "loading"){
+    state.loadFrac = Math.min(1, state.time/state.loadingTime);
+    if(state.loadFrac >= 1){ state.phase="holding"; state.time=0; }
+  } else if(state.phase === "holding"){
+    state.loadFrac = 1;
+    if(state.time >= state.holdTime){ state.phase="unloading"; state.time=0; }
+  } else if(state.phase === "unloading"){
+    state.loadFrac = Math.max(0, 1 - state.time/state.unloadTime);
+    if(state.loadFrac <= 0){ state.phase="recovery"; state.time=0; state.loadFrac=0; }
+  } else if(state.phase === "recovery"){
+    state.loadFrac = 0;
+    if(state.time > 0.5){ state.phase="idle"; state.running=false; }
+  }
+  // record history (monotonic simTime)
+  const res = compute(state.loadFrac);
+  if(res){
+    state.history.t.push(state.simTime);
+    state.history.loadFrac.push(state.loadFrac);
+    state.history.sigma.push(res.sigmaAbs);
+    state.history.nSF.push(isFinite(res.nSF)?res.nSF:null);
+    const maxPts = 400;
+    if(state.history.t.length>maxPts){
+      state.history.t.shift(); state.history.loadFrac.shift();
+      state.history.sigma.shift(); state.history.nSF.shift();
+    }
+  }
+}
+/* ---------- Tooltips dictionary for engineering symbols ---------- */
+const TOOLTIPS = {
+  A:{id:"Luas efektif yang menahan beban aksial, mm².", en:"Effective area carrying axial load, mm²."},
+  L:{id:"Panjang elemen struktur, mm.", en:"Length of the structural element, mm."},
+  E:{id:"Kekakuan material pada daerah elastis linear, GPa.", en:"Material stiffness in the linear elastic region, GPa."},
+  I:{id:"Momen inersia penampang terhadap sumbu netral, ×10⁶ mm⁴.", en:"Cross-section moment of inertia about the neutral axis, ×10⁶ mm⁴."},
+  sigmaYield:{id:"Tegangan di mana material mulai berdeformasi plastis, MPa.", en:"Stress at which the material begins to yield plastically, MPa."},
+  sigmaAllow:{id:"Batas tegangan desain yang diizinkan, MPa.", en:"Allowable design stress limit, MPa."},
+  p:{id:"Tekanan internal pada dinding bejana, MPa.", en:"Internal pressure on the vessel wall, MPa."},
+  d:{id:"Diameter bejana tekan, mm.", en:"Pressure vessel diameter, mm."},
+  t:{id:"Tebal dinding bejana, mm. Validitas dinding tipis: t/d ≤ 1/10.", en:"Vessel wall thickness, mm. Thin-wall validity: t/d ≤ 1/10."},
+  Ej:{id:"Efisiensi sambungan las, 0–1 (model ASME lanjutan).", en:"Welded joint efficiency, 0–1 (advanced ASME model)."},
+  c:{id:"Jarak dari sumbu netral ke serat terluar, mm.", en:"Distance from the neutral axis to the extreme fiber, mm."},
+  Le:{id:"Panjang efektif untuk analisis tekuk (buckling), mm.", en:"Effective length for buckling analysis, mm."},
+  F:{id:"Gaya yang diterapkan pada elemen, kN.", en:"Force applied to the element, kN."},
+  Fa:{id:"Komponen gaya aksial, kN.", en:"Axial force component, kN."},
+  Fb:{id:"Komponen gaya lateral penyebab lentur, kN.", en:"Lateral force component causing bending, kN."},
+  deltaTarget:{id:"Target deformasi aksial yang ditetapkan langsung, mm.", en:"Directly prescribed target axial deformation, mm."},
+};
+
+/* ---------- Dynamic control panel generation ---------- */
+function fNum(key, labelKey, min, max, step, unit){
+  const val = state[key];
+  const tip = TOOLTIPS[key] ? TOOLTIPS[key][state.lang] : "";
+  const tipAttr = tip ? ` title="${tip.replace(/"/g,'&quot;')}"` : "";
+  return `<label class="field" data-fieldkey="${key}">
+    <span class="lbl tip"${tipAttr}>${t(labelKey)} <span style="opacity:.7">(${unit})</span></span>
+    <div class="row2">
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-bind="${key}" data-kind="range">
+      <input type="number" min="${min}" max="${max}" step="${step}" value="${val}" data-bind="${key}" data-kind="number">
+    </div>
+  </label>`;
+}
+function fSel(key, labelKey, options){
+  const opts = options.map(o=>`<option value="${o[0]}" ${String(state[key])===String(o[0])?'selected':''}>${t(o[1])}</option>`).join('');
+  return `<label class="field" data-fieldkey="${key}">
+    <span class="lbl">${t(labelKey)}</span>
+    <select data-bind="${key}" data-kind="select">${opts}</select>
+  </label>`;
+}
+
+function generateControlsHTML(sys){
+  let h = "";
+  if(sys === "truss"){
+    h += fSel("axialMode","fieldAxialMode",[["force","modeForce"],["displacement","modeDisp"]]);
+    h += fSel("axialState","fieldMemberState",[["tension","tensionOpt"],["compression","compressionOpt"]]);
+    if(state.axialMode === "displacement"){
+      h += fNum("deltaTarget","fieldDispTarget",-10,10,0.1,"mm");
+    } else {
+      h += fNum("F","fieldForce",0,500,1,"kN");
+    }
+    h += fNum("A","fieldArea",10,5000,10,"mm²");
+    h += fNum("L","fieldLength",100,10000,10,"mm");
+    h += fNum("E","fieldModulus",1,400,1,"GPa");
+    h += fNum("I","fieldInertia",0,50,0.1,"×10⁶mm⁴");
+    if(state.axialState === "compression"){
+      h += fNum("Le","fieldEffLength",100,10000,10,"mm");
+    }
+    h += fNum("sigmaYield","fieldYield",50,1000,5,"MPa");
+    h += fNum("sigmaAllow","fieldAllow",10,1000,5,"MPa");
+  }
+  else if(sys === "frame"){
+    h += fNum("Fa","fieldForceAxial",0,300,1,"kN");
+    h += fNum("Fb","fieldForceLateral",0,100,1,"kN");
+    h += fNum("A","fieldArea",100,10000,50,"mm²");
+    h += fNum("L","fieldLength",100,10000,10,"mm");
+    h += fNum("I","fieldInertia",0.1,50,0.1,"×10⁶mm⁴");
+    h += fNum("c","fieldDistC",5,500,5,"mm");
+    h += fNum("E","fieldModulus",1,400,1,"GPa");
+    h += fNum("sigmaYield","fieldYield",50,1000,5,"MPa");
+    h += fNum("sigmaAllow","fieldAllow",10,1000,5,"MPa");
+  }
+  else if(sys === "beam"){
+    h += fNum("F","fieldForce",0,200,1,"kN");
+    h += fNum("L","fieldLength",100,10000,10,"mm");
+    h += fNum("I","fieldInertia",0.1,50,0.1,"×10⁶mm⁴");
+    h += fNum("c","fieldDistC",5,500,5,"mm");
+    h += fNum("E","fieldModulus",1,400,1,"GPa");
+    h += fSel("support","fieldSupport",[["simple","supportSimple"],["cantilever","supportCantilever"]]);
+    h += fNum("sigmaYield","fieldYield",50,1000,5,"MPa");
+    h += fNum("sigmaAllow","fieldAllow",10,1000,5,"MPa");
+  }
+  else if(sys === "cyl" || sys === "sph"){
+    h += fSel("vesselMode","fieldVesselMode",[["analysis","modeAnalysis"],["design","modeDesign"]]);
+    h += fNum("p","fieldPressure",0,20,0.1,"MPa");
+    h += fNum("d","fieldDiameter",10,5000,10,"mm");
+    if(state.vesselMode === "analysis"){
+      h += fNum("t","fieldThickness",1,200,0.5,"mm");
+    }
+    h += fNum("Ej","fieldJointEff",0.5,1,0.05,"-");
+    h += fNum("sigmaYield","fieldYield",50,1000,5,"MPa");
+    h += fNum("sigmaAllow","fieldAllow",10,1000,5,"MPa");
+  }
+  else if(sys === "casing"){
+    h += fSel("pressurized","fieldPressurized",[[true,"yesOpt"],[false,"noOpt"]]);
+    if(state.pressurized){
+      h += fNum("p","fieldPressure",0,10,0.1,"MPa");
+      h += fNum("d","fieldDiameter",10,2000,10,"mm");
+      h += fNum("t","fieldThickness",1,100,0.5,"mm");
+      h += fNum("Ej","fieldJointEff",0.5,1,0.05,"-");
+    }
+    h += `<hr class="rule">`;
+    h += fNum("Fa","fieldForceAxial",0,200,1,"kN");
+    h += fNum("Fb","fieldForceLateral",0,100,1,"kN");
+    h += fNum("A","fieldArea",100,10000,50,"mm²");
+    h += fNum("L","fieldLength",100,5000,10,"mm");
+    h += fNum("I","fieldInertia",0.1,50,0.1,"×10⁶mm⁴");
+    h += fNum("c","fieldDistC",5,300,5,"mm");
+    h += fNum("E","fieldModulus",1,400,1,"GPa");
+    h += fNum("sigmaYield","fieldYield",50,1000,5,"MPa");
+    h += fNum("sigmaAllow","fieldAllow",10,1000,5,"MPa");
+  }
+  return h;
+}
+
+function wireDynamicControls(container){
+  const groups = {};
+  container.querySelectorAll('[data-bind]').forEach(el=>{
+    const key = el.dataset.bind;
+    (groups[key] = groups[key]||[]).push(el);
+  });
+  Object.keys(groups).forEach(key=>{
+    groups[key].forEach(el=>{
+      const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(evt, ()=>{
+        let val = el.value;
+        if(el.tagName === 'SELECT'){
+          if(val === 'true') val = true;
+          else if(val === 'false') val = false;
+          state[key] = val;
+          if(key === 'pressurized' || key === 'axialMode' || key === 'axialState' || key === 'vesselMode'){
+            rebuildSystemUI();
+            return;
+          }
+        } else {
+          val = parseFloat(val);
+          if(isNaN(val)) return;
+          state[key] = val;
+          groups[key].forEach(other=>{ if(other!==el) other.value = val; });
+        }
+        onParamChanged();
+      });
+    });
+  });
+}
+
+function onParamChanged(){
+  if(state.running){ resetSimulation(); }
+  else { refreshAll(); }
+}
+
+function rebuildSystemUI(){
+  document.getElementById('systemTypeSelect').value = state.systemType;
+  const dc = document.getElementById('dynamicControls');
+  dc.innerHTML = generateControlsHTML(state.systemType);
+  wireDynamicControls(dc);
+  resetSimulation();
+}
+
+function applyPreset(key){
+  const preset = PRESETS[key];
+  if(!preset) return;
+  state.preset = key;
+  state.systemType = preset.systemType;
+  // reset relevant defaults first
+  state.axialMode = "force"; state.axialState = "tension"; state.vesselMode = "analysis";
+  state.pressurized = true; state.support = "simple";
+  Object.assign(state, preset.vals);
+  if(state.systemType==='cyl') state.geometry='cyl';
+  if(state.systemType==='sph') state.geometry='sph';
+  rebuildSystemUI();
+}
+/* ---------- Colors based on status ---------- */
+function statusColor(status){
+  if(status === "safe") return "#49c98d";
+  if(status === "warning") return "#f0a83c";
+  if(status === "critical" || status === "modelLimit") return "#e6584c";
+  return "#93aac0";
+}
+function currentFrac(){ return (state.running || state.phase!=="idle") ? state.loadFrac : 1; }
+
+function dimLine(x1,y,x2,label){
+  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#5c7996" stroke-width="1"/>
+    <line x1="${x1}" y1="${y-5}" x2="${x1}" y2="${y+5}" stroke="#5c7996" stroke-width="1"/>
+    <line x1="${x2}" y1="${y-5}" x2="${x2}" y2="${y+5}" stroke="#5c7996" stroke-width="1"/>
+    <text x="${(x1+x2)/2}" y="${y+16}" fill="#93aac0" font-size="12" text-anchor="middle" font-family="var(--mono)">${label}</text>`;
+}
+function arrow(x1,y1,x2,y2,color){
+  const angle = Math.atan2(y2-y1,x2-x1);
+  const ah = 8;
+  const ax1 = x2 - ah*Math.cos(angle-0.4), ay1 = y2 - ah*Math.sin(angle-0.4);
+  const ax2 = x2 - ah*Math.cos(angle+0.4), ay2 = y2 - ah*Math.sin(angle+0.4);
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2.5"/>
+    <polygon points="${x2},${y2} ${ax1},${ay1} ${ax2},${ay2}" fill="${color}"/>`;
+}
+function svgLabel(x,y,text,color,size,anchor){
+  return `<text x="${x}" y="${y}" fill="${color||'#e7eef5'}" font-size="${size||13}" text-anchor="${anchor||'middle'}" font-family="var(--mono)">${text}</text>`;
+}
+function stageTitle(text){
+  return `<text x="400" y="28" fill="#3ecbe8" font-size="14" text-anchor="middle" font-family="Segoe UI, sans-serif" font-weight="600">${text}</text>`;
+}
+
+/* ---------- TRUSS ---------- */
+function trussBridgeSchematic(hc){
+  let s='';
+  const y0=280,y1=190,xStart=90,panel=105;
+  s+=`<line x1="${xStart-30}" y1="${y0}" x2="${xStart+6*panel+30}" y2="${y0}" stroke="#3a5064" stroke-width="3"/>`;
+  s+=`<line x1="${xStart-30}" y1="${y0+10}" x2="${xStart+6*panel+30}" y2="${y0+10}" stroke="#25384a" stroke-width="10" stroke-dasharray="4 4"/>`;
+  for(let i=0;i<6;i++){
+    const xA=xStart+i*panel, xB=xStart+(i+1)*panel, xm=(xA+xB)/2;
+    const hi = (i===2);
+    s+=`<line x1="${xA}" y1="${y0}" x2="${xm}" y2="${y1}" stroke="${hi?hc:'#41586e'}" stroke-width="${hi?5:3}"/>`;
+    s+=`<line x1="${xm}" y1="${y1}" x2="${xB}" y2="${y0}" stroke="${hi?hc:'#41586e'}" stroke-width="${hi?5:3}"/>`;
+    s+=`<line x1="${xA}" y1="${y0}" x2="${xB}" y2="${y0}" stroke="#41586e" stroke-width="3"/>`;
+  }
+  s+=`<circle cx="${xStart-30}" cy="${y0}" r="8" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+  s+=`<circle cx="${xStart+6*panel+30}" cy="${y0}" r="8" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+  return s;
+}
+
+function svgTruss(stage, res){
+  let s = '<g>';
+  if(stage === 1){
+    s += stageTitle(t("stage1Btn")+" — "+I18N[state.lang].systemTruss);
+    s += trussBridgeSchematic("#3ecbe8");
+    s += svgLabel(400,340,"Real system: pin-jointed truss members carry axial tension/compression.", "#93aac0",12);
+  } else {
+    const frac = currentFrac();
+    const color = stage===3 ? statusColor(res? res.status : "na") : "#3ecbe8";
+    const isComp = state.axialState === "compression";
+    const baseLen = 460;
+    const stretchPx = res ? Math.max(-70, Math.min(70, (res.delta||0) * state.defScale * 0.9 * frac * (isComp?-1:1))) : 0;
+    const dispStretch = isComp ? -Math.abs(stretchPx) : Math.abs(stretchPx);
+    const x1 = 170, x2 = 170+baseLen+dispStretch, y=200;
+    s += stageTitle((stage===2?t("stage2Btn"):t("stage3Btn"))+" — "+I18N[state.lang].systemTruss);
+    // pin support
+    s += `<polygon points="${x1},${y} ${x1-16},${y+26} ${x1+16},${y+26}" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+    s += `<line x1="${x1-24}" y1="${y+26}" x2="${x1+24}" y2="${y+26}" stroke="#93aac0" stroke-width="2"/>`;
+    // member
+    s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="10" stroke-linecap="round"/>`;
+    // roller support
+    s += `<circle cx="${x2+22}" cy="${y+14}" r="10" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+    s += `<line x1="${x2+8}" y1="${y+26}" x2="${x2+36}" y2="${y+26}" stroke="#93aac0" stroke-width="2"/>`;
+    // force arrow
+    const fx = isComp ? x2-70 : x2+70;
+    s += arrow(fx, y-50, isComp? x2+2 : x2+2, y, color);
+    s += svgLabel((x2+fx)/2, y-58, "F", color, 15);
+    s += dimLine(x1, y+60, x2, "L = "+state.L.toFixed(0)+" mm");
+    if(stage===3 && res){
+      s += svgLabel((x1+x2)/2, y-16, "σ = "+fmt(res.sigma,1)+" MPa", color, 14);
+      s += svgLabel((x1+x2)/2, 330, t("deformNote"), "#93aac0", 11);
+    }
+  }
+  s += '</g>';
+  return s;
+}
+
+/* ---------- FRAME ---------- */
+function svgFrame(stage, res){
+  let s = '<g>';
+  if(stage === 1){
+    s += stageTitle(t("stage1Btn")+" — "+I18N[state.lang].systemFrame);
+    s += `<rect x="250" y="120" width="300" height="140" fill="none" stroke="#41586e" stroke-width="4"/>`;
+    s += `<circle cx="400" cy="150" r="18" fill="none" stroke="#3ecbe8" stroke-width="3"/>`;
+    s += `<line x1="250" y1="260" x2="250" y2="300" stroke="#41586e" stroke-width="6"/>`;
+    s += `<line x1="550" y1="260" x2="550" y2="300" stroke="#41586e" stroke-width="6"/>`;
+    s += svgLabel(400,340,"Real system: portal frame supporting rotating machinery / crane arm.", "#93aac0",12);
+  } else {
+    const frac = currentFrac();
+    const color = stage===3 ? statusColor(res? res.status : "na") : "#3ecbe8";
+    const bend = res ? Math.max(-60,Math.min(60, (res.delta||0)*state.defScale*0.5*frac)) : 0;
+    s += stageTitle((stage===2?t("stage2Btn"):t("stage3Btn"))+" — "+I18N[state.lang].systemFrame);
+    const bx=250, by=310, tx=250+bend, ty=110;
+    s += `<line x1="${bx-30}" y1="${by}" x2="${bx+30}" y2="${by}" stroke="#93aac0" stroke-width="3"/>`;
+    s += `<path d="M ${bx} ${by} Q ${bx+bend*0.5} ${(by+ty)/2} ${tx} ${ty}" stroke="${color}" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+    s += arrow(tx+70, ty-10, tx+10, ty, color);
+    s += svgLabel(tx+80, ty-20, "Fb", color, 14);
+    s += arrow(tx, ty-40, tx, ty-2, "#f0a83c");
+    s += svgLabel(tx+18, ty-40, "Fa", "#f0a83c", 14);
+    s += svgLabel(bx-40, (by+ty)/2, "L = "+state.L.toFixed(0)+" mm", "#93aac0", 12, "end");
+    if(stage===3 && res){
+      s += svgLabel(tx+60, ty+40, "σtotal = "+fmt(res.sigma,1)+" MPa", color, 14, "start");
+      s += svgLabel(400, 330, t("deformNote"), "#93aac0", 11);
+    }
+  }
+  s += '</g>';
+  return s;
+}
+
+/* ---------- BEAM ---------- */
+function svgBeam(stage, res){
+  let s = '<g>';
+  if(stage === 1){
+    s += stageTitle(t("stage1Btn")+" — "+I18N[state.lang].systemBeam);
+    s += `<line x1="140" y1="220" x2="660" y2="220" stroke="#41586e" stroke-width="10" stroke-linecap="round"/>`;
+    s += `<rect x="120" y="220" width="560" height="8" fill="#1c2c3c"/>`;
+    s += svgLabel(400,300,"Real system: beam supporting equipment/rail load between columns.", "#93aac0",12);
+  } else {
+    const frac = currentFrac();
+    const color = stage===3 ? statusColor(res? res.status : "na") : "#3ecbe8";
+    const sag = res ? Math.max(0,Math.min(70,(res.delta||0)*state.defScale*frac)) : 0;
+    const x1=150,x2=650,ymid=200;
+    s += stageTitle((stage===2?t("stage2Btn"):t("stage3Btn"))+" — "+I18N[state.lang].systemBeam);
+    if(state.support === "cantilever"){
+      s += `<line x1="${x1-20}" y1="${ymid-40}" x2="${x1-20}" y2="${ymid+40}" stroke="#93aac0" stroke-width="6"/>`;
+      s += `<path d="M ${x1} ${ymid} Q ${(x1+x2)/2} ${ymid+sag} ${x2} ${ymid+sag*2}" stroke="${color}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+      s += arrow(x2, ymid+sag*2-50, x2, ymid+sag*2-4, color);
+      s += svgLabel(x2+10, ymid+sag*2-55, "F", color, 14, "start");
+    } else {
+      s += `<polygon points="${x1},${ymid} ${x1-14},${ymid+24} ${x1+14},${ymid+24}" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+      s += `<circle cx="${x2}" cy="${ymid+12}" r="9" fill="none" stroke="#93aac0" stroke-width="2"/>`;
+      s += `<path d="M ${x1} ${ymid} Q ${(x1+x2)/2} ${ymid+sag} ${x2} ${ymid}" stroke="${color}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+      s += arrow((x1+x2)/2, ymid-50, (x1+x2)/2, ymid+sag-4, color);
+      s += svgLabel((x1+x2)/2+14, ymid-55, "F", color, 14, "start");
+    }
+    s += dimLine(x1, 300, x2, "L = "+state.L.toFixed(0)+" mm");
+    if(stage===3 && res){
+      s += svgLabel((x1+x2)/2, 335, "σ = "+fmt(res.sigma,1)+" MPa   M = "+fmt(res.M/1000,2)+" N·m", color, 13);
+    }
+  }
+  s += '</g>';
+  return s;
+}
+
+/* ---------- PRESSURE VESSEL (cyl/sph) ---------- */
+function svgVessel(stage, res){
+  let s = '<g>';
+  const isSph = state.systemType === "sph";
+  if(stage === 1){
+    s += stageTitle(t("stage1Btn")+" — "+(isSph? I18N[state.lang].systemSph : I18N[state.lang].systemCyl));
+    if(isSph){
+      s += `<circle cx="400" cy="200" r="90" fill="none" stroke="#41586e" stroke-width="8"/>`;
+      s += `<line x1="400" y1="290" x2="400" y2="330" stroke="#41586e" stroke-width="6"/>`;
+    } else {
+      s += `<rect x="230" y="140" width="340" height="140" rx="70" fill="none" stroke="#41586e" stroke-width="8"/>`;
+      s += `<line x1="280" y1="280" x2="280" y2="320" stroke="#41586e" stroke-width="6"/>`;
+      s += `<line x1="520" y1="280" x2="520" y2="320" stroke="#41586e" stroke-width="6"/>`;
+    }
+    s += svgLabel(400,355,"Real system: pressurized storage vessel / process tank.", "#93aac0",12);
+  } else {
+    const frac = currentFrac();
+    const color = stage===3 ? statusColor(res? res.status : "na") : "#3ecbe8";
+    const baseR = 95;
+    const expand = res ? Math.max(0,Math.min(25,(res.sigma||0)/Math.max(state.sigmaAllow,1)*15*frac)) : 0;
+    const r = baseR+expand;
+    const cx=400, cy=185;
+    s += stageTitle((stage===2?t("stage2Btn"):t("stage3Btn"))+" — "+(isSph? I18N[state.lang].systemSph : I18N[state.lang].systemCyl));
+    s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="14"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="${r-16}" fill="none" stroke="#0d1a28" stroke-width="2" stroke-dasharray="4 4"/>`;
+    // pressure arrows radiating outward
+    for(let a=0;a<360;a+=45){
+      const rad=a*Math.PI/180;
+      const x1=cx+(r-16)*Math.cos(rad), y1=cy+(r-16)*Math.sin(rad);
+      const x2=cx+(r+22)*Math.cos(rad), y2=cy+(r+22)*Math.sin(rad);
+      s += arrow(x1,y1,x2,y2,"#f0a83c");
+    }
+    s += svgLabel(cx, cy+5, "p = "+fmt(res? res.p : state.p,2)+" MPa", "#f0a83c", 13);
+    s += dimLine(cx-r, cy+r+18, cx+r, "d = "+state.d.toFixed(0)+" mm");
+    s += svgLabel(cx+r+18, cy, "t = "+fmt(res? res.t : state.t,1)+" mm", color, 12, "start");
+    if(stage===3 && res){
+      if(isSph){
+        s += svgLabel(cx, 55, "σ = "+fmt(res.sigma,1)+" MPa", color, 14);
+      } else {
+        s += svgLabel(cx, 55, "σh = "+fmt(res.sigmaH,1)+" MPa    σl = "+fmt(res.sigmaL,1)+" MPa", color, 14);
+      }
+      if(res.thinWallValid === false){
+        s += svgLabel(cx, 368, "t/d > 1/10 — "+t("cardThinWall")+": "+t("validNo"), "#e6584c", 12);
+      } else {
+        s += svgLabel(cx, 368, t("deformNote"), "#93aac0", 11);
+      }
+    }
+  }
+  s += '</g>';
+  return s;
+}
+
+/* ---------- CASING ---------- */
+function svgCasing(stage, res){
+  let s = '<g>';
+  if(stage === 1){
+    s += stageTitle(t("stage1Btn")+" — "+I18N[state.lang].systemCasing);
+    s += `<rect x="260" y="140" width="280" height="150" rx="18" fill="none" stroke="#41586e" stroke-width="7"/>`;
+    s += `<circle cx="400" cy="215" r="40" fill="none" stroke="#3ecbe8" stroke-width="4"/>`;
+    s += `<line x1="300" y1="290" x2="300" y2="325" stroke="#41586e" stroke-width="6"/>`;
+    s += `<line x1="500" y1="290" x2="500" y2="325" stroke="#41586e" stroke-width="6"/>`;
+    s += svgLabel(400,355,"Real system: compressor/pump casing with internal pressure and structural loads.", "#93aac0",12);
+  } else {
+    const frac = currentFrac();
+    const color = stage===3 ? statusColor(res? res.status : "na") : "#3ecbe8";
+    const cx=400, cy=210;
+    const expand = res && res.pressurized ? Math.max(0,Math.min(18,(res.pressSigma||0)/Math.max(state.sigmaAllow,1)*14*frac)) : 0;
+    s += stageTitle((stage===2?t("stage2Btn"):t("stage3Btn"))+" — "+I18N[state.lang].systemCasing);
+    s += `<rect x="${290-expand}" y="${140-expand}" width="${220+2*expand}" height="${140+2*expand}" rx="16" fill="none" stroke="${color}" stroke-width="10"/>`;
+    s += `<line x1="330" y1="300" x2="330" y2="330" stroke="#93aac0" stroke-width="5"/>`;
+    s += `<line x1="470" y1="300" x2="470" y2="330" stroke="#93aac0" stroke-width="5"/>`;
+    s += arrow(cx, 90, cx, 138-expand, "#f0a83c");
+    s += svgLabel(cx+16, 90, "Fb", "#f0a83c", 13, "start");
+    if(res && res.pressurized){
+      s += svgLabel(cx, cy, "p = "+fmt(res.p,2)+" MPa", "#f0a83c", 13);
+    }
+    if(stage===3 && res){
+      let txt = "σstruct = "+fmt(res.structSigma,1)+" MPa";
+      if(res.pressurized) txt += "   σpress(σh) = "+fmt(res.pressSigma,1)+" MPa";
+      s += svgLabel(cx, 355, txt, color, 13);
+    }
+  }
+  s += '</g>';
+  return s;
+}
+
+function stageCaptionText(){
+  const map = {1:"stage1Btn",2:"stage2Btn",3:"stage3Btn"};
+  return t(map[state.stage]);
+}
+
+function renderStage(res){
+  const svg = document.getElementById('mainSvg');
+  let html;
+  if(state.systemType==='truss') html = svgTruss(state.stage, res);
+  else if(state.systemType==='frame') html = svgFrame(state.stage, res);
+  else if(state.systemType==='beam') html = svgBeam(state.stage, res);
+  else if(state.systemType==='casing') html = svgCasing(state.stage, res);
+  else html = svgVessel(state.stage, res);
+  svg.innerHTML = html;
+  document.getElementById('stageCaption').textContent = stageCaptionText();
+}
+
+function fmt(v, dec){
+  if(v===null || v===undefined || isNaN(v)) return "N/A";
+  if(!isFinite(v)) return "∞";
+  return Number(v).toFixed(dec===undefined?2:dec);
+}
+/* ---------- Engineering Cards ---------- */
+function card(kLabel, val, unit){
+  return `<div class="card"><div class="k">${kLabel}</div><div class="v">${val} <span class="u">${unit}</span></div></div>`;
+}
+function badgeFor(status){
+  const map = {safe:["safeS","safe"], warning:["warnS","warn"], critical:["critS","danger"], modelLimit:["limitS","danger"], na:["naS","na"]};
+  const m = map[status] || map.na;
+  return `<span class="badge ${m[1]}">${t(m[0])}</span>`;
+}
+
+function updateEngCards(res){
+  const c = document.getElementById('engCards');
+  if(!res){ c.innerHTML = `<div class="card"><div class="k">${t('modelInvalid')}</div></div>`; return; }
+  let h = "";
+  if(res.kind === "axial"){
+    h += card(t('cardAxialForce'), fmt(res.F/1000,2), "kN");
+    h += card(t('cardStress'), fmt(res.sigma,1), "MPa");
+    h += card(t('cardStrain'), fmt(res.strain*1000,3), "×10⁻³");
+    h += card(t('cardDeform'), fmt(res.delta,3), "mm");
+    h += card(t('cardStrainEnergy'), fmt(res.U,2), "J");
+    if(res.Pcr!==null) h += card(t('cardBuckling'), fmt(res.Pcr/1000,1), "kN");
+    h += card(t('cardSafety'), fmt(res.nSF,2), "-") + " " + badgeFor(res.status);
+  } else if(res.kind === "frame"){
+    h += card(t('cardAxialForce'), fmt(res.Fa/1000,2), "kN");
+    h += card(t('cardMoment'), fmt(res.M/1e6,3), "kN·m");
+    h += card(t('cardStructStress')+" (σ)", fmt(res.sigma,1), "MPa");
+    h += card(t('cardDeform'), fmt(res.delta,3), "mm");
+    if(res.Pcr!==null) h += card(t('cardBuckling'), fmt(res.Pcr/1000,1), "kN");
+    h += card(t('cardSafety'), fmt(res.nSF,2), "-") + " " + badgeFor(res.status);
+  } else if(res.kind === "beam"){
+    h += card(t('cardMoment'), fmt(res.M/1e6,3), "kN·m");
+    h += card(t('cardStress'), fmt(res.sigma,1), "MPa");
+    h += card(t('cardDeform'), fmt(res.delta,3), "mm");
+    h += card(t('cardSafety'), fmt(res.nSF,2), "-") + " " + badgeFor(res.status);
+  } else if(res.kind === "vessel"){
+    h += card(t('cardThinWall'), res.thinWallValid? t('validYes') : t('validNo'), "");
+    if(state.systemType==='cyl'){
+      h += card(t('cardHoop'), fmt(res.sigmaH,1), "MPa");
+      h += card(t('cardLong'), fmt(res.sigmaL,1), "MPa");
+    } else {
+      h += card(t('cardStress'), fmt(res.sigma,1), "MPa");
+    }
+    if(res.treq!==null) h += card(t('cardReqThk'), fmt(res.treq,2), "mm");
+    h += card(t('cardSafety'), fmt(res.nSF,2), "-") + " " + badgeFor(res.status);
+  } else if(res.kind === "casing"){
+    h += card(t('cardStructStress'), fmt(res.structSigma,1), "MPa");
+    if(res.pressurized){
+      h += card(t('cardPressStress')+" σh", fmt(res.pressSigma,1), "MPa");
+      h += card(t('cardThinWall'), res.thinWallValid? t('validYes') : t('validNo'), "");
+    }
+    h += card(t('cardSafety'), fmt(res.nSF,2), "-") + " " + badgeFor(res.status);
+  }
+  c.innerHTML = h;
+}
+
+/* ---------- Status bar ---------- */
+function statClass(status){
+  if(status==="safe") return "safe";
+  if(status==="warning") return "warn";
+  if(status==="critical" || status==="modelLimit") return "danger";
+  return "";
+}
+function updateStatusBar(res){
+  const sb = document.getElementById('statusBar');
+  const sysName = ({truss:t('systemTruss'),frame:t('systemFrame'),beam:t('systemBeam'),cyl:t('systemCyl'),sph:t('systemSph'),casing:t('systemCasing')})[state.systemType];
+  const phaseName = t("phase"+state.phase.charAt(0).toUpperCase()+state.phase.slice(1));
+  const modelValid = res ? (res.status==='modelLimit'? t('modelLimit') : t('modelValid')) : t('modelInvalid');
+  const balanceOk = res ? t('balanceOk') : t('balanceErr');
+  const stressText = res ? (res.kind==='vessel' && state.systemType==='cyl' ? fmt(res.sigmaH,1)+" / "+fmt(res.sigmaL,1)+" MPa" : fmt(res.sigmaAbs,1)+" MPa") : "N/A";
+  const deformText = res ? (res.delta!==undefined ? fmt(res.delta,3)+" mm" : (res.t!==undefined? fmt(res.t,2)+" mm (t)" : "N/A")) : "N/A";
+  const safetyText = res ? t(({safe:"safeS",warning:"warnS",critical:"critS",modelLimit:"limitS",na:"naS"})[res.status]) : t('naS');
+  const cls = res? statClass(res.status) : "";
+  sb.innerHTML = `
+    <div class="stat"><b>${t('statSystem')}</b>${sysName}</div>
+    <div class="stat"><b>${t('statMode')}</b>${phaseName}</div>
+    <div class="stat ${res && res.status==='modelLimit'?'danger':''}"><b>${t('statModel')}</b>${modelValid}</div>
+    <div class="stat"><b>${t('statBalance')}</b>${balanceOk}</div>
+    <div class="stat"><b>${t('statStress')}</b>${stressText}</div>
+    <div class="stat"><b>${t('statDeform')}</b>${deformText}</div>
+    <div class="stat ${cls}"><b>${t('statSafety')}</b>${safetyText}</div>
+    <div class="stat"><b>${t('statTime')}</b>${(state.simTime||0).toFixed(1)} s (${state.animSpeed}×)</div>
+  `;
+}
+
+/* ---------- Assumptions ---------- */
+function updateAssumptions(){
+  const el = document.getElementById('assumptionsPanel');
+  let arr = [];
+  if(state.systemType==='truss') arr = tArr('assumTruss');
+  else if(state.systemType==='frame') arr = tArr('assumFrame');
+  else if(state.systemType==='beam') arr = tArr('assumBeam');
+  else if(state.systemType==='casing') arr = tArr('assumCasing');
+  else arr = tArr('assumVessel');
+  arr = arr.concat(tArr('assumGeneral'));
+  el.innerHTML = arr.map(a=>`<li>${a}</li>`).join('');
+}
+
+/* ---------- Calculation Panel (step by step) ---------- */
+function updateCalcPanel(res){
+  const el = document.getElementById('calcPanel');
+  if(!res){ el.innerHTML = `<div class="step">${t('modelInvalid')}</div>`; return; }
+  let steps = [];
+  if(state.systemType==='truss'){
+    steps.push(`STEP 1 — Input: F = ${fmt(state.F,1)} kN; A = ${fmt(state.A,0)} mm²; L = ${fmt(state.L,0)} mm; E = ${fmt(state.E,0)} GPa.`);
+    steps.push(`STEP 2 — Convert: F = ${fmt(res.F,0)} N; E = ${fmt(state.E*1000,0)} MPa.`);
+    steps.push(`STEP 3 — Stress: σ = F/A = ${fmt(res.F,0)}/${fmt(state.A,0)} = <b>${fmt(res.sigma,2)} MPa</b>.`);
+    steps.push(`STEP 4 — Deformation: δ = FL/(AE) = <b>${fmt(res.delta,3)} mm</b>.`);
+    steps.push(`STEP 5 — Strain energy: U = ½Fδ = <b>${fmt(res.U,2)} J</b>.`);
+    if(res.Pcr!==null) steps.push(`STEP 6 — Buckling: Pcr = π²EI/Le² = <b>${fmt(res.Pcr/1000,2)} kN</b>.`);
+    steps.push(`STEP 7 — Safety factor: nSF = σyield/σ = ${fmt(state.sigmaYield,0)}/${fmt(res.sigmaAbs,1)} = <b>${fmt(res.nSF,2)}</b>.`);
+  } else if(state.systemType==='frame'){
+    steps.push(`STEP 1 — Input: Fa = ${fmt(state.Fa,1)} kN; Fb = ${fmt(state.Fb,1)} kN; A = ${fmt(state.A,0)} mm²; L = ${fmt(state.L,0)} mm; I = ${fmt(state.I,2)}×10⁶ mm⁴; c = ${fmt(state.c,0)} mm.`);
+    steps.push(`STEP 2 — Axial stress: σa = Fa/A = <b>${fmt(res.sigmaAxial,2)} MPa</b>.`);
+    steps.push(`STEP 3 — Bending moment (cantilever column): M = Fb·L = <b>${fmt(res.M/1e6,3)} kN·m</b>.`);
+    steps.push(`STEP 4 — Bending stress: σb = Mc/I = <b>${fmt(res.sigmaBend,2)} MPa</b>.`);
+    steps.push(`STEP 5 — Combined: σtotal = σa + σb = <b>${fmt(res.sigma,2)} MPa</b>.`);
+    steps.push(`STEP 6 — Safety factor: nSF = σyield/σtotal = <b>${fmt(res.nSF,2)}</b>.`);
+  } else if(state.systemType==='beam'){
+    const supTxt = state.support==='cantilever' ? 'M = F·L' : 'M = F·L/4';
+    steps.push(`STEP 1 — Input: F = ${fmt(state.F,1)} kN; L = ${fmt(state.L,0)} mm; I = ${fmt(state.I,2)}×10⁶ mm⁴; c = ${fmt(state.c,0)} mm; support = ${state.support}.`);
+    steps.push(`STEP 2 — Moment: ${supTxt} = <b>${fmt(res.M/1e6,3)} kN·m</b>.`);
+    steps.push(`STEP 3 — Stress: σ = Mc/I = <b>${fmt(res.sigma,2)} MPa</b>.`);
+    steps.push(`STEP 4 — Deflection δ = <b>${fmt(res.delta,3)} mm</b>.`);
+    steps.push(`STEP 5 — Safety factor: nSF = σyield/σ = <b>${fmt(res.nSF,2)}</b>.`);
+  } else if(state.systemType==='cyl'){
+    steps.push(`STEP 1 — Input: p = ${fmt(state.p,2)} MPa; d = ${fmt(state.d,0)} mm; t = ${fmt(res.t,2)} mm.`);
+    steps.push(`STEP 2 — Thin-wall check: t/d = ${fmt(res.t/state.d,4)} ${res.thinWallValid? '≤ 1/10 → valid':'> 1/10 → NOT VALID'}.`);
+    steps.push(`STEP 3 — Hoop stress: σh = pd/(2t) = <b>${fmt(res.sigmaH,2)} MPa</b>.`);
+    steps.push(`STEP 4 — Longitudinal stress: σl = pd/(4t) = <b>${fmt(res.sigmaL,2)} MPa</b>.`);
+    if(res.treq!==null) steps.push(`STEP 5 — Required thickness: t = pd/(2σallow) = <b>${fmt(res.treq,3)} mm</b>.`);
+    steps.push(`STEP 6 — Safety factor: nSF = σyield/σh = <b>${fmt(res.nSF,2)}</b>.`);
+  } else if(state.systemType==='sph'){
+    steps.push(`STEP 1 — Input: p = ${fmt(state.p,2)} MPa; d = ${fmt(state.d,0)} mm; t = ${fmt(res.t,2)} mm.`);
+    steps.push(`STEP 2 — Thin-wall check: t/d = ${fmt(res.t/state.d,4)} ${res.thinWallValid? '≤ 1/10 → valid':'> 1/10 → NOT VALID'}.`);
+    steps.push(`STEP 3 — Stress: σ = pd/(4t) = <b>${fmt(res.sigma,2)} MPa</b>.`);
+    if(res.treq!==null) steps.push(`STEP 4 — Required thickness: t = pd/(4σallow) = <b>${fmt(res.treq,3)} mm</b>.`);
+    steps.push(`STEP 5 — Safety factor: nSF = σyield/σ = <b>${fmt(res.nSF,2)}</b>.`);
+  } else if(state.systemType==='casing'){
+    steps.push(`STEP 1 — Structural: Fa = ${fmt(state.Fa,1)} kN, Fb = ${fmt(state.Fb,1)} kN → σstruct = <b>${fmt(res.structSigma,2)} MPa</b>.`);
+    if(res.pressurized){
+      steps.push(`STEP 2 — Pressure: p = ${fmt(state.p,2)} MPa, d = ${fmt(state.d,0)} mm, t = ${fmt(state.t,1)} mm → σh = <b>${fmt(res.sigmaH,2)} MPa</b>, σl = <b>${fmt(res.sigmaL,2)} MPa</b>.`);
+      steps.push(`STEP 3 — Thin-wall check: t/d = ${fmt(state.t/state.d,4)} ${res.thinWallValid? '≤ 1/10 → valid':'> 1/10 → NOT VALID'}.`);
+    }
+    steps.push(`STEP ${res.pressurized?4:2} — Governing stress = max(σstruct, σpress) = <b>${fmt(res.sigma,2)} MPa</b>. nSF = <b>${fmt(res.nSF,2)}</b>.`);
+  }
+  // renumber steps sequentially to avoid gaps (e.g. when optional steps are skipped)
+  steps = steps.map((s,i)=> s.replace(/^STEP\s+\d+/, "STEP "+(i+1)) );
+  if(state.learningLevel === 'beginner'){
+    steps = steps.slice(-2);
+  }
+  el.innerHTML = steps.map(s=>`<div class="step">${s}</div>`).join('');
+  if(state.learningLevel === 'advanced'){
+    el.innerHTML += `<div class="step" style="color:var(--warn)">Advanced mode: predict the result before revealing — use Challenge Mode below to test yourself.</div>`;
+  }
+}
+
+/* ---------- Chart drawing (canvas) ---------- */
+function fitCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h};
+}
+
+function drawAxes(ctx,w,h,pad,xMax,yMax,xLabel,yLabel){
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = "#25384a"; ctx.fillStyle = "#93aac0"; ctx.font = "10px monospace";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad,10); ctx.lineTo(pad,h-pad); ctx.lineTo(w-8,h-pad);
+  ctx.stroke();
+  // grid + ticks
+  const nx=4, ny=4;
+  for(let i=0;i<=nx;i++){
+    const x = pad + (w-pad-8)*i/nx;
+    ctx.strokeStyle="#182838"; ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,h-pad); ctx.stroke();
+    ctx.fillStyle="#93aac0"; ctx.fillText((xMax*i/nx).toFixed(2), x-8, h-pad+12);
+  }
+  for(let i=0;i<=ny;i++){
+    const y = (h-pad) - (h-pad-10)*i/ny;
+    ctx.strokeStyle="#182838"; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(w-8,y); ctx.stroke();
+    ctx.fillStyle="#93aac0"; ctx.fillText((yMax*i/ny).toFixed(1), 2, y+3);
+  }
+  ctx.fillStyle="#5c7996"; ctx.font="10px sans-serif";
+  ctx.fillText(xLabel, w-pad-40, h-4);
+  ctx.fillText(yLabel, pad+4, 10);
+}
+
+function plotLine(ctx,pts,pad,w,h,xMax,yMax,color,width){
+  if(!pts.length) return;
+  ctx.strokeStyle = color; ctx.lineWidth = width||2; ctx.beginPath();
+  pts.forEach((p,i)=>{
+    const x = pad + (w-pad-8)*(p[0]/xMax);
+    const y = (h-pad) - (h-pad-10)*(p[1]/yMax);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+function plotPoint(ctx,x0,y0,pad,w,h,xMax,yMax,color){
+  const x = pad + (w-pad-8)*(x0/xMax);
+  const y = (h-pad) - (h-pad-10)*(y0/yMax);
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill();
+}
+
+function updateChartTitles(res){
+  const t1 = document.getElementById('graphTitle1');
+  const t2 = document.getElementById('graphTitle2');
+  if(!res){ return; }
+  if(res.kind==='vessel'){
+    t1.textContent = state.lang==='id' ? "Grafik Tekanan vs Tegangan Keliling" : "Pressure vs Hoop Stress";
+    t2.textContent = state.lang==='id' ? "Grafik Tegangan vs Tebal Dinding" : "Stress vs Wall Thickness";
+  } else if(res.kind==='casing'){
+    t1.textContent = state.lang==='id' ? "Grafik Fraksi Beban vs Tegangan" : "Load Fraction vs Stress";
+    t2.textContent = state.lang==='id' ? "Grafik Gaya Lateral vs Tegangan Struktural" : "Lateral Force vs Structural Stress";
+  } else {
+    t1.textContent = t("graphLoadDefTitle");
+    t2.textContent = t("graphStressStrainTitle");
+  }
+}
+
+function updateCharts(res){
+  if(!res) return;
+  updateChartTitles(res);
+  // Chart 1: Load vs Deformation (or Pressure vs Thickness-stress proxy)
+  const c1 = document.getElementById('graphLoadDef');
+  const {ctx:ctx1,w:w1,h:h1} = fitCanvas(c1);
+  let xMax1, yMax1, pts1, curX1, curY1, xl1, yl1;
+  if(res.kind==='vessel'){
+    xl1="p (MPa)"; yl1="σh (MPa)";
+    xMax1 = Math.max(state.p*1.3, 0.5); yMax1 = Math.max((res.sigmaH||res.sigma)*1.4, 10);
+    const k = (state.systemType==='cyl'? state.d/(2*res.t) : state.d/(4*res.t));
+    pts1 = [[0,0],[xMax1, k*xMax1]];
+    curX1 = res.p; curY1 = res.sigmaH!==undefined&&res.sigmaH!==null? res.sigmaH : res.sigma;
+  } else if(res.kind==='casing'){
+    xl1="load frac"; yl1="σ (MPa)";
+    xMax1=1; yMax1=Math.max(res.sigma*1.4,10);
+    pts1=[[0,0],[1,res.sigma/Math.max(currentFrac(),0.001)]];
+    curX1=currentFrac(); curY1=res.sigma;
+  } else {
+    xl1="δ (mm)"; yl1="F (kN)";
+    const kNmm = res.kind==='axial'? res.k/1000 : (res.kind==='frame'? null : null);
+    if(res.kind==='axial'){
+      xMax1 = Math.max(Math.abs(res.delta)*1.4, 0.5); yMax1 = Math.max(Math.abs(res.F/1000)*1.4, 1);
+      pts1 = [[0,0],[xMax1, (res.k/1000)*xMax1]];
+      curX1 = Math.abs(res.delta); curY1 = Math.abs(res.F/1000);
+    } else {
+      xMax1 = Math.max(res.delta*1.4,0.5); yMax1 = Math.max((res.F||res.Fb||1)/1000*1.4,1);
+      pts1 = [[0,0],[xMax1, ((res.F||res.Fb||1)/1000)/xMax1*xMax1]];
+      curX1 = res.delta; curY1 = (res.F||res.Fb||0)/1000;
+    }
+  }
+  drawAxes(ctx1,w1,h1,34,xMax1,yMax1,xl1,yl1);
+  plotLine(ctx1,pts1,34,w1,h1,xMax1,yMax1,"#3ecbe8",2);
+  plotPoint(ctx1,curX1,curY1,34,w1,h1,xMax1,yMax1,statusColor(res.status));
+
+  // Chart 2: Stress vs Strain (or sigmaH vs sigmaL ratio for vessel)
+  const c2 = document.getElementById('graphStressStrain');
+  const {ctx:ctx2,w:w2,h:h2} = fitCanvas(c2);
+  let xMax2,yMax2,pts2,curX2,curY2,xl2,yl2;
+  if(res.kind==='vessel'){
+    xl2="t (mm)"; yl2="σ (MPa)";
+    xMax2 = Math.max(res.t*2, 5); yMax2 = Math.max((res.sigmaH||res.sigma)*1.6, 10);
+    const num = state.systemType==='cyl'? state.p*state.d/2 : state.p*state.d/4;
+    let pp=[]; for(let i=1;i<=20;i++){ const tt=xMax2*i/20; pp.push([tt, num/tt]); }
+    pts2 = pp;
+    curX2 = res.t; curY2 = res.sigmaH!==undefined&&res.sigmaH!==null?res.sigmaH:res.sigma;
+  } else if(res.kind==='casing'){
+    xl2="Fb (kN)"; yl2="σstruct (MPa)";
+    xMax2=Math.max(state.Fb*1.4,1); yMax2=Math.max(res.structSigma*1.4,5);
+    pts2=[[0, res.structSigma - (res.Fa? Math.abs(state.Fa*1000)/state.A:0)],[xMax2, res.structSigma*(xMax2/Math.max(state.Fb,0.001))]];
+    curX2 = state.Fb; curY2 = res.structSigma;
+  } else {
+    xl2="ε (×10⁻³)"; yl2="σ (MPa)";
+    const strainPct = (res.strain!==undefined? res.strain : (res.sigma/(state.E*1000)))*1000;
+    xMax2 = Math.max(Math.abs(strainPct)*1.4, 0.5); yMax2 = Math.max(Math.abs(res.sigma)*1.4,10);
+    const Emod = state.E*1000;
+    pts2 = [[0,0],[xMax2, Emod*xMax2/1000]];
+    curX2 = Math.abs(strainPct); curY2 = Math.abs(res.sigma);
+  }
+  drawAxes(ctx2,w2,h2,34,xMax2,yMax2,xl2,yl2);
+  plotLine(ctx2,pts2,34,w2,h2,xMax2,yMax2,"#3ecbe8",2);
+  plotPoint(ctx2,curX2,curY2,34,w2,h2,xMax2,yMax2,statusColor(res.status));
+
+  // Chart 3: history stress & nSF vs time
+  const c3 = document.getElementById('graphTime');
+  const {ctx:ctx3,w:w3,h:h3} = fitCanvas(c3);
+  const hist = state.history;
+  const xMax3 = Math.max(1, hist.t.length? hist.t[hist.t.length-1] : 1);
+  const yMax3 = Math.max(10, res.sigmaAbs? res.sigmaAbs*1.5 : 10, state.sigmaAllow*1.2);
+  drawAxes(ctx3,w3,h3,34,xMax3,yMax3,"t (s)","σ (MPa)");
+  if(hist.t.length>1){
+    const pts = hist.t.map((tt,i)=>[tt,hist.sigma[i]]);
+    plotLine(ctx3,pts,34,w3,h3,xMax3,yMax3,"#3ecbe8",2);
+  }
+  // allowable line
+  ctx3.strokeStyle="#f0a83c"; ctx3.setLineDash([4,3]);
+  plotLine(ctx3,[[0,state.sigmaAllow],[xMax3,state.sigmaAllow]],34,w3,h3,xMax3,yMax3,"#f0a83c",1);
+  ctx3.setLineDash([]);
+}
+/* ---------- Data Table ---------- */
+function tableColumnsFor(sys){
+  const common = ["ID","Preset","System","Phase"];
+  if(sys==='truss') return common.concat(["A(mm2)","L(mm)","E(GPa)","F(kN)","sigma(MPa)","delta(mm)","U(J)","nSF","Status"]);
+  if(sys==='frame') return common.concat(["Fa(kN)","Fb(kN)","A(mm2)","L(mm)","I(x1e6mm4)","sigma(MPa)","delta(mm)","nSF","Status"]);
+  if(sys==='beam') return common.concat(["F(kN)","L(mm)","I(x1e6mm4)","M(kNm)","sigma(MPa)","delta(mm)","nSF","Status"]);
+  if(sys==='cyl'||sys==='sph') return common.concat(["p(MPa)","d(mm)","t(mm)","sigmaH(MPa)","sigmaL(MPa)","nSF","ThinWallValid","Status"]);
+  return common.concat(["p(MPa)","structStress(MPa)","pressStress_sigmaH(MPa)","nSF","Status"]);
+}
+
+function recordExperiment(){
+  const res = compute(1);
+  if(!res) return;
+  state.trialCounter++;
+  state.trials.push({
+    id: state.trialCounter,
+    preset: state.lang==='id' ? PRESETS[state.preset].nameId : PRESETS[state.preset].nameEn,
+    sys: state.systemType,
+    phase: state.phase,
+    res: res,
+    snap: {A:state.A,L:state.L,E:state.E,F:state.F,Fa:state.Fa,Fb:state.Fb,I:state.I,c:state.c,
+           p:state.p,d:state.d,t:res.t!==undefined?res.t:state.t}
+  });
+  updateTable();
+}
+
+function updateTable(){
+  const tableEl = document.getElementById('dataTable');
+  const cols = tableColumnsFor(state.systemType);
+  let head = "<tr>"+cols.map(c=>`<th>${c}</th>`).join('')+"</tr>";
+  const rows = state.trials.filter(tr=>tr.sys===state.systemType).map(tr=>{
+    const r = tr.res, s = tr.snap;
+    let cells;
+    if(tr.sys==='truss') cells=[tr.id,tr.preset,tr.sys,tr.phase,s.A,s.L,s.E,s.F,fmt(r.sigma,1),fmt(r.delta,3),fmt(r.U,2),fmt(r.nSF,2),r.status];
+    else if(tr.sys==='frame') cells=[tr.id,tr.preset,tr.sys,tr.phase,s.Fa,s.Fb,s.A,s.L,s.I,fmt(r.sigma,1),fmt(r.delta,3),fmt(r.nSF,2),r.status];
+    else if(tr.sys==='beam') cells=[tr.id,tr.preset,tr.sys,tr.phase,s.F,s.L,s.I,fmt(r.M/1e6,3),fmt(r.sigma,1),fmt(r.delta,3),fmt(r.nSF,2),r.status];
+    else if(tr.sys==='cyl'||tr.sys==='sph') cells=[tr.id,tr.preset,tr.sys,tr.phase,s.p,s.d,fmt(s.t,2),fmt(r.sigmaH,1),fmt(r.sigmaL,1),fmt(r.nSF,2),(r.thinWallValid?"VALID":"NOT VALID"),r.status];
+    else cells=[tr.id,tr.preset,tr.sys,tr.phase,s.p,fmt(r.structSigma,1),fmt(r.pressSigma,1),fmt(r.nSF,2),r.status];
+    return "<tr>"+cells.map(c=>`<td>${c}</td>`).join('')+"</tr>";
+  }).join('');
+  tableEl.innerHTML = head+rows;
+}
+
+function exportCSV(){
+  const table = document.getElementById('dataTable');
+  const rows = Array.from(table.querySelectorAll('tr')).map(tr=>
+    Array.from(tr.children).map(td=>td.textContent).join(",")
+  );
+  if(rows.length<=1){ alert(state.lang==='id'?'Belum ada data untuk diekspor.':'No data to export yet.'); return; }
+  const csvContent = rows.join("\n");
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `experiment_data_${state.systemType}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Worksheet ---------- */
+function buildWorksheet(){
+  const el = document.getElementById('worksheetBody');
+  const items = state.lang==='id' ? [
+    "Pilih elemen struktur atau bejana tekan dan preset mesin yang relevan.",
+    "Tentukan tujuan, variabel bebas, variabel terkontrol, dan rentang aman.",
+    "Tuliskan parameter, satuan, asumsi, dan kondisi awal.",
+    "Prediksi tegangan/deformasi atau tebal minimum sebelum menjalankan simulasi.",
+    "Jalankan loading–holding–unloading dan amati grafik.",
+    "Catat sedikitnya lima trial untuk eksperimen parameter yang dipilih (gunakan tombol REKAM DATA).",
+    "Bandingkan prediksi dengan hasil calculation engine dan hitung selisih relatif.",
+    "Periksa neraca gaya dan status MODEL pada status bar.",
+    "Jelaskan batas keamanan dan batas model (mis. dinding tipis, tekuk) yang dijumpai.",
+    "Buat kesimpulan serta kaitkan dengan rangka jembatan, casing mesin, atau bejana tekan industri."
+  ] : [
+    "Choose a structural element or pressure vessel and a relevant machine preset.",
+    "Define the objective, independent variable, controlled variables, and safe range.",
+    "Write down parameters, units, assumptions, and initial conditions.",
+    "Predict the stress/deformation or minimum thickness before running the simulation.",
+    "Run loading–holding–unloading and observe the graphs.",
+    "Record at least five trials for the chosen parameter experiment (use RECORD DATA).",
+    "Compare your prediction with the calculation engine result and compute relative difference.",
+    "Check the force balance and MODEL status on the status bar.",
+    "Explain the safety limits and model limits (e.g. thin-wall, buckling) encountered.",
+    "Write a conclusion and relate it to a bridge truss, machine casing, or industrial pressure vessel."
+  ];
+  el.innerHTML = `<ol>${items.map(i=>`<li style="margin-bottom:6px;">${i}</li>`).join('')}</ol>
+    <label class="field"><span class="lbl">${state.lang==='id'?'Prediksi Anda':'Your Prediction'}</span>
+      <input type="text" id="wsPredict" placeholder="${state.lang==='id'?'σ = ... MPa, δ = ... mm':'σ = ... MPa, δ = ... mm'}"></label>
+    <label class="field"><span class="lbl">${state.lang==='id'?'Kesimpulan Anda':'Your Conclusion'}</span>
+      <input type="text" id="wsConclusion"></label>`;
+}
+
+/* ---------- Challenge Mode ---------- */
+function buildChallenge(){
+  const el = document.getElementById('challengeBody');
+  el.innerHTML = `
+    <label class="field"><span class="lbl">${state.lang==='id'?'Pilih Soal':'Choose Problem'}</span>
+      <select id="challengeSelect">
+        <option value="truss">${state.lang==='id'?'Batang Rangka':'Truss Member'}</option>
+        <option value="vessel">${state.lang==='id'?'Bejana Tekan':'Pressure Vessel'}</option>
+      </select>
+    </label>
+    <div class="challenge-box" id="challengeContent"></div>`;
+  document.getElementById('challengeSelect').addEventListener('change', renderChallenge);
+  renderChallenge();
+}
+
+function renderChallenge(){
+  const type = document.getElementById('challengeSelect').value;
+  const el = document.getElementById('challengeContent');
+  const CHK = state.lang==='id'?'PERIKSA JAWABAN':'CHECK ANSWER';
+  const SOL = state.lang==='id'?'Tampilkan Solusi':'Show Solution';
+  const CORRECT = state.lang==='id'?'BENAR':'CORRECT';
+  const TRYAGAIN = state.lang==='id'?'COBA LAGI':'TRY AGAIN';
+
+  if(type === 'truss'){
+    el.innerHTML = `
+      <p>${state.lang==='id'
+        ? 'Diketahui: F = 50 kN, A = 500 mm², L = 2000 mm, E = 200 GPa. Hitung σ (MPa) dan δ (mm).'
+        : 'Given: F = 50 kN, A = 500 mm², L = 2000 mm, E = 200 GPa. Find σ (MPa) and δ (mm).'}</p>
+      <div class="row2" style="grid-template-columns:1fr 1fr;">
+        <input type="number" id="ansSigma" placeholder="sigma (MPa)">
+        <input type="number" id="ansDelta" placeholder="delta (mm)">
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button id="checkBtnT">${CHK}</button><button id="hintBtnT">Hint</button><button id="solBtnT">${SOL}</button>
+      </div>
+      <div class="cres" id="challengeResultT"></div>`;
+    let hintIdx=0;
+    const hints = state.lang==='id'
+      ? ["Ubah kN menjadi N.","Gunakan σ = F/A, lalu δ = σL/E."]
+      : ["Convert kN to N.","Use σ = F/A, then δ = σL/E."];
+    document.getElementById('hintBtnT').onclick=()=>{
+      document.getElementById('challengeResultT').innerHTML += `<div>Hint ${hintIdx+1}: ${hints[hintIdx]}</div>`;
+      hintIdx = Math.min(hintIdx+1, hints.length-1);
+    };
+    document.getElementById('checkBtnT').onclick=()=>{
+      const F=50000,A=500,L=2000,E=200000;
+      const sigma=F/A, delta=sigma/E*L;
+      const uS=parseFloat(document.getElementById('ansSigma').value);
+      const uD=parseFloat(document.getElementById('ansDelta').value);
+      const okS = Math.abs(uS-sigma) <= (0.5+0.01*sigma);
+      const okD = Math.abs(uD-delta) <= (0.02+0.01*delta);
+      document.getElementById('challengeResultT').innerHTML =
+        (okS&&okD) ? `<b style="color:var(--safe)">${CORRECT}</b>` : `<b style="color:var(--danger)">${TRYAGAIN}</b>`;
+    };
+    document.getElementById('solBtnT').onclick=()=>{
+      document.getElementById('challengeResultT').innerHTML = `σ = 100 MPa, δ = 1 mm, U = 25 J.`;
+    };
+  } else {
+    el.innerHTML = `
+      <p>${state.lang==='id'
+        ? 'Diketahui: bejana silinder, p = 2 MPa, d = 1000 mm, t = 10 mm. Hitung σh dan σl (MPa).'
+        : 'Given: cylindrical vessel, p = 2 MPa, d = 1000 mm, t = 10 mm. Find σh and σl (MPa).'}</p>
+      <div class="row2" style="grid-template-columns:1fr 1fr;">
+        <input type="number" id="ansSigH" placeholder="sigmaH (MPa)">
+        <input type="number" id="ansSigL" placeholder="sigmaL (MPa)">
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button id="checkBtnV">${CHK}</button><button id="hintBtnV">Hint</button><button id="solBtnV">${SOL}</button>
+      </div>
+      <div class="cres" id="challengeResultV"></div>`;
+    let hintIdx=0;
+    const hints = state.lang==='id'
+      ? ["Cek validitas dinding tipis t/d.","Gunakan σh = pd/(2t), lalu σl = ½σh."]
+      : ["Check thin-wall validity t/d.","Use σh = pd/(2t), then σl = ½σh."];
+    document.getElementById('hintBtnV').onclick=()=>{
+      document.getElementById('challengeResultV').innerHTML += `<div>Hint ${hintIdx+1}: ${hints[hintIdx]}</div>`;
+      hintIdx = Math.min(hintIdx+1, hints.length-1);
+    };
+    document.getElementById('checkBtnV').onclick=()=>{
+      const p=2,d=1000,tt=10;
+      const sh=p*d/(2*tt), sl=p*d/(4*tt);
+      const uH=parseFloat(document.getElementById('ansSigH').value);
+      const uL=parseFloat(document.getElementById('ansSigL').value);
+      const okH = Math.abs(uH-sh) <= (0.5+0.01*sh);
+      const okL = Math.abs(uL-sl) <= (0.5+0.01*sl);
+      document.getElementById('challengeResultV').innerHTML =
+        (okH&&okL) ? `<b style="color:var(--safe)">${CORRECT}</b>` : `<b style="color:var(--danger)">${TRYAGAIN}</b>`;
+    };
+    document.getElementById('solBtnV').onclick=()=>{
+      document.getElementById('challengeResultV').innerHTML = `σh = 100 MPa, σl = 50 MPa.`;
+    };
+  }
+}
+
+/* ---------- Concept Quiz ---------- */
+const QUIZ = [
+  {q:{id:"Jika gaya aksial pada batang linear digandakan pada A dan L tetap, tegangan menjadi berapa?",
+      en:"If the axial force on a linear member is doubled with A and L constant, the stress becomes?"},
+   opts:{id:["2 kali","4 kali","½ kali","Tetap"], en:["2 times","4 times","Half","Unchanged"]}, correct:0,
+   exp:{id:"σ = F/A sebanding linear dengan F.", en:"σ = F/A is linearly proportional to F."}},
+  {q:{id:"Jika luas penampang A digandakan pada F tetap, tegangan menjadi berapa?",
+      en:"If the cross-section area A is doubled with F constant, the stress becomes?"},
+   opts:{id:["2 kali","Setengah","4 kali","Tetap"], en:["2 times","Half","4 times","Unchanged"]}, correct:1,
+   exp:{id:"σ = F/A berbanding terbalik dengan A.", en:"σ = F/A is inversely proportional to A."}},
+  {q:{id:"Pada p, d, t yang sama, tegangan bejana bola dibanding bejana silinder (hoop) adalah?",
+      en:"At the same p, d, t, the spherical vessel stress compared to the cylindrical (hoop) stress is?"},
+   opts:{id:["Sama","Setengah","Dua kali","Nol"], en:["Same","Half","Twice","Zero"]}, correct:1,
+   exp:{id:"σ_bola = pd/4t = ½σh_silinder.", en:"σ_sphere = pd/4t = ½σh_cylinder."}},
+  {q:{id:"Jika tebal dinding bejana tekan digandakan pada p, d tetap, tegangan keliling menjadi?",
+      en:"If the vessel wall thickness is doubled with p, d constant, the hoop stress becomes?"},
+   opts:{id:["Dua kali","Setengah","Empat kali","Tetap"], en:["Twice","Half","Four times","Unchanged"]}, correct:1,
+   exp:{id:"σh = pd/2t berbanding terbalik dengan t.", en:"σh = pd/2t is inversely proportional to t."}},
+  {q:{id:"Pada batang tekan langsing, jika panjang efektif Le digandakan pada I tetap, beban kritis Pcr menjadi?",
+      en:"On a slender compression member, if effective length Le is doubled with I constant, the critical load Pcr becomes?"},
+   opts:{id:["Dua kali","Setengah","Seperempat","Tetap"], en:["Twice","Half","One quarter","Unchanged"]}, correct:2,
+   exp:{id:"Pcr = π²EI/Le² berbanding terbalik dengan Le².", en:"Pcr = π²EI/Le² is inversely proportional to Le²."}},
+  {q:{id:"Mengapa rumus dinding tipis tidak berlaku ketika t/d melebihi sekitar 1/10?",
+      en:"Why does the thin-wall formula not apply when t/d exceeds about 1/10?"},
+   opts:{id:["Tegangan menjadi nol","Distribusi tegangan pada tebal dinding tidak lagi seragam","Material berubah","Tekanan hilang"],
+         en:["Stress becomes zero","Stress distribution through the wall thickness is no longer uniform","Material changes","Pressure disappears"]}, correct:1,
+   exp:{id:"Pada dinding tebal, tegangan bervariasi terhadap radius (perlu model Lamé).", en:"In thick walls, stress varies with radius (a Lamé model is needed)."}},
+  {q:{id:"Mengapa hoop stress biasanya lebih menentukan kegagalan dibanding longitudinal stress pada bejana silinder?",
+      en:"Why does hoop stress usually govern failure over longitudinal stress in a cylindrical vessel?"},
+   opts:{id:["Hoop stress dua kali longitudinal stress","Longitudinal stress selalu nol","Keduanya sama","Tidak terkait"],
+         en:["Hoop stress is twice the longitudinal stress","Longitudinal stress is always zero","Both are equal","Unrelated"]}, correct:0,
+   exp:{id:"σh = pd/2t = 2×σl = 2×(pd/4t).", en:"σh = pd/2t = 2×σl = 2×(pd/4t)."}},
+];
+
+function buildQuiz(){
+  const el = document.getElementById('quizBody');
+  el.innerHTML = QUIZ.map((qq,i)=>{
+    const opts = qq.opts[state.lang];
+    return `<div class="qcard">
+      <div style="margin-bottom:6px;"><b>Q${i+1}.</b> ${qq.q[state.lang]}</div>
+      ${opts.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join('')}
+      <div style="margin-top:6px;"><button data-qi="${i}" class="quizCheck">${state.lang==='id'?'Periksa':'Check'}</button></div>
+      <div class="fb" id="fb${i}"></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.quizCheck').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = parseInt(btn.dataset.qi);
+      const sel = document.querySelector(`input[name="q${i}"]:checked`);
+      const fb = document.getElementById('fb'+i);
+      if(!sel){
+        fb.className='fb wrong';
+        fb.textContent = state.lang==='id' ? 'Pilih salah satu jawaban dahulu.' : 'Please select an answer first.';
+        return;
+      }
+      const val = parseInt(sel.value);
+      const correct = val === QUIZ[i].correct;
+      fb.className = 'fb ' + (correct?'correct':'wrong');
+      fb.textContent = (correct ? (state.lang==='id'?'Benar. ':'Correct. ') : (state.lang==='id'?'Belum tepat. ':'Not quite. ')) + QUIZ[i].exp[state.lang];
+    });
+  });
+}
+
+/* ---------- Comparison Mode ---------- */
+function computeForPreset(key){
+  const backup = Object.assign({}, state);
+  const preset = PRESETS[key];
+  Object.assign(state, {axialMode:"force",axialState:"tension",vesselMode:"analysis",pressurized:true,support:"simple"});
+  state.systemType = preset.systemType;
+  Object.assign(state, preset.vals);
+  const res = compute(1);
+  const sys = state.systemType;
+  Object.assign(state, backup);
+  return {res, sys, name: state.lang==='id'?preset.nameId:preset.nameEn};
+}
+
+function metricFor(r){
+  if(!r) return {stress:"N/A", deform:"N/A", nSF:"N/A"};
+  if(r.kind==='vessel') return {
+    stress: fmt(r.sigmaH!==undefined && r.sigmaH!==null ? r.sigmaH : r.sigma,1),
+    deform: fmt(r.t,1)+" mm (t)", nSF: fmt(r.nSF,2)
+  };
+  if(r.kind==='casing') return {stress: fmt(r.sigma,1), deform:"-", nSF: fmt(r.nSF,2)};
+  return {stress: fmt(r.sigmaAbs!==undefined?r.sigmaAbs:r.sigma,1), deform: fmt(r.delta,3)+" mm", nSF: fmt(r.nSF,2)};
+}
+
+function renderComparisonTable(A,B){
+  const ma = metricFor(A.res), mb = metricFor(B.res);
+  const note = state.lang==='id'
+    ? 'Catatan: besaran dibandingkan berdasarkan definisi masing-masing model; tidak semua besaran memiliki satuan yang identik secara langsung.'
+    : "Note: quantities are compared based on each model's own definition; not all quantities share directly comparable units.";
+  return `<table class="comp-table">
+      <tr><th></th><th>${A.name}</th><th>${B.name}</th></tr>
+      <tr><td>${state.lang==='id'?'Jenis Sistem':'System Type'}</td><td>${A.sys}</td><td>${B.sys}</td></tr>
+      <tr><td>${t('cardStress')}</td><td>${ma.stress} MPa</td><td>${mb.stress} MPa</td></tr>
+      <tr><td>${t('cardDeform')}</td><td>${ma.deform}</td><td>${mb.deform}</td></tr>
+      <tr><td>${t('cardSafety')}</td><td>${ma.nSF}</td><td>${mb.nSF}</td></tr>
+    </table>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">${note}</p>`;
+}
+
+function buildComparison(){
+  const el = document.getElementById('comparisonBody');
+  el.innerHTML = `<div class="row2" style="grid-template-columns:1fr 1fr;">
+      <label class="field"><span class="lbl">${state.lang==='id'?'Konfigurasi A':'Configuration A'}</span><select id="cmpA"></select></label>
+      <label class="field"><span class="lbl">${state.lang==='id'?'Konfigurasi B':'Configuration B'}</span><select id="cmpB"></select></label>
+    </div>
+    <div id="cmpResult"></div>`;
+  const selA = document.getElementById('cmpA'), selB = document.getElementById('cmpB');
+  const optsHtml = PRESET_ORDER.map(k=>`<option value="${k}">${state.lang==='id'?PRESETS[k].nameId:PRESETS[k].nameEn}</option>`).join('');
+  selA.innerHTML = optsHtml; selB.innerHTML = optsHtml;
+  selA.value='p1'; selB.value='p4';
+  const update = ()=>{
+    const A = computeForPreset(selA.value), B = computeForPreset(selB.value);
+    document.getElementById('cmpResult').innerHTML = renderComparisonTable(A,B);
+  };
+  selA.addEventListener('change', update);
+  selB.addEventListener('change', update);
+  update();
+}
+
+/* ---------- Global refresh / render orchestration ---------- */
+function refreshAll(){
+  const res = compute();
+  renderStage(res);
+  updateEngCards(res);
+  updateStatusBar(res);
+  updateAssumptions();
+  updateCalcPanel(res);
+  updateCharts(res);
+}
+
+/* ---------- i18n application & population ---------- */
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.title = t('appTitle');
+}
+function populatePresetSelect(){
+  const sel = document.getElementById('presetSelect');
+  sel.innerHTML = PRESET_ORDER.map(k=>`<option value="${k}" ${state.preset===k?'selected':''}>${state.lang==='id'?PRESETS[k].nameId:PRESETS[k].nameEn}</option>`).join('');
+}
+function populateSystemTypeSelect(){
+  const sel = document.getElementById('systemTypeSelect');
+  const opts = [['truss','systemTruss'],['frame','systemFrame'],['beam','systemBeam'],['cyl','systemCyl'],['sph','systemSph'],['casing','systemCasing']];
+  sel.innerHTML = opts.map(o=>`<option value="${o[0]}" ${state.systemType===o[0]?'selected':''}>${t(o[1])}</option>`).join('');
+}
+
+function setStage(n){
+  state.stage = n;
+  document.querySelectorAll('.stage-tabs button[id^="stageBtn"]').forEach(b=>b.classList.remove('on'));
+  const btn = document.getElementById('stageBtn'+n);
+  if(btn) btn.classList.add('on');
+  refreshAll();
+}
+function autoConvert(){
+  setStage(1);
+  let n=1;
+  const iv = setInterval(()=>{
+    n++;
+    if(n>3){ clearInterval(iv); return; }
+    setStage(n);
+  }, 900);
+}
+
+function setLang(lang){
+  state.lang = lang;
+  document.getElementById('langId').classList.toggle('on', lang==='id');
+  document.getElementById('langEn').classList.toggle('on', lang==='en');
+  document.documentElement.lang = lang;
+  applyStaticI18n();
+  populatePresetSelect();
+  populateSystemTypeSelect();
+  rebuildSystemUI();
+  buildWorksheet();
+  buildChallenge();
+  buildQuiz();
+  buildComparison();
+}
+
+/* ---------- Animation loop ---------- */
+let _lastTs = null;
+function animate(ts){
+  if(_lastTs === null) _lastTs = ts;
+  let dt = (ts - _lastTs)/1000;
+  _lastTs = ts;
+  dt = Math.min(dt, 0.1);
+  if(state.running){
+    stepSimulation(dt);
+    refreshAll();
+  }
+  requestAnimationFrame(animate);
+}
+
+/* ---------- Init ---------- */
+function init(){
+  populatePresetSelect();
+  populateSystemTypeSelect();
+
+  document.getElementById('presetSelect').addEventListener('change', e=>applyPreset(e.target.value));
+  document.getElementById('systemTypeSelect').addEventListener('change', e=>{
+    state.systemType = e.target.value;
+    if(state.systemType==='cyl' || state.systemType==='sph') state.geometry = state.systemType;
+    rebuildSystemUI();
+  });
+  document.getElementById('learningLevelSelect').addEventListener('change', e=>{
+    state.learningLevel = e.target.value; refreshAll();
+  });
+  document.getElementById('stageBtn1').addEventListener('click', ()=>setStage(1));
+  document.getElementById('stageBtn2').addEventListener('click', ()=>setStage(2));
+  document.getElementById('stageBtn3').addEventListener('click', ()=>setStage(3));
+  document.getElementById('autoConvertBtn').addEventListener('click', autoConvert);
+
+  document.getElementById('playBtn').addEventListener('click', ()=>{
+    if(state.phase==='idle') startPhaseSequence(); else state.running = true;
+  });
+  document.getElementById('pauseBtn').addEventListener('click', ()=>{ state.running = false; });
+  document.getElementById('stepBtn').addEventListener('click', ()=>{ stepSimulation(0.15); refreshAll(); });
+  document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+  document.getElementById('loadBtn').addEventListener('click', ()=>{ state.phase='loading'; state.time=0; state.running=true; });
+  document.getElementById('holdBtnCtl').addEventListener('click', ()=>{ state.phase='holding'; state.time=0; state.loadFrac=1; state.running=true; });
+  document.getElementById('unloadBtn').addEventListener('click', ()=>{ state.phase='unloading'; state.time=0; state.running=true; });
+
+  document.getElementById('animSpeedSlider').addEventListener('input', e=>{ state.animSpeed = parseFloat(e.target.value); });
+  document.getElementById('defScaleSlider').addEventListener('input', e=>{ state.defScale = parseFloat(e.target.value); refreshAll(); });
+
+  document.getElementById('langId').addEventListener('click', ()=>setLang('id'));
+  document.getElementById('langEn').addEventListener('click', ()=>setLang('en'));
+
+  document.getElementById('recordBtn').addEventListener('click', recordExperiment);
+  document.getElementById('clearBtn').addEventListener('click', ()=>{ state.trials=[]; state.trialCounter=0; updateTable(); });
+  document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+  document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+  applyPreset(state.preset);
+  setStage(1);
+  buildWorksheet();
+  buildChallenge();
+  buildQuiz();
+  buildComparison();
+  applyStaticI18n();
+  requestAnimationFrame(animate);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Lab — Sambungan Elemen Mesin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0F1A;
+  --panel:#101827;
+  --panel2:#141E2E;
+  --steel:#1B2638;
+  --border:#28374D;
+  --border-soft:#1E2B3E;
+  --text:#E7ECF3;
+  --text-dim:#93A3B8;
+  --text-faint:#5C6B80;
+  --cyan:#33D6EE;
+  --cyan-dim:#1B7A88;
+  --blue:#4C8DFF;
+  --amber:#F2A93B;
+  --red:#F2555A;
+  --green:#3ECF8E;
+  --font-ui:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-mono:'Consolas','SFMono-Regular',Menlo,monospace;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.5;}
+body{padding-bottom:40px;}
+h1,h2,h3,h4{margin:0;font-weight:600;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+.hidden{display:none !important;}
+.mono{font-family:var(--font-mono);}
+.dim{color:var(--text-dim);}
+.faint{color:var(--text-faint);font-size:12px;}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 20px;background:linear-gradient(180deg,#0D1524,#0A0F1A);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;
+  flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;gap:2px;}
+.brand .t1{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.2px;}
+.brand .t2{font-size:12px;color:var(--cyan);}
+.topbar-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.seg{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.seg button{background:var(--panel);color:var(--text-dim);border:none;padding:7px 14px;font-size:13px;font-weight:600;}
+.seg button.active{background:var(--cyan);color:#04222A;}
+.seg button:not(:last-child){border-right:1px solid var(--border);}
+select.ctl{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;}
+
+/* ===== LAYOUT ===== */
+.main-grid{display:grid;grid-template-columns:290px 1fr 300px;gap:14px;padding:14px;align-items:start;}
+@media (max-width:1100px){.main-grid{grid-template-columns:1fr;}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.panel + .panel{margin-top:14px;}
+.panel-title{font-size:12px;text-transform:none;letter-spacing:.3px;color:var(--cyan);font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-soft);}
+
+/* ===== FORM CONTROLS ===== */
+.field{margin-bottom:12px;}
+.field label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-dim);margin-bottom:5px;}
+.field label .val{color:var(--cyan);font-family:var(--font-mono);}
+.field input[type=range]{width:100%;accent-color:var(--cyan);}
+.field input[type=number]{width:100%;background:var(--steel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-family:var(--font-mono);font-size:13px;}
+.field select{width:100%;background:var(--steel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 8px;font-size:13px;}
+.field-row{display:flex;gap:8px;}
+.field-row .field{flex:1;}
+.btn{background:var(--steel);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:12.5px;font-weight:600;}
+.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn.primary{background:var(--cyan);color:#04222A;border-color:var(--cyan);}
+.btn.primary:hover{filter:brightness(1.08);color:#04222A;}
+.btn.warn{background:transparent;border-color:var(--amber);color:var(--amber);}
+.btn.danger{background:transparent;border-color:var(--red);color:var(--red);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.btn-row .btn{flex:1;min-width:64px;}
+
+/* ===== STAGE / DIAGRAM ===== */
+.stage-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.stage-tabs button{flex:1;min-width:110px;}
+.diagram-host{background:
+    linear-gradient(var(--border-soft) 1px,transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg,var(--border-soft) 1px,transparent 1px) 0 0/24px 24px,
+    #0C1320;
+  border:1px solid var(--border);border-radius:var(--radius);
+  min-height:380px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+}
+.diagram-host svg{width:100%;height:100%;display:block;}
+.svg-el{cursor:pointer;}
+.svg-el:hover{filter:brightness(1.35);}
+
+.status-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;}
+.status-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center;}
+.status-card .lbl{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;}
+.status-card .v{font-family:var(--font-mono);font-size:15px;font-weight:700;margin-top:3px;}
+.status-safe{color:var(--green);}
+.status-warn{color:var(--amber);}
+.status-crit{color:var(--red);}
+
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px;}
+.ecard{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.ecard .lbl{font-size:11px;color:var(--text-dim);}
+.ecard .v{font-family:var(--font-mono);font-size:17px;font-weight:700;margin-top:4px;}
+
+/* ===== RIGHT PANEL ===== */
+.info-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12.5px;min-height:60px;}
+.info-box .obj{color:var(--cyan);font-weight:700;margin-bottom:4px;}
+.info-box .k{color:var(--text-faint);}
+.behavior-table{width:100%;border-collapse:collapse;font-size:12px;}
+.behavior-table th,.behavior-table td{border-bottom:1px solid var(--border-soft);padding:5px 4px;text-align:left;}
+.behavior-table th{color:var(--text-faint);font-weight:600;font-size:10.5px;text-transform:uppercase;}
+.ok{color:var(--green);}
+.no{color:var(--red);}
+.assump-list{margin:0;padding-left:18px;font-size:12.5px;color:var(--text-dim);}
+.assump-list li{margin-bottom:5px;}
+
+/* ===== BOTTOM TABS ===== */
+.bottom-wrap{padding:0 14px 14px;}
+.tabbar{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.tabbar button{background:transparent;border:none;color:var(--text-dim);padding:10px 14px;font-size:13px;font-weight:600;border-bottom:2px solid transparent;}
+.tabbar button.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.tabpanel{display:none;}
+.tabpanel.active{display:block;}
+
+.calc-steps{display:flex;flex-direction:column;gap:8px;}
+.step{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:6px;padding:9px 12px;}
+.step .stitle{font-size:11.5px;color:var(--cyan);font-weight:700;margin-bottom:4px;}
+.step .sbody{font-family:var(--font-mono);font-size:13px;}
+.result-flag{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:6px;font-weight:700;font-size:12.5px;}
+.flag-safe{background:rgba(62,207,142,.15);color:var(--green);border:1px solid var(--green);}
+.flag-fail{background:rgba(242,85,90,.15);color:var(--red);border:1px solid var(--red);}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:800px){.charts-grid{grid-template-columns:1fr;}}
+.chart-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px;height:280px;}
+
+table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.data-tbl th,table.data-tbl td{border:1px solid var(--border-soft);padding:6px 8px;text-align:center;font-family:var(--font-mono);}
+table.data-tbl th{background:var(--panel2);color:var(--text-dim);font-family:var(--font-ui);font-size:11px;}
+
+.compare-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media (max-width:900px){.compare-grid{grid-template-columns:repeat(2,1fr);}}
+.compare-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.compare-card h4{color:var(--cyan);font-size:13px;margin-bottom:8px;}
+.compare-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed var(--border-soft);}
+
+.quiz-item{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;}
+.quiz-opts{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.quiz-opts button{text-align:left;background:var(--steel);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;}
+.quiz-opts button.correct{border-color:var(--green);color:var(--green);}
+.quiz-opts button.wrong{border-color:var(--red);color:var(--red);}
+.quiz-fb{margin-top:8px;font-size:12.5px;color:var(--text-dim);}
+
+.challenge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.challenge-result{margin-top:10px;font-weight:700;}
+
+.worksheet-list{list-style:none;margin:0;padding:0;counter-reset:ws;}
+.worksheet-list li{counter-increment:ws;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:13px;}
+.worksheet-list li::before{content:counter(ws) ". ";color:var(--cyan);font-weight:700;}
+textarea.ws-input{width:100%;background:var(--steel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;margin-top:8px;font-family:inherit;font-size:13px;min-height:60px;}
+
+.warning-banner{background:rgba(242,85,90,.12);border:1px solid var(--red);color:var(--red);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-weight:600;font-size:13px;}
+
+@media print{
+  .topbar,.main-grid > aside,.stage-tabs,.tabbar,.btn-row,.bottom-wrap .tabpanel:not(#printArea){display:none !important;}
+  body{background:#fff;color:#000;}
+}
+#printArea{display:none;}
+.rotate-anim{animation:spin-anim var(--dur,4s) linear infinite;transform-box:fill-box;transform-origin:center;}
+@keyframes spin-anim{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.flash-highlight{animation:flash-anim 1.2s ease-out;}
+@keyframes flash-anim{0%{box-shadow:0 0 0 3px var(--cyan);border-radius:10px;}100%{box-shadow:0 0 0 0px transparent;border-radius:10px;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="t1" data-i18n="appTitle">VIRTUAL LAB — SAMBUNGAN ELEMEN MESIN</span>
+    <span class="t2" data-i18n="appSub">Bolted · Riveted · Welded · Keyed Joints</span>
+  </div>
+  <div class="topbar-controls">
+    <select class="ctl" id="learningMode">
+      <option value="beginner" data-i18n="lmBeginner">Beginner</option>
+      <option value="intermediate" selected data-i18n="lmIntermediate">Intermediate</option>
+      <option value="advanced" data-i18n="lmAdvanced">Advanced</option>
+    </select>
+    <div class="seg" id="langSwitch">
+      <button data-lang="id" class="active">ID</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <!-- LEFT PANEL -->
+  <aside class="panel">
+    <div class="panel-title" data-i18n="panelControls">EXPERIMENT CONTROLS</div>
+
+    <div class="field">
+      <label data-i18n="lblPreset">PRESET</label>
+      <select id="presetSel">
+        <option value="coupling" data-i18n="p1">PRESET 1 — Bolted Flange Coupling</option>
+        <option value="pressureVessel" data-i18n="p2">PRESET 2 — Riveted Pressure Vessel</option>
+        <option value="bracket" data-i18n="p3">PRESET 3 — Fillet Welded Bracket</option>
+        <option value="shaftKey" data-i18n="p4">PRESET 4 — Key on Shaft-Pulley</option>
+        <option value="boltGroup" data-i18n="p5">PRESET 5 — Eccentric Bolt Group</option>
+        <option value="hybrid" data-i18n="p6">PRESET 6 — Hybrid Weld+Bolt Fixture</option>
+        <option value="custom" data-i18n="p7">BUILD YOUR OWN / BANGUN SENDIRI</option>
+      </select>
+    </div>
+
+    <div class="field" id="jointTypeField">
+      <label data-i18n="lblJointType">JOINT TYPE</label>
+      <select id="jointTypeSel">
+        <option value="bolt" data-i18n="jtBolt">Bolted Joint</option>
+        <option value="rivet" data-i18n="jtRivet">Riveted Joint</option>
+        <option value="weld" data-i18n="jtWeld">Welded Joint</option>
+        <option value="key" data-i18n="jtKey">Keyed Joint</option>
+      </select>
+    </div>
+
+    <div id="dynamicInputs"></div>
+
+    <div class="panel-title" style="margin-top:14px" data-i18n="panelAnim">ANIMATION</div>
+    <div class="btn-row">
+      <button class="btn" id="btnPlay" data-i18n="btnPlay">PLAY</button>
+      <button class="btn" id="btnPause" data-i18n="btnPause">PAUSE</button>
+      <button class="btn" id="btnStep" data-i18n="btnStep">STEP</button>
+      <button class="btn" id="btnReset" data-i18n="btnReset">RESET</button>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label><span data-i18n="lblAnimSpeed">ANIMATION SPEED</span> <span class="val" id="animSpeedVal">1.0×</span></label>
+      <input type="range" id="animSpeed" min="0.2" max="3" step="0.1" value="1">
+    </div>
+    <div class="field">
+      <label><span data-i18n="lblDeflScale">DEFORMATION SCALE</span> <span class="val" id="deflScaleVal">50×</span></label>
+      <input type="range" id="deflScale" min="1" max="500" step="1" value="50">
+    </div>
+
+    <div class="panel-title" style="margin-top:14px" data-i18n="panelScenario">SIMULASI SKENARIO</div>
+    <div class="btn-row">
+      <button class="btn" id="scnNormal" data-i18n="scnNormal">Normal</button>
+      <button class="btn warn" id="scnOverload" data-i18n="scnOverload">Overload</button>
+      <button class="btn warn" id="scnLoosen" data-i18n="scnLoosen">Loosening</button>
+      <button class="btn danger" id="scnFailure" data-i18n="scnFailure">Failure</button>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <main>
+    <div class="panel">
+      <div class="stage-tabs">
+        <button class="btn stage-btn" data-stage="1" data-i18n="stage1">1. REAL SYSTEM</button>
+        <button class="btn stage-btn" data-stage="2" data-i18n="stage2">2. ENGINEERING MODEL</button>
+        <button class="btn stage-btn active" data-stage="3" data-i18n="stage3">3. FREE BODY DIAGRAM</button>
+        <button class="btn primary" id="btnAutoConvert" data-i18n="btnAutoConvert">AUTO CONVERT</button>
+      </div>
+      <div id="warningBanner" class="warning-banner hidden"></div>
+      <div class="diagram-host" id="diagramHost"></div>
+
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn primary" id="toggleFBD" data-i18n="btnShowFBD">SHOW/HIDE FBD</button>
+        <button class="btn primary" id="toggleReactions" data-i18n="btnShowReactions">SHOW REACTIONS</button>
+        <button class="btn primary" id="toggleDims" data-i18n="btnShowDims">SHOW DIMENSIONS</button>
+        <button class="btn primary" id="toggleEq" data-i18n="btnShowEq">SHOW EQUATIONS</button>
+      </div>
+
+      <div class="status-bar" id="statusBar"></div>
+      <div class="cards-row" id="cardsRow"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside>
+    <div class="panel">
+      <div class="panel-title" data-i18n="panelInfo">PANEL INFORMASI (KLIK OBJEK PADA DIAGRAM)</div>
+      <div class="info-box" id="infoBox"><span class="dim" data-i18n="infoHint">Klik salah satu elemen (baut/keling/las/pasak/gaya) pada diagram untuk melihat penjelasannya.</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" data-i18n="panelBehavior">JOINT BEHAVIOR EXPLORER</div>
+      <table class="behavior-table" id="behaviorTable"></table>
+    </div>
+    <div class="panel">
+      <div class="panel-title" data-i18n="panelAssump">ENGINEERING ASSUMPTIONS / ASUMSI</div>
+      <ul class="assump-list" id="assumpList"></ul>
+    </div>
+  </aside>
+</div>
+
+<div class="bottom-wrap">
+  <div class="panel">
+    <div class="tabbar" id="tabbar">
+      <button class="active" data-tab="calc" data-i18n="tabCalc">PERHITUNGAN</button>
+      <button data-tab="charts" data-i18n="tabCharts">GRAFIK</button>
+      <button data-tab="table" data-i18n="tabTable">DATA EKSPERIMEN</button>
+      <button data-tab="compare" data-i18n="tabCompare">BANDINGKAN SAMBUNGAN</button>
+      <button data-tab="challenge" data-i18n="tabChallenge">COBA SELESAIKAN</button>
+      <button data-tab="quiz" data-i18n="tabQuiz">PERTANYAAN KONSEP</button>
+      <button data-tab="worksheet" data-i18n="tabWorksheet">LAB WORKSHEET</button>
+    </div>
+
+    <div class="tabpanel active" id="tab-calc">
+      <div class="calc-steps" id="calcSteps"></div>
+    </div>
+
+    <div class="tabpanel" id="tab-charts">
+      <div class="charts-grid">
+        <div class="chart-box" id="chartBoxDist"><canvas id="chartDist"></canvas></div>
+        <div class="chart-box" id="chartBoxSF"><canvas id="chartLoadSF"></canvas></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-table">
+      <div class="btn-row" style="max-width:420px;margin-bottom:10px">
+        <button class="btn primary" id="btnRecord" data-i18n="btnRecord">RECORD DATA</button>
+        <button class="btn" id="btnClear" data-i18n="btnClear">CLEAR DATA</button>
+        <button class="btn" id="btnExportCSV" data-i18n="btnExportCSV">EXPORT CSV</button>
+        <button class="btn" id="btnPrint" data-i18n="btnPrint">PRINT LAB REPORT</button>
+      </div>
+      <div style="overflow-x:auto"><table class="data-tbl" id="dataTable"></table></div>
+    </div>
+
+    <div class="tabpanel" id="tab-compare">
+      <p class="faint" data-i18n="compareNote">Membandingkan 4 jenis sambungan pada beban referensi yang sama dengan asumsi geometri nominal (untuk ilustrasi relatif, bukan pengganti perhitungan detail).</p>
+      <div class="field" style="max-width:220px">
+        <label><span data-i18n="lblRefLoad">REFERENCE LOAD</span> <span class="val" id="refLoadVal">30 kN</span></label>
+        <input type="range" id="refLoad" min="5" max="100" step="1" value="30">
+      </div>
+      <div class="compare-grid" id="compareGrid"></div>
+    </div>
+
+    <div class="tabpanel" id="tab-challenge">
+      <p class="faint" data-i18n="challengeNote">Hasil tegangan dan faktor keamanan disembunyikan. Masukkan perkiraan Anda, lalu periksa jawaban.</p>
+      <div class="challenge-grid" id="challengeInputs"></div>
+      <div class="btn-row" style="max-width:420px">
+        <button class="btn primary" id="btnCheckAnswer" data-i18n="btnCheckAnswer">CHECK ANSWER</button>
+        <button class="btn" id="btnHint" data-i18n="btnHint">SHOW HINT</button>
+      </div>
+      <div class="challenge-result" id="challengeResult"></div>
+      <div class="faint" id="challengeHint"></div>
+    </div>
+
+    <div class="tabpanel" id="tab-quiz">
+      <div id="quizList"></div>
+    </div>
+
+    <div class="tabpanel" id="tab-worksheet">
+      <ol class="worksheet-list" id="worksheetList"></ol>
+      <textarea class="ws-input" id="wsConclusion" data-i18n-ph="wsConclusionPh"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+/* =========================================================
+   I18N DICTIONARY
+   ========================================================= */
+const I18N = {
+  id: {
+    appTitle:"VIRTUAL LAB — SAMBUNGAN ELEMEN MESIN", appSub:"Sambungan Baut · Keling · Las · Pasak",
+    lmBeginner:"Pemula", lmIntermediate:"Menengah", lmAdvanced:"Lanjutan",
+    panelControls:"KONTROL EKSPERIMEN", lblPreset:"PRESET", lblJointType:"JENIS SAMBUNGAN",
+    p1:"PRESET 1 — Sambungan Baut Flange Kopling", p2:"PRESET 2 — Sambungan Keling Tangki Tekan",
+    p3:"PRESET 3 — Sambungan Las Bracket", p4:"PRESET 4 — Pasak Poros-Puli",
+    p5:"PRESET 5 — Grup Baut Eksentris", p6:"PRESET 6 — Fixture Hybrid Las+Baut",
+    p7:"BANGUN SISTEM SENDIRI",
+    jtBolt:"Sambungan Baut", jtRivet:"Sambungan Keling", jtWeld:"Sambungan Las", jtKey:"Sambungan Pasak",
+    panelAnim:"ANIMASI", btnPlay:"PLAY", btnPause:"PAUSE", btnStep:"STEP", btnReset:"RESET",
+    lblAnimSpeed:"KECEPATAN ANIMASI", lblDeflScale:"SKALA DEFORMASI",
+    panelScenario:"SIMULASI SKENARIO", scnNormal:"Normal", scnOverload:"Overload", scnLoosen:"Loosening", scnFailure:"Failure",
+    stage1:"1. REAL SYSTEM", stage2:"2. ENGINEERING MODEL", stage3:"3. FREE BODY DIAGRAM", btnAutoConvert:"AUTO CONVERT",
+    btnShowFBD:"SHOW/HIDE FBD", btnShowReactions:"SHOW REACTIONS", btnShowDims:"SHOW DIMENSIONS", btnShowEq:"SHOW EQUATIONS",
+    panelInfo:"PANEL INFORMASI (KLIK OBJEK PADA DIAGRAM)",
+    infoHint:"Klik salah satu elemen (baut/keling/las/pasak/gaya) pada diagram untuk melihat penjelasannya.",
+    panelBehavior:"JOINT BEHAVIOR EXPLORER", panelAssump:"ASUMSI TEKNIK / ENGINEERING ASSUMPTIONS",
+    tabCalc:"PERHITUNGAN", tabCharts:"GRAFIK", tabTable:"DATA EKSPERIMEN", tabCompare:"BANDINGKAN SAMBUNGAN",
+    tabChallenge:"COBA SELESAIKAN", tabQuiz:"PERTANYAAN KONSEP", tabWorksheet:"LAB WORKSHEET",
+    btnRecord:"RECORD DATA", btnClear:"CLEAR DATA", btnExportCSV:"EXPORT CSV", btnPrint:"PRINT LAB REPORT",
+    compareNote:"Membandingkan 4 jenis sambungan pada beban referensi yang sama dengan asumsi geometri nominal (ilustrasi relatif, bukan pengganti perhitungan detail).",
+    lblRefLoad:"BEBAN REFERENSI",
+    challengeNote:"Hasil tegangan dan faktor keamanan disembunyikan. Masukkan perkiraan Anda, lalu periksa jawaban.",
+    btnCheckAnswer:"CHECK ANSWER", btnHint:"SHOW HINT",
+    wsConclusionPh:"Tuliskan kesimpulan Anda di sini...",
+    statSystem:"STATUS SISTEM", statEquil:"KESETIMBANGAN", statSafety:"KEAMANAN", statSF:"FAKTOR KEAMANAN", statFail:"MODE KEGAGALAN",
+    stable:"STABIL", unstable:"TIDAK STABIL", satisfied:"TERPENUHI", notSatisfied:"TIDAK TERPENUHI",
+    safe:"AMAN", warn:"WASPADA", crit:"KRITIS", fail:"GAGAL",
+    warnLoosen:"PRELOAD HILANG — celah antar pelat dapat terjadi, risiko slip pada sambungan baut.",
+    warnUnstable:"KONFIGURASI TIDAK VALID — jumlah pengikat tidak mencukupi. Angka teknik tidak dihasilkan.",
+    equalDist:"Beban diasumsikan terdistribusi merata pada tiap pengikat kecuali dinyatakan lain (grup eksentris).",
+  },
+  en: {
+    appTitle:"VIRTUAL LAB — MACHINE ELEMENT FASTENING JOINTS", appSub:"Bolted · Riveted · Welded · Keyed Joints",
+    lmBeginner:"Beginner", lmIntermediate:"Intermediate", lmAdvanced:"Advanced",
+    panelControls:"EXPERIMENT CONTROLS", lblPreset:"PRESET", lblJointType:"JOINT TYPE",
+    p1:"PRESET 1 — Bolted Flange Coupling", p2:"PRESET 2 — Riveted Pressure Vessel",
+    p3:"PRESET 3 — Fillet Welded Bracket", p4:"PRESET 4 — Key on Shaft-Pulley",
+    p5:"PRESET 5 — Eccentric Bolt Group", p6:"PRESET 6 — Hybrid Weld+Bolt Fixture",
+    p7:"BUILD YOUR OWN SYSTEM",
+    jtBolt:"Bolted Joint", jtRivet:"Riveted Joint", jtWeld:"Welded Joint", jtKey:"Keyed Joint",
+    panelAnim:"ANIMATION", btnPlay:"PLAY", btnPause:"PAUSE", btnStep:"STEP", btnReset:"RESET",
+    lblAnimSpeed:"ANIMATION SPEED", lblDeflScale:"DEFORMATION SCALE",
+    panelScenario:"SCENARIO SIMULATION", scnNormal:"Normal", scnOverload:"Overload", scnLoosen:"Loosening", scnFailure:"Failure",
+    stage1:"1. REAL SYSTEM", stage2:"2. ENGINEERING MODEL", stage3:"3. FREE BODY DIAGRAM", btnAutoConvert:"AUTO CONVERT",
+    btnShowFBD:"SHOW/HIDE FBD", btnShowReactions:"SHOW REACTIONS", btnShowDims:"SHOW DIMENSIONS", btnShowEq:"SHOW EQUATIONS",
+    panelInfo:"INFO PANEL (CLICK AN OBJECT ON THE DIAGRAM)",
+    infoHint:"Click a fastener element or force vector on the diagram to see its explanation.",
+    panelBehavior:"JOINT BEHAVIOR EXPLORER", panelAssump:"ENGINEERING ASSUMPTIONS",
+    tabCalc:"CALCULATION", tabCharts:"GRAPHS", tabTable:"EXPERIMENT DATA", tabCompare:"COMPARE JOINTS",
+    tabChallenge:"TRY TO SOLVE", tabQuiz:"CONCEPT QUESTIONS", tabWorksheet:"LAB WORKSHEET",
+    btnRecord:"RECORD DATA", btnClear:"CLEAR DATA", btnExportCSV:"EXPORT CSV", btnPrint:"PRINT LAB REPORT",
+    compareNote:"Comparing 4 joint types under the same reference load with nominal geometry assumptions (relative illustration, not a substitute for detailed design).",
+    lblRefLoad:"REFERENCE LOAD",
+    challengeNote:"Stress and safety-factor results are hidden. Enter your estimate, then check your answer.",
+    btnCheckAnswer:"CHECK ANSWER", btnHint:"SHOW HINT",
+    wsConclusionPh:"Write your conclusion here...",
+    statSystem:"SYSTEM STATUS", statEquil:"EQUILIBRIUM", statSafety:"SAFETY", statSF:"SAFETY FACTOR", statFail:"FAILURE MODE",
+    stable:"STABLE", unstable:"UNSTABLE", satisfied:"SATISFIED", notSatisfied:"NOT SATISFIED",
+    safe:"SAFE", warn:"WARNING", crit:"CRITICAL", fail:"FAILURE",
+    warnLoosen:"PRELOAD LOST — a gap between plates may occur, risk of slip in the bolted joint.",
+    warnUnstable:"INVALID CONFIGURATION — insufficient number of fasteners. No engineering numbers are generated.",
+    equalDist:"Load is assumed uniformly distributed among fasteners unless otherwise stated (eccentric group).",
+  }
+};
+function t(key){ return (I18N[state.lang] && I18N[state.lang][key]) || key; }
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const state = {
+  lang:'id',
+  learningMode:'intermediate',
+  preset:'coupling',
+  jointType:'bolt',
+  stage:3,
+  showFBD:true, showReactions:true, showDims:true, showEq:true,
+  scenario:'normal',
+  inputs:{
+    P:25, T:500, n:6, d:12, t:8, pitch:50, D:150,
+    weldLeg:8, weldLength:100, weldSpacing:80, eccentricity:150,
+    keyWidth:10, keyHeight:8, keyLength:50, shaftDia:40,
+    shearPlanes:1,
+    allowShear:60, allowBearing:120, allowTensile:100,
+  },
+  anim:{playing:false, speed:1, phase:0, raf:null},
+  deflScale:50,
+  records:[],
+  challengeRevealed:false,
+  hintLevel:0,
+};
+
+/* =========================================================
+   CALCULATION ENGINE (unit-tested logic)
+   ========================================================= */
+function boltCircleTorque(T_Nm, n, D_mm, d_mm, allowShear){
+  const T = T_Nm*1000, R = D_mm/2;
+  const F = T/(n*R);
+  const A = Math.PI*d_mm*d_mm/4;
+  const tau = F/A;
+  const SF = allowShear/tau;
+  return {A, F, tau, SF, distribution:Array.from({length:n},()=>F), governing:'shear', mode:'bolt'};
+}
+function boltGroupEccentric(P_kN, e_mm, n, R_mm, d_mm, allowShear){
+  const P = P_kN*1000, M = P*e_mm;
+  const A = Math.PI*d_mm*d_mm/4;
+  const Fd = P/n, Ft = M/(n*R_mm);
+  let maxF=0; const distribution=[];
+  for(let i=0;i<n;i++){
+    const ang = 2*Math.PI*i/n;
+    const fx = -Math.sin(ang)*Ft;
+    const fy = Math.cos(ang)*Ft - Fd;
+    const mag = Math.sqrt(fx*fx+fy*fy);
+    distribution.push(mag); if(mag>maxF) maxF=mag;
+  }
+  const tau = maxF/A, SF = allowShear/tau;
+  return {A, Fd, Ft, maxF, tau, SF, distribution, governing:'shear', mode:'bolt'};
+}
+function rivetJoint(P_kN, n, d_mm, t_mm, pitch_mm, allowShear, allowBearing, allowTensile){
+  const P=P_kN*1000, Pi=P/n;
+  const A=Math.PI*d_mm*d_mm/4;
+  const tau=Pi/A, sigmaB=Pi/(d_mm*t_mm);
+  const netW=pitch_mm-d_mm;
+  const sigmaT = netW>0 ? Pi/(netW*t_mm) : Infinity;
+  const opts=[{mode:'shear',SF:allowShear/tau},{mode:'bearing',SF:allowBearing/sigmaB},{mode:'tearing',SF:netW>0?allowTensile/sigmaT:0}];
+  opts.sort((a,b)=>a.SF-b.SF);
+  const Pt=netW*t_mm*allowTensile, Ps=A*allowShear, Pc=d_mm*t_mm*allowBearing, solid=pitch_mm*t_mm*allowTensile;
+  const efficiency = solid>0 ? (Math.min(Pt,Ps,Pc)/solid)*100 : 0;
+  return {tau, sigmaB, sigmaT, SF:opts[0].SF, governing:opts[0].mode, efficiency, distribution:Array.from({length:n},()=>Pi), mode:'rivet'};
+}
+function weldEccentric(P_kN, e_mm, L_mm, b_mm, leg_mm, allowShear){
+  const P=P_kN*1000, tw=0.707*leg_mm;
+  const At=2*tw*L_mm, tau1=P/At;
+  const J=2*((tw*Math.pow(L_mm,3))/12 + tw*L_mm*Math.pow(b_mm/2,2));
+  const r=Math.sqrt(Math.pow(L_mm/2,2)+Math.pow(b_mm/2,2));
+  const M=P*e_mm, tau2=(M*r)/J;
+  const tauMax=tau1+tau2, SF=allowShear/tauMax;
+  return {tw, At, tau1, tau2, tauMax, SF, governing:'weld shear (combined)', mode:'weld', distribution:[tau1,tauMax]};
+}
+function weldDirect(P_kN, leg_mm, L_mm, allowShear){
+  const P=P_kN*1000, tw=0.707*leg_mm, A=tw*L_mm, tau=P/A, SF=allowShear/tau;
+  return {tw, A, tau, SF, governing:'weld shear', mode:'weld', distribution:[tau]};
+}
+function keyJoint(T_Nm, shaftDia_mm, w_mm, h_mm, l_mm, allowShear, allowBearing){
+  const T=T_Nm*1000, F=(2*T)/shaftDia_mm;
+  const tau=F/(w_mm*l_mm), sigmaC=(2*F)/(h_mm*l_mm);
+  const SFs=allowShear/tau, SFc=allowBearing/sigmaC;
+  return {F, tau, sigmaC, SF:Math.min(SFs,SFc), governing: SFs<SFc?'shear':'bearing/crushing', mode:'key', distribution:[F]};
+}
+function genericBolt(P_kN, n, d_mm, t_mm, planes, allowShear, allowBearing){
+  const P=P_kN*1000, A=Math.PI*d_mm*d_mm/4;
+  const tau=P/(n*planes*A), sigmaB=P/(n*d_mm*t_mm);
+  const SFs=allowShear/tau, SFb=allowBearing/sigmaB;
+  return {tau, sigmaB, SF:Math.min(SFs,SFb), governing: SFs<SFb?'shear':'bearing', mode:'bolt', distribution:Array.from({length:n},()=>P/(n*planes))};
+}
+function genericRivet(P_kN,n,d_mm,t_mm,pitch_mm,allowShear,allowBearing,allowTensile){
+  return rivetJoint(P_kN,n,d_mm,t_mm,pitch_mm,allowShear,allowBearing,allowTensile);
+}
+function genericKey(T_Nm, shaftDia_mm, w_mm, h_mm, l_mm, allowShear, allowBearing){
+  return keyJoint(T_Nm, shaftDia_mm, w_mm, h_mm, l_mm, allowShear, allowBearing);
+}
+
+function computeResults(){
+  const i = state.inputs;
+  let scenarioP = i.P, scenarioT = i.T, allowShear = i.allowShear;
+  if(state.scenario==='overload'){ scenarioP = i.P*2.5; scenarioT = i.T*2.5; }
+  if(state.scenario==='failure'){ scenarioP = i.P*6; scenarioT = i.T*6; }
+  if(state.scenario==='loosen'){ allowShear = i.allowShear*0.5; }
+
+  let invalid=false, invalidMsg='';
+  if(i.n<1 && state.preset!=='bracket' && state.preset!=='shaftKey'){ invalid=true; }
+  if(i.d<=0 || i.t<=0){ invalid=true; }
+  if(invalid){ return {invalid:true}; }
+
+  let res;
+  switch(state.preset){
+    case 'coupling': res = boltCircleTorque(scenarioT, i.n, i.D, i.d, allowShear); break;
+    case 'boltGroup': res = boltGroupEccentric(scenarioP, i.eccentricity, i.n, i.D/2, i.d, allowShear); break;
+    case 'pressureVessel': res = rivetJoint(scenarioP, i.n, i.d, i.t, i.pitch, allowShear, i.allowBearing, i.allowTensile); break;
+    case 'bracket': res = weldEccentric(scenarioP, i.eccentricity, i.weldLength, i.weldSpacing, i.weldLeg, allowShear); break;
+    case 'shaftKey': res = keyJoint(scenarioT, i.shaftDia, i.keyWidth, i.keyHeight, i.keyLength, allowShear, i.allowBearing); break;
+    case 'hybrid': {
+      const weldPart = weldDirect(scenarioP*0.6, i.weldLeg, i.weldLength, allowShear);
+      const boltPart = genericBolt(scenarioP*0.4, i.n, i.d, i.t, i.shearPlanes, allowShear, i.allowBearing);
+      res = { hybrid:true, weldPart, boltPart, SF: Math.min(weldPart.SF, boltPart.SF),
+              governing: weldPart.SF<boltPart.SF ? 'weld shear' : boltPart.governing, mode:'hybrid',
+              distribution:[...weldPart.distribution, ...boltPart.distribution] };
+      break;
+    }
+    default: // custom - build your own
+      if(state.jointType==='bolt') res = genericBolt(scenarioP, i.n, i.d, i.t, i.shearPlanes, allowShear, i.allowBearing);
+      else if(state.jointType==='rivet') res = genericRivet(scenarioP, i.n, i.d, i.t, i.pitch, allowShear, i.allowBearing, i.allowTensile);
+      else if(state.jointType==='weld') res = weldDirect(scenarioP, i.weldLeg, i.weldLength, allowShear);
+      else res = genericKey(scenarioT, i.shaftDia, i.keyWidth, i.keyHeight, i.keyLength, allowShear, i.allowBearing);
+  }
+  res.invalid=false;
+  res.scenarioP=scenarioP; res.scenarioT=scenarioT; res.allowShearUsed=allowShear;
+  if(!isFinite(res.SF) || isNaN(res.SF)) { res.SF = 0; }
+  res.status = res.SF<1 ? 'fail' : res.SF<1.5 ? 'crit' : res.SF<2.2 ? 'warn' : 'safe';
+  return res;
+}
+
+/* =========================================================
+   FIELD CONFIG
+   ========================================================= */
+const FIELD_DEFS = {
+  P:{min:1,max:200,step:0.5,unit:'kN', id:{lbl:'Beban Terpasang, P'}, en:{lbl:'Applied Load, P'}},
+  T:{min:10,max:3000,step:10,unit:'N·m', id:{lbl:'Torsi, T'}, en:{lbl:'Torque, T'}},
+  n:{min:1,max:16,step:1,unit:'', id:{lbl:'Jumlah Pengikat, n'}, en:{lbl:'Number of Fasteners, n'}},
+  d:{min:4,max:40,step:1,unit:'mm', id:{lbl:'Diameter Pengikat, d'}, en:{lbl:'Fastener Diameter, d'}},
+  t:{min:2,max:40,step:1,unit:'mm', id:{lbl:'Tebal Pelat, t'}, en:{lbl:'Plate Thickness, t'}},
+  pitch:{min:10,max:150,step:1,unit:'mm', id:{lbl:'Pitch, p'}, en:{lbl:'Pitch, p'}},
+  D:{min:40,max:400,step:5,unit:'mm', id:{lbl:'Diameter Lingkaran Baut, D'}, en:{lbl:'Bolt Circle Diameter, D'}},
+  weldLeg:{min:3,max:20,step:1,unit:'mm', id:{lbl:'Ukuran Kaki Las, h'}, en:{lbl:'Weld Leg Size, h'}},
+  weldLength:{min:20,max:300,step:5,unit:'mm', id:{lbl:'Panjang Las, L'}, en:{lbl:'Weld Length, L'}},
+  weldSpacing:{min:20,max:300,step:5,unit:'mm', id:{lbl:'Jarak Antar Las, b'}, en:{lbl:'Weld Spacing, b'}},
+  eccentricity:{min:0,max:400,step:5,unit:'mm', id:{lbl:'Eksentrisitas, e'}, en:{lbl:'Eccentricity, e'}},
+  keyWidth:{min:4,max:30,step:1,unit:'mm', id:{lbl:'Lebar Pasak, w'}, en:{lbl:'Key Width, w'}},
+  keyHeight:{min:3,max:25,step:1,unit:'mm', id:{lbl:'Tinggi Pasak, h'}, en:{lbl:'Key Height, h'}},
+  keyLength:{min:10,max:150,step:1,unit:'mm', id:{lbl:'Panjang Pasak, l'}, en:{lbl:'Key Length, l'}},
+  shaftDia:{min:10,max:150,step:1,unit:'mm', id:{lbl:'Diameter Poros'}, en:{lbl:'Shaft Diameter'}},
+  shearPlanes:{min:1,max:2,step:1,unit:'', id:{lbl:'Bidang Geser (1/2)'}, en:{lbl:'Shear Planes (1/2)'}},
+  allowShear:{min:10,max:150,step:1,unit:'MPa', id:{lbl:'Tegangan Geser Izin, τallow'}, en:{lbl:'Allowable Shear, τallow'}},
+  allowBearing:{min:10,max:250,step:1,unit:'MPa', id:{lbl:'Tegangan Tumpu Izin, σb-allow'}, en:{lbl:'Allowable Bearing, σb-allow'}},
+  allowTensile:{min:10,max:250,step:1,unit:'MPa', id:{lbl:'Tegangan Tarik Izin, σ-allow'}, en:{lbl:'Allowable Tensile, σ-allow'}},
+};
+const PRESET_FIELDS = {
+  coupling:['T','n','D','d','allowShear'],
+  boltGroup:['P','eccentricity','n','D','d','allowShear'],
+  pressureVessel:['P','n','d','t','pitch','allowShear','allowBearing','allowTensile'],
+  bracket:['P','eccentricity','weldLength','weldSpacing','weldLeg','allowShear'],
+  shaftKey:['T','shaftDia','keyWidth','keyHeight','keyLength','allowShear','allowBearing'],
+  hybrid:['P','n','d','t','shearPlanes','weldLeg','weldLength','allowShear','allowBearing'],
+};
+const CUSTOM_FIELDS = {
+  bolt:['P','n','d','t','shearPlanes','allowShear','allowBearing'],
+  rivet:['P','n','d','t','pitch','allowShear','allowBearing','allowTensile'],
+  weld:['P','weldLeg','weldLength','allowShear'],
+  key:['T','shaftDia','keyWidth','keyHeight','keyLength','allowShear','allowBearing'],
+};
+
+function applyPresetDefaults(preset){
+  switch(preset){
+    case 'coupling': state.jointType='bolt'; Object.assign(state.inputs,{T:500,n:6,D:150,d:12,allowShear:60}); break;
+    case 'boltGroup': state.jointType='bolt'; Object.assign(state.inputs,{P:25,eccentricity:200,n:6,D:300,d:16,allowShear:60}); break;
+    case 'pressureVessel': state.jointType='rivet'; Object.assign(state.inputs,{P:40,n:5,d:18,t:10,pitch:50,allowShear:60,allowBearing:120,allowTensile:100}); break;
+    case 'bracket': state.jointType='weld'; Object.assign(state.inputs,{P:15,eccentricity:150,weldLength:100,weldSpacing:80,weldLeg:8,allowShear:70}); break;
+    case 'shaftKey': state.jointType='key'; Object.assign(state.inputs,{T:300,shaftDia:40,keyWidth:10,keyHeight:8,keyLength:50,allowShear:50,allowBearing:90}); break;
+    case 'hybrid': state.jointType='hybrid'; Object.assign(state.inputs,{P:20,n:4,d:12,t:8,shearPlanes:1,weldLeg:6,weldLength:80,allowShear:60,allowBearing:110}); break;
+    case 'custom': state.jointType='bolt'; Object.assign(state.inputs,{P:30,n:4,d:14,t:10,shearPlanes:1,allowShear:60,allowBearing:110,pitch:45,weldLeg:8,weldLength:120,allowTensile:100,T:400,shaftDia:40,keyWidth:10,keyHeight:8,keyLength:50}); break;
+  }
+}
+
+/* =========================================================
+   RENDER: DYNAMIC INPUTS
+   ========================================================= */
+function currentFieldList(){
+  if(state.preset==='custom') return CUSTOM_FIELDS[state.jointType];
+  return PRESET_FIELDS[state.preset];
+}
+function renderInputs(){
+  document.getElementById('jointTypeField').classList.toggle('hidden', state.preset!=='custom');
+  document.getElementById('jointTypeSel').value = state.jointType;
+  const host = document.getElementById('dynamicInputs');
+  host.innerHTML='';
+  const fields = currentFieldList();
+  fields.forEach(key=>{
+    const def = FIELD_DEFS[key];
+    const wrap = document.createElement('div'); wrap.className='field';
+    const lbl = document.createElement('label');
+    const labelText = document.createElement('span'); labelText.textContent = def[state.lang].lbl + (def.unit?` (${def.unit})`:'');
+    const valSpan = document.createElement('span'); valSpan.className='val'; valSpan.id='val_'+key;
+    valSpan.textContent = state.inputs[key];
+    lbl.appendChild(labelText); lbl.appendChild(valSpan);
+    const row = document.createElement('div'); row.className='field-row';
+    const slider = document.createElement('input');
+    slider.type='range'; slider.min=def.min; slider.max=def.max; slider.step=def.step; slider.value=state.inputs[key];
+    slider.style.flex='2';
+    const num = document.createElement('input');
+    num.type='number'; num.min=def.min; num.max=def.max; num.step=def.step; num.value=state.inputs[key];
+    num.style.flex='1';
+    function onChange(v){
+      let val = parseFloat(v);
+      if(isNaN(val)) val = def.min;
+      val = Math.max(def.min, Math.min(def.max, val));
+      state.inputs[key]=val;
+      slider.value=val; num.value=val; valSpan.textContent=val;
+      state.scenario='normal';
+      renderAll();
+    }
+    slider.addEventListener('input', e=>onChange(e.target.value));
+    num.addEventListener('change', e=>onChange(e.target.value));
+    row.appendChild(slider); row.appendChild(num);
+    wrap.appendChild(lbl); wrap.appendChild(row);
+    host.appendChild(wrap);
+  });
+}
+
+/* =========================================================
+   SVG DIAGRAM HELPERS
+   ========================================================= */
+function arrowDefs(){
+  return `<defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#F2555A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#F2A93B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+}
+function textLabel(x,y,text,color){ return `<text x="${x}" y="${y}" fill="${color}" font-size="13" text-anchor="middle" font-family="Segoe UI, sans-serif">${text}</text>`; }
+function wrapSVG(inner){ return `<svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
+function polarXY(cx,cy,r,ang){ return [cx+r*Math.cos(ang), cy+r*Math.sin(ang)]; }
+
+function drawBoltCircle(stage, res, eccentric){
+  const cx=350, cy=195, Rpx=105;
+  const n = Math.max(1, Math.round(state.inputs.n));
+  let svg = arrowDefs();
+  let labels = '';
+  let ring = '';
+  if(stage===1){
+    ring += `<circle cx="${cx}" cy="${cy}" r="${Rpx+42}" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+    if(!eccentric) svg += `<rect x="${cx-Rpx-42-95}" y="${cy-26}" width="95" height="52" rx="8" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+    labels += textLabel(cx, 50, eccentric? (state.lang==='id'?'Dudukan Mesin dengan Grup Baut (Nyata)':'Machine Base with Bolt Group (Real)') : (state.lang==='id'?'Sambungan Flange Kopling Poros (Nyata)':'Shaft Flange Coupling (Real)'), '#93A3B8');
+  }
+  if(stage>=2){
+    ring += `<circle cx="${cx}" cy="${cy}" r="${Rpx+42}" fill="none" stroke="#4C8DFF" stroke-width="2"/>`;
+    ring += `<circle cx="${cx}" cy="${cy}" r="${Rpx}" fill="none" stroke="#28374D" stroke-width="1" stroke-dasharray="4 4"/>`;
+    if(state.showDims) labels += textLabel(cx, cy+Rpx+65, `D = ${state.inputs.D} mm, d = ${state.inputs.d} mm`, '#93A3B8');
+  }
+  const maxMag = res && res.distribution && res.distribution.length ? Math.max(...res.distribution) : 1;
+  for(let idx=0; idx<n; idx++){
+    const ang = 2*Math.PI*idx/n - Math.PI/2;
+    const [bx,by] = polarXY(cx,cy,Rpx,ang);
+    ring += `<circle class="svg-el" data-key="bolt" cx="${bx}" cy="${by}" r="9" fill="#33D6EE" stroke="#0A0F1A" stroke-width="1.5" onclick="showInfo('bolt')"/>`;
+    if(stage===3 && state.showFBD && res && !res.invalid && res.distribution){
+      const mag = res.distribution[idx]||0;
+      const len = 16 + 44*((mag/(maxMag||1))||0);
+      let dx,dy;
+      if(eccentric){ dx = -Math.sin(ang); dy = Math.cos(ang) - 0.35; const nr=Math.hypot(dx,dy)||1; dx/=nr; dy/=nr; }
+      else { dx=-Math.sin(ang); dy=Math.cos(ang); }
+      const ex=bx+dx*len, ey=by+dy*len;
+      const color = mag>=maxMag-1e-6 ? '#F2555A':'#F2A93B';
+      const markerId = mag>=maxMag-1e-6 ? 'arrow-red':'arrow-amber';
+      ring += `<line x1="${bx}" y1="${by}" x2="${ex}" y2="${ey}" stroke="${color}" stroke-width="2.5" marker-end="url(#${markerId})"/>`;
+    }
+  }
+  const animate = !eccentric;
+  const animClass = animate && state.anim.playing ? 'rotate-anim' : '';
+  const styleAttr = animate && state.anim.playing ? `style="--dur:${(4/state.anim.speed).toFixed(2)}s"` : '';
+  const staticRot = animate && !state.anim.playing && state.anim.phase>0 ? `transform="rotate(${(state.anim.phase*15)%360} ${cx} ${cy})"` : '';
+  svg += `<g class="${animClass}" ${styleAttr} ${staticRot}>${ring}</g>`;
+  svg += labels;
+  if(eccentric && stage===3 && state.showReactions){
+    svg += `<line x1="${cx}" y1="${cy-Rpx-95}" x2="${cx}" y2="${cy-Rpx-40}" stroke="#F2555A" stroke-width="3" marker-end="url(#arrow-red)"/>`;
+    svg += textLabel(cx, cy-Rpx-105, `P = ${state.inputs.P} kN, e = ${state.inputs.eccentricity} mm`, '#F2555A');
+  }
+  if(!eccentric && stage===3 && state.showReactions){
+    svg += textLabel(cx, cy+5, 'T', '#F2A93B');
+  }
+  return wrapSVG(svg);
+}
+
+function drawRivetLap(stage, res){
+  const y=195, h=52;
+  const leftX=110, rightX=590;
+  let svg = arrowDefs();
+  svg += `<rect x="${leftX}" y="${y-h/2}" width="${rightX-leftX}" height="${h}" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+  const overlapStart = (leftX+rightX)/2 - 90;
+  svg += `<rect x="${overlapStart}" y="${y-h/2-16}" width="${rightX-overlapStart+30}" height="${h}" fill="#141E2E" stroke="#4C8DFF" stroke-width="2" opacity="0.95"/>`;
+  const n = Math.max(1, Math.round(state.inputs.n));
+  const spacing = Math.min(46, 260/n);
+  const firstX = overlapStart+40;
+  for(let idx=0; idx<n; idx++){
+    const rx = firstX+idx*spacing;
+    svg += `<circle class="svg-el" data-key="rivet" cx="${rx}" cy="${y-10}" r="7" fill="#33D6EE" stroke="#0A0F1A" stroke-width="1.5" onclick="showInfo('rivet')"/>`;
+  }
+  if(stage===1){
+    svg += textLabel(350,50, state.lang==='id'?'Sambungan Keling Dinding Tangki Tekan (Nyata)':'Riveted Pressure-Vessel Wall (Real)', '#93A3B8');
+    svg += `<path d="M 60 320 Q 350 355 640 320" stroke="#28374D" stroke-width="3" fill="none"/>`;
+  }
+  if(stage>=2 && state.showDims){
+    svg += textLabel(350,110, `p = ${state.inputs.pitch} mm, d = ${state.inputs.d} mm, t = ${state.inputs.t} mm`, '#93A3B8');
+  }
+  if(stage===3 && state.showReactions){
+    svg += `<line x1="55" y1="${y}" x2="${leftX+8}" y2="${y}" stroke="#F2555A" stroke-width="3" marker-end="url(#arrow-red)"/>`;
+    svg += `<line x1="645" y1="${y}" x2="${rightX-8}" y2="${y}" stroke="#F2555A" stroke-width="3" marker-start="url(#arrow-red)"/>`;
+    svg += textLabel(100,160, `P = ${state.inputs.P} kN`, '#F2555A');
+  }
+  return wrapSVG(svg);
+}
+
+function drawWeldBracket(stage, res){
+  let svg = arrowDefs();
+  const wallX=200, wallTop=60, wallBottom=340, armY=195;
+  const weldPath = `M ${wallX} ${armY-14} l -9 6 l 9 6 l -9 6 l 9 6 l -9 6 l 9 4`;
+  svg += `<rect x="${wallX-24}" y="${wallTop}" width="24" height="${wallBottom-wallTop}" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+  svg += `<rect x="${wallX}" y="${armY-14}" width="230" height="28" fill="#141E2E" stroke="#4C8DFF" stroke-width="2"/>`;
+  svg += `<path d="${weldPath}" stroke="#F2A93B" stroke-width="3" fill="none" class="svg-el" data-key="weld" onclick="showInfo('weld')"/>`;
+  if(state.anim.playing){
+    const dur = (2.5/state.anim.speed).toFixed(2);
+    svg += `<circle r="4.5" fill="#F2555A"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${weldPath}"/></circle>`;
+  }
+  if(stage===1){
+    svg += textLabel(350,50, state.lang==='id'?'Bracket Las pada Rangka Mesin (Nyata)':'Welded Bracket on Machine Frame (Real)', '#93A3B8');
+  }
+  if(stage>=2 && state.showDims){
+    svg += textLabel(350,110, `L = ${state.inputs.weldLength} mm, h = ${state.inputs.weldLeg} mm, b = ${state.inputs.weldSpacing} mm`, '#93A3B8');
+  }
+  if(stage===3 && state.showReactions){
+    const ex=wallX+230, ey=armY;
+    svg += `<line x1="${ex}" y1="${ey-80}" x2="${ex}" y2="${ey-14}" stroke="#F2555A" stroke-width="3" marker-end="url(#arrow-red)"/>`;
+    svg += textLabel(ex+20, ey-88, `P = ${state.inputs.P} kN`, '#F2555A');
+    svg += textLabel(ex+20, ey-63, `e = ${state.inputs.eccentricity} mm`, '#93A3B8');
+  }
+  return wrapSVG(svg);
+}
+
+function drawKeyShaft(stage, res){
+  let svg = arrowDefs();
+  const cx=330, cy=200, shaftR=58;
+  let shaftGroup = `<circle cx="${cx}" cy="${cy}" r="${shaftR}" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+  shaftGroup += `<rect class="svg-el" data-key="key" x="${cx-10}" y="${cy-shaftR-14}" width="20" height="22" fill="#33D6EE" stroke="#0A0F1A" stroke-width="1.5" onclick="showInfo('key')"/>`;
+  const animClass = state.anim.playing ? 'rotate-anim' : '';
+  const styleAttr = state.anim.playing ? `style="--dur:${(2/state.anim.speed).toFixed(2)}s"` : '';
+  const staticRot = !state.anim.playing && state.anim.phase>0 ? `transform="rotate(${(state.anim.phase*20)%360} ${cx} ${cy})"` : '';
+  svg += `<g class="${animClass}" ${styleAttr} ${staticRot}>${shaftGroup}</g>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${shaftR+48}" fill="none" stroke="#4C8DFF" stroke-width="2" stroke-dasharray="${stage>=2?'0':'4 4'}"/>`;
+  if(stage===1) svg += textLabel(350,50, state.lang==='id'?'Sambungan Pasak Poros-Puli (Nyata)':'Shaft-Pulley Key Connection (Real)', '#93A3B8');
+  if(stage>=2 && state.showDims){
+    svg += textLabel(350,345, `d=${state.inputs.shaftDia}mm, w=${state.inputs.keyWidth}mm, l=${state.inputs.keyLength}mm`, '#93A3B8');
+  }
+  if(stage===3 && state.showReactions){
+    svg += `<path d="M ${cx-shaftR-28} ${cy} A ${shaftR+28} ${shaftR+28} 0 1 1 ${cx+shaftR+28} ${cy}" stroke="#F2A93B" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"/>`;
+    svg += textLabel(cx, cy-shaftR-72, `T = ${state.inputs.T} N·m`, '#F2A93B');
+    svg += `<line x1="${cx+26}" y1="${cy-shaftR-14}" x2="${cx+76}" y2="${cy-shaftR-14}" stroke="#F2555A" stroke-width="3" marker-end="url(#arrow-red)"/>`;
+    svg += textLabel(cx+92, cy-shaftR-18, 'F', '#F2555A');
+  }
+  return wrapSVG(svg);
+}
+
+function drawGenericLap(stage, res){
+  let svg = arrowDefs();
+  const y=195, h=58;
+  svg += `<rect x="120" y="${y-h/2}" width="460" height="${h}" fill="#1B2638" stroke="#28374D" stroke-width="2"/>`;
+  const type = state.preset==='hybrid' ? 'hybrid' : state.jointType;
+  if(type==='hybrid'){
+    svg += `<path d="M 160 ${y-h/2} l -9 6 l 9 6 l -9 6 l 9 6" stroke="#F2A93B" stroke-width="3" fill="none" class="svg-el" data-key="weld" onclick="showInfo('weld')"/>`;
+    const n=Math.max(1,Math.round(state.inputs.n));
+    for(let idx=0; idx<n; idx++){
+      const rx=330+idx*38;
+      svg += `<circle class="svg-el" data-key="bolt" cx="${rx}" cy="${y}" r="8" fill="#33D6EE" stroke="#0A0F1A" stroke-width="1.5" onclick="showInfo('bolt')"/>`;
+    }
+  } else if(type==='weld'){
+    svg += `<path d="M 160 ${y-h/2} l -9 6 l 9 6 l -9 6 l 9 6 l -9 6 l 9 6 l -9 6 l 9 4" stroke="#F2A93B" stroke-width="3" fill="none" class="svg-el" data-key="weld" onclick="showInfo('weld')"/>`;
+  } else {
+    const n=Math.max(1,Math.round(state.inputs.n));
+    const spacing=380/(n+1);
+    for(let idx=0; idx<n; idx++){
+      const rx=120+spacing*(idx+1);
+      svg += `<circle class="svg-el" data-key="${type}" cx="${rx}" cy="${y}" r="8" fill="#33D6EE" stroke="#0A0F1A" stroke-width="1.5" onclick="showInfo('${type}')"/>`;
+    }
+  }
+  if(stage===1) svg += textLabel(350,50, state.lang==='id'?'Bangun Sambungan Sendiri (Nyata)':'Build Your Own Joint (Real)', '#93A3B8');
+  if(stage===3 && state.showReactions){
+    svg += `<line x1="55" y1="${y}" x2="110" y2="${y}" stroke="#F2555A" stroke-width="3" marker-end="url(#arrow-red)"/>`;
+    svg += `<line x1="645" y1="${y}" x2="590" y2="${y}" stroke="#F2555A" stroke-width="3" marker-start="url(#arrow-red)"/>`;
+    svg += textLabel(100,160, `P = ${state.inputs.P} kN`, '#F2555A');
+  }
+  return wrapSVG(svg);
+}
+
+function renderDiagram(res){
+  const host = document.getElementById('diagramHost');
+  const stage = state.stage;
+  let html;
+  switch(state.preset){
+    case 'coupling': html = drawBoltCircle(stage,res,false); break;
+    case 'boltGroup': html = drawBoltCircle(stage,res,true); break;
+    case 'pressureVessel': html = drawRivetLap(stage,res); break;
+    case 'bracket': html = drawWeldBracket(stage,res); break;
+    case 'shaftKey': html = drawKeyShaft(stage,res); break;
+    default: html = drawGenericLap(stage,res); break;
+  }
+  host.innerHTML = html;
+}
+
+/* =========================================================
+   INFO PANELS (click on diagram objects)
+   ========================================================= */
+const INFO_PANELS = {
+  bolt:{ id:{obj:'SAMBUNGAN BAUT / BOLTED JOINT', fn:'Menahan gaya tarik dan/atau geser antar komponen; dapat dilepas untuk keperluan perawatan.', reaction:'Ft (tarik akibat preload), Fs (geser)', fail:'Baut putus geser/tarik, ulir slip, pelat sobek pada lubang.', app:'Flange kopling, penutup casing, dudukan mesin, sambungan yang perlu dibongkar-pasang.'},
+        en:{obj:'BOLTED JOINT', fn:'Carries tensile and/or shear force between components; removable for maintenance.', reaction:'Ft (tensile from preload), Fs (shear)', fail:'Bolt shear/tensile failure, thread stripping, plate tear-out at the hole.', app:'Flange couplings, casing covers, machine mounts, joints that must be disassembled.'} },
+  rivet:{ id:{obj:'SAMBUNGAN KELING / RIVETED JOINT', fn:'Menahan gaya geser antar pelat yang tumpang tindih; bersifat permanen.', reaction:'Fs (geser pada keling), gaya tumpu pada lubang', fail:'Shearing keling, tearing pelat pada penampang bersih, crushing/bearing.', app:'Tangki tekan, badan pesawat lama, konstruksi baja berpelat tipis.'},
+        en:{obj:'RIVETED JOINT', fn:'Carries shear force between overlapping plates; a permanent connection.', reaction:'Fs (shear on rivet), bearing force at the hole', fail:'Rivet shearing, plate tearing at the net section, crushing/bearing.', app:'Pressure vessels, older aircraft skins, thin-plate steel structures.'} },
+  weld:{ id:{obj:'SAMBUNGAN LAS / WELDED JOINT', fn:'Menyambung permanen dengan logam pengisi cair; tegangan kritis pada leher las (throat).', reaction:'Tegangan geser pada throat, tegangan akibat momen eksentris', fail:'Retak pada logam las (weld crack), patah pada logam induk (base metal fracture).', app:'Bracket rangka mesin, sambungan struktur permanen, casing yang dilas.'},
+        en:{obj:'WELDED JOINT', fn:'A permanent connection made with molten filler metal; critical stress occurs at the weld throat.', reaction:'Shear stress on the throat, stress from eccentric moment', fail:'Weld metal crack, base metal fracture.', app:'Machine-frame brackets, permanent structural joints, welded casings.'} },
+  key:{ id:{obj:'SAMBUNGAN PASAK / KEYED JOINT', fn:'Meneruskan torsi antara poros dan hub (puli/roda gigi); dapat dilepas.', reaction:'F (gaya tangensial), tegangan geser dan tumpu pada pasak', fail:'Pasak tergeser (shear), permukaan pasak tergerus (crushing).', app:'Poros-puli, poros-roda gigi, poros-kopling.'},
+       en:{obj:'KEYED JOINT', fn:'Transmits torque between a shaft and a hub (pulley/gear); removable.', reaction:'F (tangential force), shear and bearing stress on the key', fail:'Key shear failure, key crushing on the bearing face.', app:'Shaft-pulley, shaft-gear, shaft-coupling connections.'} },
+};
+function showInfo(key){
+  const d = INFO_PANELS[key][state.lang];
+  const box = document.getElementById('infoBox');
+  const L = state.lang==='id' ? {fn:'FUNGSI',reaction:'REAKSI',fail:'MODE KEGAGALAN',app:'APLIKASI'} : {fn:'FUNCTION',reaction:'REACTION',fail:'FAILURE MODE',app:'APPLICATION'};
+  box.innerHTML = `<div class="obj">${d.obj}</div>
+    <div style="margin-bottom:6px"><span class="k">${L.fn}: </span>${d.fn}</div>
+    <div style="margin-bottom:6px"><span class="k">${L.reaction}: </span>${d.reaction}</div>
+    <div style="margin-bottom:6px"><span class="k">${L.fail}: </span>${d.fail}</div>
+    <div><span class="k">${L.app}: </span>${d.app}</div>`;
+}
+
+/* =========================================================
+   STATUS BAR + ENGINEERING CARDS
+   ========================================================= */
+function renderStatusBar(res){
+  const host = document.getElementById('statusBar');
+  const banner = document.getElementById('warningBanner');
+  banner.classList.add('hidden');
+  if(!res || res.invalid){
+    banner.textContent = t('warnUnstable'); banner.classList.remove('hidden');
+    host.innerHTML = `<div class="status-card"><div class="lbl">${t('statSystem')}</div><div class="v status-crit">${t('unstable')}</div></div>`;
+    return;
+  }
+  if(state.scenario==='loosen'){ banner.textContent = t('warnLoosen'); banner.classList.remove('hidden'); }
+  const statusColorClass = res.status==='safe' ? 'status-safe' : res.status==='warn' ? 'status-warn' : 'status-crit';
+  const statusText = { safe:t('safe'), warn:t('warn'), crit:t('crit'), fail:t('fail') }[res.status];
+  const govText = typeof res.governing==='string' ? res.governing : '-';
+  host.innerHTML = `
+    <div class="status-card"><div class="lbl">${t('statSystem')}</div><div class="v status-safe">${t('stable')}</div></div>
+    <div class="status-card"><div class="lbl">${t('statEquil')}</div><div class="v status-safe">${t('satisfied')}</div></div>
+    <div class="status-card"><div class="lbl">${t('statSafety')}</div><div class="v ${statusColorClass}">${statusText}</div></div>
+    <div class="status-card"><div class="lbl">${t('statSF')}</div><div class="v ${statusColorClass}">${res.SF.toFixed(2)}</div></div>
+    <div class="status-card"><div class="lbl">${t('statFail')}</div><div class="v" style="font-size:12px">${govText}</div></div>
+  `;
+}
+
+function renderCards(res){
+  const host = document.getElementById('cardsRow');
+  if(!res || res.invalid){ host.innerHTML=''; return; }
+  const cards=[];
+  const lang=state.lang;
+  const push=(lbl,val)=>cards.push(`<div class="ecard"><div class="lbl">${lbl}</div><div class="v">${val}</div></div>`);
+  if(res.mode==='bolt'){
+    push(lang==='id'?'Tegangan Geser τ':'Shear Stress τ', (res.tau).toFixed(2)+' MPa');
+    if(res.sigmaB!==undefined) push(lang==='id'?'Tegangan Tumpu σb':'Bearing Stress σb', res.sigmaB.toFixed(2)+' MPa');
+    if(res.maxF!==undefined) push(lang==='id'?'Gaya Maks/baut':'Max Force/bolt', (res.maxF/1000).toFixed(2)+' kN');
+    if(res.F!==undefined) push(lang==='id'?'Gaya/baut':'Force/bolt', (res.F/1000).toFixed(2)+' kN');
+  } else if(res.mode==='rivet'){
+    push(lang==='id'?'Tegangan Geser τ':'Shear Stress τ', res.tau.toFixed(2)+' MPa');
+    push(lang==='id'?'Tegangan Tumpu σb':'Bearing Stress σb', res.sigmaB.toFixed(2)+' MPa');
+    push(lang==='id'?'Tegangan Tarik (net) σt':'Tensile (net) σt', isFinite(res.sigmaT)?res.sigmaT.toFixed(2)+' MPa':'—');
+    push(lang==='id'?'Efisiensi Sambungan η':'Joint Efficiency η', res.efficiency.toFixed(1)+' %');
+  } else if(res.mode==='weld'){
+    push(lang==='id'?'Tebal Leher, tw':'Throat Thickness, tw', res.tw.toFixed(2)+' mm');
+    if(res.tau1!==undefined){
+      push(lang==='id'?'Tegangan Langsung τ1':'Direct Stress τ1', res.tau1.toFixed(2)+' MPa');
+      push(lang==='id'?'Tegangan Puntir τ2':'Torsional Stress τ2', res.tau2.toFixed(2)+' MPa');
+      push(lang==='id'?'Tegangan Maks τmax':'Max Stress τmax', res.tauMax.toFixed(2)+' MPa');
+    } else {
+      push(lang==='id'?'Tegangan Geser τ':'Shear Stress τ', res.tau.toFixed(2)+' MPa');
+    }
+  } else if(res.mode==='key'){
+    push(lang==='id'?'Gaya Tangensial F':'Tangential Force F', (res.F/1000).toFixed(2)+' kN');
+    push(lang==='id'?'Tegangan Geser τ':'Shear Stress τ', res.tau.toFixed(2)+' MPa');
+    push(lang==='id'?'Tegangan Tumpu σc':'Bearing Stress σc', res.sigmaC.toFixed(2)+' MPa');
+  } else if(res.mode==='hybrid'){
+    push(lang==='id'?'τ Las':'Weld τ', res.weldPart.tau.toFixed(2)+' MPa');
+    push(lang==='id'?'τ Baut':'Bolt τ', res.boltPart.tau.toFixed(2)+' MPa');
+  }
+  push(lang==='id'?'Faktor Keamanan':'Factor of Safety', res.SF.toFixed(2));
+  host.innerHTML = cards.join('');
+}
+
+/* =========================================================
+   STEP-BY-STEP CALCULATION
+   ========================================================= */
+function fmt(x,d=2){ return isFinite(x) ? x.toFixed(d) : '—'; }
+function stepHTML(title, body){
+  // When showEq is off, strip the symbolic formula after the em-dash (e.g. "STEP 5 — τ = F / A" -> "STEP 5"),
+  // keeping only the numeric substitution in the body visible.
+  const displayTitle = state.showEq ? title : title.replace(/—.*/, '').trim();
+  return `<div class="step"><div class="stitle">${displayTitle}</div><div class="sbody">${body}</div></div>`;
+}
+function renderCalcSteps(res){
+  const host = document.getElementById('calcSteps');
+  const i = state.inputs; const lang=state.lang;
+  if(!res || res.invalid){ host.innerHTML = `<div class="step" style="border-left-color:var(--red)"><div class="sbody">${t('warnUnstable')}</div></div>`; return; }
+  let steps = [];
+  if(state.preset==='coupling'){
+    steps.push([lang==='id'?'STEP 1 — Data':'STEP 1 — Given', `T = ${res.scenarioT} N·m, n = ${i.n}, D = ${i.D} mm, d = ${i.d} mm`]);
+    steps.push(['STEP 2 — R = D/2', `R = ${i.D}/2 = ${(i.D/2).toFixed(1)} mm`]);
+    steps.push(['STEP 3 — F = T / (n·R)', `F = ${(res.scenarioT*1000).toFixed(0)} / (${i.n}×${(i.D/2).toFixed(1)}) = ${res.F.toFixed(1)} N`]);
+    steps.push(['STEP 4 — A = π d² / 4', `A = π×${i.d}²/4 = ${res.A.toFixed(2)} mm²`]);
+    steps.push(['STEP 5 — τ = F / A', `τ = ${res.F.toFixed(1)} / ${res.A.toFixed(2)} = ${res.tau.toFixed(2)} MPa`]);
+    steps.push(['STEP 6 — SF = τallow / τ', `SF = ${res.allowShearUsed} / ${res.tau.toFixed(2)} = ${res.SF.toFixed(2)}`]);
+  } else if(state.preset==='boltGroup'){
+    steps.push([lang==='id'?'STEP 1 — Momen M = P·e':'STEP 1 — Moment M = P·e', `M = ${res.scenarioP}kN × ${i.eccentricity}mm = ${(res.scenarioP*1000*i.eccentricity).toFixed(0)} N·mm`]);
+    steps.push([lang==='id'?'STEP 2 — Gaya langsung Fd = P/n':'STEP 2 — Direct force Fd = P/n', `Fd = ${(res.Fd).toFixed(1)} N`]);
+    steps.push([lang==='id'?'STEP 3 — Gaya puntir Ft = M/(n·R)':'STEP 3 — Torsional force Ft = M/(n·R)', `Ft = ${(res.Ft).toFixed(1)} N`]);
+    steps.push([lang==='id'?'STEP 4 — Superposisi vektor tiap baut':'STEP 4 — Vector superposition per bolt', lang==='id'?'Jumlahkan komponen Fd (vertikal) dan Ft (tangensial) pada tiap baut.':'Sum the Fd (vertical) and Ft (tangential) components at each bolt.']);
+    steps.push([lang==='id'?'STEP 5 — Gaya maksimum':'STEP 5 — Maximum force', `Fmax = ${res.maxF.toFixed(1)} N`]);
+    steps.push(['STEP 6 — τ = Fmax/A, SF = τallow/τ', `τ = ${res.tau.toFixed(2)} MPa → SF = ${res.SF.toFixed(2)}`]);
+  } else if(state.preset==='pressureVessel'){
+    steps.push([lang==='id'?'STEP 1 — Beban per keling Pi = P/n':'STEP 1 — Load per rivet Pi = P/n', `Pi = ${(res.scenarioP*1000/i.n).toFixed(1)} N`]);
+    steps.push(['STEP 2 — τ = Pi / A', `τ = ${res.tau.toFixed(2)} MPa`]);
+    steps.push(['STEP 3 — σb = Pi / (d·t)', `σb = ${res.sigmaB.toFixed(2)} MPa`]);
+    steps.push(['STEP 4 — σt = Pi / ((p−d)·t)', `σt = ${isFinite(res.sigmaT)?res.sigmaT.toFixed(2):'—'} MPa`]);
+    steps.push([lang==='id'?'STEP 5 — Mode kritis':'STEP 5 — Governing mode', `${res.governing} → SF = ${res.SF.toFixed(2)}`]);
+    steps.push([lang==='id'?'STEP 6 — Efisiensi sambungan':'STEP 6 — Joint efficiency', `η = ${res.efficiency.toFixed(1)} %`]);
+  } else if(state.preset==='bracket'){
+    steps.push(['STEP 1 — tw = 0.707×h', `tw = 0.707×${i.weldLeg} = ${res.tw.toFixed(2)} mm`]);
+    steps.push([lang==='id'?'STEP 2 — Tegangan langsung τ1 = P/At':'STEP 2 — Direct stress τ1 = P/At', `τ1 = ${res.tau1.toFixed(2)} MPa`]);
+    steps.push([lang==='id'?'STEP 3 — Momen M = P·e':'STEP 3 — Moment M = P·e', `M = ${(res.scenarioP*1000*i.eccentricity).toFixed(0)} N·mm`]);
+    steps.push([lang==='id'?'STEP 4 — Tegangan puntir τ2 = M·r/J':'STEP 4 — Torsional stress τ2 = M·r/J', `τ2 = ${res.tau2.toFixed(2)} MPa`]);
+    steps.push([lang==='id'?'STEP 5 — Kombinasi (konservatif) τmax = τ1+τ2':'STEP 5 — Combined (conservative) τmax = τ1+τ2', `τmax = ${res.tauMax.toFixed(2)} MPa`]);
+    steps.push(['STEP 6 — SF = τallow/τmax', `SF = ${res.SF.toFixed(2)}`]);
+  } else if(state.preset==='shaftKey'){
+    steps.push([lang==='id'?'STEP 1 — Gaya tangensial F = 2T/d':'STEP 1 — Tangential force F = 2T/d', `F = 2×${(res.scenarioT*1000).toFixed(0)}/${i.shaftDia} = ${res.F.toFixed(1)} N`]);
+    steps.push(['STEP 2 — τ = F/(w·l)', `τ = ${res.tau.toFixed(2)} MPa`]);
+    steps.push(['STEP 3 — σc = 2F/(h·l)', `σc = ${res.sigmaC.toFixed(2)} MPa`]);
+    steps.push([lang==='id'?'STEP 4 — Mode kritis & SF':'STEP 4 — Governing mode & SF', `${res.governing} → SF = ${res.SF.toFixed(2)}`]);
+  } else if(state.preset==='hybrid'){
+    steps.push([lang==='id'?'STEP 1 — Distribusi beban (asumsi)':'STEP 1 — Load split (assumed)', lang==='id'?'60% ditahan las, 40% ditahan baut':'60% carried by weld, 40% by bolts']);
+    steps.push([lang==='id'?'STEP 2 — Tegangan las':'STEP 2 — Weld stress', `τ = ${res.weldPart.tau.toFixed(2)} MPa → SF = ${res.weldPart.SF.toFixed(2)}`]);
+    steps.push([lang==='id'?'STEP 3 — Tegangan baut':'STEP 3 — Bolt stress', `τ = ${res.boltPart.tau.toFixed(2)} MPa → SF = ${res.boltPart.SF.toFixed(2)}`]);
+    steps.push([lang==='id'?'STEP 4 — Elemen kritis':'STEP 4 — Governing element', `${res.governing} → SF = ${res.SF.toFixed(2)}`]);
+  } else {
+    if(state.jointType==='bolt'){
+      steps.push(['STEP 1 — A = πd²/4', `A = ${(Math.PI*i.d*i.d/4).toFixed(2)} mm²`]);
+      steps.push(['STEP 2 — τ = P/(n·planes·A)', `τ = ${res.tau.toFixed(2)} MPa`]);
+      steps.push(['STEP 3 — σb = P/(n·d·t)', `σb = ${res.sigmaB.toFixed(2)} MPa`]);
+      steps.push([lang==='id'?'STEP 4 — Mode kritis & SF':'STEP 4 — Governing & SF', `${res.governing} → SF=${res.SF.toFixed(2)}`]);
+    } else if(state.jointType==='rivet'){
+      steps.push(['STEP 1 — Pi = P/n', `Pi = ${(res.scenarioP*1000/i.n).toFixed(1)} N`]);
+      steps.push(['STEP 2 — τ, σb, σt', `τ=${res.tau.toFixed(2)} | σb=${res.sigmaB.toFixed(2)} | σt=${isFinite(res.sigmaT)?res.sigmaT.toFixed(2):'—'} MPa`]);
+      steps.push([lang==='id'?'STEP 3 — Mode kritis & SF':'STEP 3 — Governing & SF', `${res.governing} → SF=${res.SF.toFixed(2)}`]);
+    } else if(state.jointType==='weld'){
+      steps.push(['STEP 1 — tw = 0.707h', `tw = ${res.tw.toFixed(2)} mm`]);
+      steps.push(['STEP 2 — τ = P/(tw·L)', `τ = ${res.tau.toFixed(2)} MPa`]);
+      steps.push(['STEP 3 — SF = τallow/τ', `SF = ${res.SF.toFixed(2)}`]);
+    } else {
+      steps.push(['STEP 1 — F = 2T/d', `F = ${res.F.toFixed(1)} N`]);
+      steps.push(['STEP 2 — τ, σc', `τ=${res.tau.toFixed(2)} | σc=${res.sigmaC.toFixed(2)} MPa`]);
+      steps.push([lang==='id'?'STEP 3 — Mode kritis & SF':'STEP 3 — Governing & SF', `${res.governing} → SF=${res.SF.toFixed(2)}`]);
+    }
+  }
+  let html = steps.map(([ti,bo])=>stepHTML(ti,bo)).join('');
+  const flag = res.SF>=1 ? `<span class="result-flag flag-safe">${lang==='id'?'DESAIN AMAN ✓':'DESIGN SAFE ✓'}</span>` : `<span class="result-flag flag-fail">${lang==='id'?'DESAIN GAGAL ✕':'DESIGN FAILS ✕'}</span>`;
+  html += `<div>${flag}</div>`;
+  if(state.learningMode==='beginner'){
+    host.innerHTML = `<div class="step"><div class="sbody">${lang==='id'?'Mode Pemula: fokus pada visual diagram di atas. Aktifkan mode Menengah untuk melihat rumus lengkap.':'Beginner mode: focus on the diagram above. Switch to Intermediate mode to see full formulas.'}</div></div>` + `<div>${flag}</div>`;
+  } else if(state.learningMode==='advanced' && !state.challengeRevealedCalc){
+    host.innerHTML = `<div class="step"><div class="sbody">${lang==='id'?'Mode Lanjutan: hitung terlebih dahulu sebelum melihat jawaban.':'Advanced mode: calculate first before revealing the answer.'}</div></div>
+      <button class="btn primary" onclick="state.challengeRevealedCalc=true; renderAll();">${lang==='id'?'TAMPILKAN HASIL':'REVEAL RESULTS'}</button>`;
+  } else {
+    host.innerHTML = html;
+  }
+}
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+function generateLoadSFCurve(){
+  const i = state.inputs;
+  const factors=[0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.5];
+  return factors.map(f=>{
+    let r;
+    try{
+      switch(state.preset){
+        case 'coupling': r=boltCircleTorque(i.T*f,i.n,i.D,i.d,i.allowShear); break;
+        case 'boltGroup': r=boltGroupEccentric(i.P*f,i.eccentricity,i.n,i.D/2,i.d,i.allowShear); break;
+        case 'pressureVessel': r=rivetJoint(i.P*f,i.n,i.d,i.t,i.pitch,i.allowShear,i.allowBearing,i.allowTensile); break;
+        case 'bracket': r=weldEccentric(i.P*f,i.eccentricity,i.weldLength,i.weldSpacing,i.weldLeg,i.allowShear); break;
+        case 'shaftKey': r=keyJoint(i.T*f,i.shaftDia,i.keyWidth,i.keyHeight,i.keyLength,i.allowShear,i.allowBearing); break;
+        case 'hybrid': {
+          const w=weldDirect(i.P*f*0.6,i.weldLeg,i.weldLength,i.allowShear);
+          const b=genericBolt(i.P*f*0.4,i.n,i.d,i.t,i.shearPlanes,i.allowShear,i.allowBearing);
+          r={SF:Math.min(w.SF,b.SF)}; break;
+        }
+        default:
+          if(state.jointType==='bolt') r=genericBolt(i.P*f,i.n,i.d,i.t,i.shearPlanes,i.allowShear,i.allowBearing);
+          else if(state.jointType==='rivet') r=genericRivet(i.P*f,i.n,i.d,i.t,i.pitch,i.allowShear,i.allowBearing,i.allowTensile);
+          else if(state.jointType==='weld') r=weldDirect(i.P*f,i.weldLeg,i.weldLength,i.allowShear);
+          else r=genericKey(i.T*f,i.shaftDia,i.keyWidth,i.keyHeight,i.keyLength,i.allowShear,i.allowBearing);
+      }
+    } catch(e){ r={SF:0}; }
+    return {factor:f, SF: isFinite(r.SF)&&!isNaN(r.SF) ? r.SF : 0};
+  });
+}
+function renderCharts(res){
+  if(typeof Chart === 'undefined'){
+    throw new Error('Chart.js global not available (CDN failed to load or no internet access).');
+  }
+  // Rebuild fresh <canvas> elements every render. Chart.js permanently bakes in
+  // a 0x0 size if it first initializes while the Grafik tab is hidden (display:none),
+  // and reusing the same canvas afterwards keeps that stale size even once visible.
+  // A brand-new canvas guarantees Chart.js measures the real, visible container size.
+  if(window._chartDist) window._chartDist.destroy();
+  if(window._chartSF) window._chartSF.destroy();
+  document.getElementById('chartBoxDist').innerHTML = '<canvas id="chartDist"></canvas>';
+  document.getElementById('chartBoxSF').innerHTML = '<canvas id="chartLoadSF"></canvas>';
+  const distCanvas = document.getElementById('chartDist');
+  const sfCanvas = document.getElementById('chartLoadSF');
+  let labels=[], data=[];
+  if(res && !res.invalid && res.distribution){
+    labels = res.distribution.map((_,i)=>'#'+(i+1));
+    data = res.distribution.map(v=>+(v/1).toFixed(1));
+  }
+  window._chartDist = new Chart(distCanvas, {
+    type:'bar',
+    data:{labels, datasets:[{label: state.lang==='id'?'Gaya/tegangan per elemen':'Force/stress per element', data, backgroundColor:'#33D6EE'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#93A3B8'}}, title:{display:true,text: state.lang==='id'?'Distribusi Gaya pada Grup Pengikat':'Force Distribution Along Fastener Group', color:'#E7ECF3'}},
+      scales:{x:{ticks:{color:'#93A3B8'},grid:{color:'#1E2B3E'}},y:{ticks:{color:'#93A3B8'},grid:{color:'#1E2B3E'}}}}
+  });
+  const curve = generateLoadSFCurve();
+  window._chartSF = new Chart(sfCanvas, {
+    type:'line',
+    data:{labels:curve.map(c=>c.factor+'×'), datasets:[{label:'Safety Factor', data:curve.map(c=>+c.SF.toFixed(2)), borderColor:'#4C8DFF', backgroundColor:'rgba(76,141,255,.15)', fill:true, tension:.3, pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#93A3B8'}}, title:{display:true,text: state.lang==='id'?'Faktor Keamanan vs Faktor Beban':'Safety Factor vs Load Factor', color:'#E7ECF3'}},
+      scales:{x:{ticks:{color:'#93A3B8'},grid:{color:'#1E2B3E'}},y:{ticks:{color:'#93A3B8'},grid:{color:'#1E2B3E'}, suggestedMin:0}}}
+  });
+}
+
+/* Pure HTML/CSS fallback renderer, used only if Chart.js failed to load from the CDN
+   (e.g. no internet access, or the CDN domain is blocked on the network). Keeps the
+   Grafik tab useful instead of a silent blank box. */
+function renderChartsFallback(res){
+  const lang = state.lang;
+  const noteHtml = `<div class="faint" style="margin-bottom:8px">${lang==='id'
+    ? 'Chart.js tidak dapat dimuat dari CDN (periksa koneksi internet Anda). Menampilkan grafik sederhana sebagai gantinya.'
+    : 'Chart.js could not be loaded from the CDN (check your internet connection). Showing a simple fallback chart instead.'}</div>`;
+
+  let distHtml = noteHtml + `<div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">${lang==='id'?'Distribusi Gaya pada Grup Pengikat':'Force Distribution Along Fastener Group'}</div>`;
+  if(res && !res.invalid && res.distribution && res.distribution.length){
+    const maxV = Math.max(...res.distribution) || 1;
+    distHtml += '<div style="display:flex;flex-direction:column;gap:6px">' + res.distribution.map((v,i)=>{
+      const pct = Math.max(2, (v/maxV)*100);
+      return `<div style="display:flex;align-items:center;gap:8px;font-size:11px">
+        <span style="width:28px;color:var(--text-faint)">#${i+1}</span>
+        <div style="flex:1;background:var(--steel);border-radius:4px;overflow:hidden;height:14px">
+          <div style="width:${pct}%;height:100%;background:var(--cyan)"></div>
+        </div>
+        <span class="mono" style="width:70px;text-align:right">${v.toFixed(1)}</span>
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    distHtml += `<div class="faint">${lang==='id'?'Tidak ada data untuk konfigurasi ini.':'No data for this configuration.'}</div>`;
+  }
+  document.getElementById('chartBoxDist').innerHTML = distHtml;
+
+  const curve = generateLoadSFCurve();
+  const maxSF = Math.max(...curve.map(c=>c.SF), 1);
+  let sfHtml = noteHtml + `<div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">${lang==='id'?'Faktor Keamanan vs Faktor Beban':'Safety Factor vs Load Factor'}</div>`;
+  sfHtml += '<div style="display:flex;flex-direction:column;gap:6px">' + curve.map(c=>{
+    const pct = Math.max(2, (c.SF/maxSF)*100);
+    const color = c.SF<1 ? 'var(--red)' : c.SF<1.5 ? 'var(--amber)' : 'var(--green)';
+    return `<div style="display:flex;align-items:center;gap:8px;font-size:11px">
+      <span style="width:34px;color:var(--text-faint)">${c.factor}×</span>
+      <div style="flex:1;background:var(--steel);border-radius:4px;overflow:hidden;height:14px">
+        <div style="width:${pct}%;height:100%;background:${color}"></div>
+      </div>
+      <span class="mono" style="width:50px;text-align:right">${c.SF.toFixed(2)}</span>
+    </div>`;
+  }).join('') + '</div>';
+  document.getElementById('chartBoxSF').innerHTML = sfHtml;
+}
+
+/* =========================================================
+   JOINT BEHAVIOR EXPLORER
+   ========================================================= */
+function renderBehaviorTable(){
+  const lang=state.lang;
+  const rows = [
+    { name: lang==='id'?'Baut':'Bolted', removable:true, preload:true, fail: lang==='id'?'Geser/Tarik':'Shear/Tensile' },
+    { name: lang==='id'?'Keling':'Riveted', removable:false, preload:false, fail: lang==='id'?'Geser/Sobek/Tumpu':'Shear/Tear/Bearing' },
+    { name: lang==='id'?'Las':'Welded', removable:false, preload:false, fail: lang==='id'?'Retak Las/Induk':'Weld/Base Crack' },
+    { name: lang==='id'?'Pasak':'Keyed', removable:true, preload:false, fail: lang==='id'?'Geser/Tumpu':'Shear/Crushing' },
+  ];
+  const activeName = {coupling:'Baut',boltGroup:'Baut',pressureVessel:'Keling',bracket:'Las',shaftKey:'Pasak',hybrid:'Baut',custom:{bolt:'Baut',rivet:'Keling',weld:'Las',key:'Pasak'}[state.jointType]}[state.preset];
+  const head = lang==='id' ? ['Jenis','Dapat Dilepas','Preload','Mode Kegagalan'] : ['Type','Removable','Preload','Failure Mode'];
+  let html = `<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
+  rows.forEach(r=>{
+    const hl = (r.name===activeName || (lang==='en' && {Baut:'Bolted',Keling:'Riveted',Las:'Welded',Pasak:'Keyed'}[activeName]===r.name)) ? 'style="background:rgba(51,214,238,.08)"' : '';
+    html += `<tr ${hl}><td>${r.name}</td><td class="${r.removable?'ok':'no'}">${r.removable?'✓':'✕'}</td><td class="${r.preload?'ok':'no'}">${r.preload?'✓':'✕'}</td><td>${r.fail}</td></tr>`;
+  });
+  document.getElementById('behaviorTable').innerHTML = html;
+}
+
+/* =========================================================
+   ASSUMPTIONS
+   ========================================================= */
+function renderAssumptions(){
+  const lang=state.lang;
+  const list = lang==='id' ? [
+    'Pembebanan statis/kuasi-statis.',
+    'Pelat/komponen dianggap rigid (tidak melentur signifikan).',
+    'Distribusi tegangan uniform pada fastener, kecuali pada grup eksentris.',
+    'Material linear elastis sebelum yield.',
+    'Gesekan antar pelat diabaikan kecuali dinyatakan lain.',
+    'Efek fatik diabaikan kecuali diaktifkan.',
+    'Pembebanan dianggap 2D kecuali dinyatakan lain.',
+    t('equalDist'),
+  ] : [
+    'Static / quasi-static loading.',
+    'Plates/members assumed rigid (no significant bending).',
+    'Uniform stress distribution on fasteners, except for eccentric groups.',
+    'Linear elastic material behavior before yield.',
+    'Friction between plates neglected unless stated otherwise.',
+    'Fatigue effects neglected unless activated.',
+    '2D loading assumed unless stated otherwise.',
+    t('equalDist'),
+  ];
+  document.getElementById('assumpList').innerHTML = list.map(x=>`<li>${x}</li>`).join('');
+}
+
+/* =========================================================
+   COMPARISON MODE
+   ========================================================= */
+function renderCompare(){
+  const P = +document.getElementById('refLoad').value;
+  document.getElementById('refLoadVal').textContent = P+' kN';
+  const lang=state.lang;
+  const d=14, t_=10, n=4, pitch=45, leg=8, L=120, shaftDia=40, w=10, hK=8, lK=50;
+  const allowShear=60, allowBearing=110, allowTensile=100;
+  const bolt = genericBolt(P,n,d,t_,1,allowShear,allowBearing);
+  const rivet = genericRivet(P,n,d,t_,pitch,allowShear,allowBearing,allowTensile);
+  const weld = weldDirect(P,leg,L,allowShear);
+  const Teq = P*0.15*1000/1000; // approximate equivalent torque (kN*0.15m) for key comparison, in N.m
+  const key = genericKey(P*0.15, shaftDia, w, hK, lK, allowShear, allowBearing);
+  const items = [
+    {name: lang==='id'?'Baut':'Bolted', r:bolt, removable:true},
+    {name: lang==='id'?'Keling':'Riveted', r:rivet, removable:false},
+    {name: lang==='id'?'Las':'Welded', r:weld, removable:false},
+    {name: lang==='id'?'Pasak':'Keyed', r:key, removable:true},
+  ];
+  const host = document.getElementById('compareGrid');
+  host.innerHTML = items.map(it=>{
+    const sf = isFinite(it.r.SF)?it.r.SF:0;
+    const color = sf<1?'var(--red)':sf<1.5?'var(--amber)':'var(--green)';
+    return `<div class="compare-card">
+      <h4>${it.name}</h4>
+      <div class="compare-row"><span>${lang==='id'?'Tegangan Maks':'Max Stress'}</span><span class="mono">${fmt(it.r.tau)} MPa</span></div>
+      <div class="compare-row"><span>SF</span><span class="mono" style="color:${color}">${sf.toFixed(2)}</span></div>
+      <div class="compare-row"><span>${lang==='id'?'Dapat Dilepas':'Removable'}</span><span>${it.removable?'✓':'✕'}</span></div>
+      <div class="compare-row"><span>${lang==='id'?'Mode Kegagalan':'Failure Mode'}</span><span style="font-size:11px;text-align:right">${it.r.governing}</span></div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   CHALLENGE MODE
+   ========================================================= */
+const CHALLENGE_FIELDS_BY_MODE = {
+  bolt:['tau','SF'], rivet:['tau','sigmaB','SF'], weld:['tau','SF'], key:['tau','sigmaC','SF'], hybrid:['tau','SF']
+};
+function renderChallenge(res){
+  const host = document.getElementById('challengeInputs');
+  document.getElementById('challengeResult').textContent='';
+  document.getElementById('challengeHint').textContent='';
+  state.hintLevel=0;
+  if(!res || res.invalid){ host.innerHTML=''; return; }
+  const mode = res.mode==='hybrid' ? 'hybrid' : res.mode;
+  const fields = CHALLENGE_FIELDS_BY_MODE[mode] || ['SF'];
+  const labelMap = { tau: state.lang==='id'?'τ (MPa)':'τ (MPa)', sigmaB: state.lang==='id'?'σb (MPa)':'σb (MPa)', sigmaC: state.lang==='id'?'σc (MPa)':'σc (MPa)', SF:'SF' };
+  host.innerHTML = fields.map(f=>`<div class="field"><label>${labelMap[f]}</label><input type="number" step="0.01" class="chal-input" data-field="${f}"></div>`).join('');
+}
+function checkChallenge(res){
+  if(!res || res.invalid) return;
+  const inputs = document.querySelectorAll('.chal-input');
+  let allCorrect=true;
+  inputs.forEach(inp=>{
+    const f = inp.dataset.field;
+    const actual = f==='SF' ? res.SF : res[f];
+    const val = parseFloat(inp.value);
+    const tol = Math.abs(actual)*0.08 + 0.05;
+    const ok = !isNaN(val) && Math.abs(val-actual) <= tol;
+    inp.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+    if(!ok) allCorrect=false;
+  });
+  const result = document.getElementById('challengeResult');
+  if(inputs.length===0) return;
+  result.style.color = allCorrect ? 'var(--green)' : 'var(--red)';
+  result.textContent = allCorrect ? (state.lang==='id'?'CORRECT ✓':'CORRECT ✓') : (state.lang==='id'?'TRY AGAIN — periksa kembali':'TRY AGAIN');
+}
+const HINTS = {
+  id:['Hint 1: Periksa luas penampang efektif (A = πd²/4 atau tw×L).','Hint 2: Perhatikan jumlah/geometri pengikat yang menahan beban.','Hint 3: SF = tegangan izin / tegangan aktual — hitung tegangan aktual dahulu dari gaya dan luas.'],
+  en:['Hint 1: Check the effective cross-sectional area (A = πd²/4 or tw×L).','Hint 2: Consider the number/geometry of fasteners carrying the load.','Hint 3: SF = allowable stress / actual stress — compute the actual stress from force and area first.']
+};
+function showHint(){
+  state.hintLevel = Math.min(state.hintLevel+1, 3);
+  const arr = HINTS[state.lang];
+  document.getElementById('challengeHint').innerHTML = arr.slice(0,state.hintLevel).map(h=>`<div>${h}</div>`).join('');
+}
+
+/* =========================================================
+   CONCEPT QUIZ
+   ========================================================= */
+const QUIZ = [
+  { id:{q:'Jika jumlah baut ditambah dari 2 menjadi 4 dengan beban tetap, apa yang terjadi pada tegangan geser tiap baut?', opts:['Bertambah','Berkurang','Tetap','Nol'], correct:1, exp:'Tegangan geser τ=P/(n·A) berbanding terbalik dengan n, sehingga menambah jumlah baut menurunkan tegangan tiap baut.'},
+    en:{q:'If the number of bolts increases from 2 to 4 at constant load, what happens to the shear stress per bolt?', opts:['Increases','Decreases','Stays the same','Becomes zero'], correct:1, exp:'Shear stress τ=P/(n·A) is inversely proportional to n, so adding bolts reduces stress per bolt.'} },
+  { id:{q:'Pada sambungan keling, mode kegagalan "tearing" terjadi pada:', opts:['Badan keling','Pelat pada penampang bersih (net section)','Kepala keling','Lubang bor'], correct:1, exp:'Tearing adalah sobeknya pelat pada penampang net (p−d)·t akibat tegangan tarik berlebih.'},
+    en:{q:'In a riveted joint, "tearing" failure occurs at:', opts:['The rivet shank','The plate net section (p−d)·t','The rivet head','The drilled hole wall'], correct:1, exp:'Tearing is plate failure at the net section (p−d)·t due to excessive tensile stress.'} },
+  { id:{q:'Mengapa tegangan kritis pada sambungan las terjadi di leher las (throat) dan bukan di kaki las (leg)?', opts:['Leher las lebih panjang','Leher las adalah penampang efektif tersempit yang menahan beban','Kaki las tidak menahan beban','Tidak ada perbedaan'], correct:1, exp:'Throat (tw=0.707h) adalah dimensi efektif tersempit sehingga menghasilkan tegangan tertinggi.'},
+    en:{q:'Why does critical stress in a welded joint occur at the throat rather than the leg?', opts:['The throat is longer','The throat is the narrowest effective section carrying the load','The leg carries no load','There is no difference'], correct:1, exp:'The throat (tw=0.707h) is the narrowest effective dimension, producing the highest stress.'} },
+  { id:{q:'Pada sambungan pasak, jika torsi T dinaikkan dua kali, apa yang terjadi pada gaya tangensial F?', opts:['F tetap','F menjadi dua kali','F menjadi setengah','F menjadi nol'], correct:1, exp:'F = 2T/d berbanding lurus dengan T, sehingga F juga menjadi dua kali.'},
+    en:{q:'In a keyed joint, if torque T doubles, what happens to the tangential force F?', opts:['F stays the same','F doubles','F halves','F becomes zero'], correct:1, exp:'F = 2T/d is directly proportional to T, so F also doubles.'} },
+  { id:{q:'Pada grup baut yang menahan beban eksentris, baut mana yang mengalami gaya terbesar?', opts:['Baut terdekat dengan pusat grup','Baut terjauh dari pusat grup','Semua baut sama','Tidak dapat ditentukan'], correct:1, exp:'Gaya akibat momen (torsional) sebanding dengan jarak dari pusat grup, sehingga baut terjauh menerima gaya terbesar.'},
+    en:{q:'In an eccentrically loaded bolt group, which bolt experiences the largest force?', opts:['The bolt closest to the group centroid','The bolt farthest from the group centroid','All bolts equally','Cannot be determined'], correct:1, exp:'The moment-induced (torsional) force is proportional to distance from the centroid, so the farthest bolt sees the largest force.'} },
+];
+function renderQuiz(){
+  const host = document.getElementById('quizList');
+  host.innerHTML = QUIZ.map((qq,idx)=>{
+    const q = qq[state.lang];
+    return `<div class="quiz-item" id="quiz-${idx}">
+      <div><strong>${idx+1}. ${q.q}</strong></div>
+      <div class="quiz-opts">${q.opts.map((o,oi)=>`<button onclick="answerQuiz(${idx},${oi})">${o}</button>`).join('')}</div>
+      <div class="quiz-fb" id="quiz-fb-${idx}"></div>
+    </div>`;
+  }).join('');
+}
+function answerQuiz(idx, oi){
+  const qq = QUIZ[idx][state.lang];
+  const buttons = document.querySelectorAll(`#quiz-${idx} .quiz-opts button`);
+  buttons.forEach((b,i)=>{
+    b.disabled = true;
+    if(i===qq.correct) b.classList.add('correct');
+    else if(i===oi) b.classList.add('wrong');
+  });
+  document.getElementById(`quiz-fb-${idx}`).textContent = (oi===qq.correct ? (state.lang==='id'?'Benar. ':'Correct. ') : (state.lang==='id'?'Kurang tepat. ':'Not quite. ')) + qq.exp;
+}
+
+/* =========================================================
+   LAB WORKSHEET
+   ========================================================= */
+function renderWorksheet(){
+  const lang=state.lang;
+  const items = lang==='id' ? [
+    'Pilih jenis sambungan.', 'Tentukan beban dan geometri.', 'Prediksi tegangan dan faktor keamanan.',
+    'Jalankan simulasi.', 'Catat hasil.', 'Bandingkan prediksi dengan simulasi.',
+    'Jelaskan perbedaan.', 'Buat kesimpulan mengenai kelayakan desain sambungan.'
+  ] : [
+    'Choose the joint type.', 'Set the load and geometry.', 'Predict the stress and safety factor.',
+    'Run the simulation.', 'Record the results.', 'Compare your prediction with the simulation.',
+    'Explain any differences.', 'Write a conclusion on the joint design adequacy.'
+  ];
+  document.getElementById('worksheetList').innerHTML = items.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('wsConclusion').placeholder = t('wsConclusionPh');
+}
+
+/* =========================================================
+   DATA TABLE / RECORD / CSV / PRINT
+   ========================================================= */
+const TABLE_COLS = ['Trial','Preset','Joint','n','d/leg/w','t','P/T','tau','sigma','sigmaB','SF','Failure'];
+function renderDataTable(){
+  const host = document.getElementById('dataTable');
+  let html = `<tr>${TABLE_COLS.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+  state.records.forEach(r=>{
+    html += `<tr>${TABLE_COLS.map(c=>`<td>${r[c]!==undefined?r[c]:'—'}</td>`).join('')}</tr>`;
+  });
+  host.innerHTML = html;
+}
+function recordData(res){
+  if(!res || res.invalid){ alert(t('warnUnstable')); return; }
+  const i = state.inputs;
+  const dLegW = state.jointType==='weld'||state.preset==='bracket' ? i.weldLeg : state.jointType==='key'||state.preset==='shaftKey' ? i.keyWidth : i.d;
+  const row = {
+    Trial: state.records.length+1,
+    Preset: state.preset,
+    Joint: res.mode,
+    n: i.n ?? '—',
+    'd/leg/w': dLegW,
+    t: i.t ?? '—',
+    'P/T': state.preset==='coupling'||state.preset==='shaftKey' ? (res.scenarioT+' N·m') : (res.scenarioP+' kN'),
+    tau: fmt(res.tau ?? (res.weldPart? res.weldPart.tau: undefined),2),
+    sigma: fmt(res.sigmaT,2),
+    sigmaB: fmt(res.sigmaB ?? res.sigmaC,2),
+    SF: res.SF.toFixed(2),
+    Failure: res.governing,
+  };
+  state.records.push(row);
+  renderDataTable();
+}
+function exportCSV(){
+  if(state.records.length===0){ alert(state.lang==='id'?'Belum ada data untuk diekspor.':'No data to export yet.'); return; }
+  const header = TABLE_COLS.join(',');
+  const rows = state.records.map(r=>TABLE_COLS.map(c=>r[c]).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'experiment_data_sambungan.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function printReport(res){
+  const i = state.inputs; const lang=state.lang;
+  const area = document.getElementById('printArea');
+  if(!res || res.invalid){
+    area.innerHTML = `<h2>${t('warnUnstable')}</h2>`;
+  } else {
+    area.innerHTML = `
+      <h1 style="font-family:sans-serif">${t('appTitle')}</h1>
+      <h3 style="font-family:sans-serif">${lang==='id'?'Laporan Lab Virtual':'Virtual Lab Report'} — ${state.preset} / ${res.mode}</h3>
+      <p><b>${lang==='id'?'Parameter Input':'Input Parameters'}:</b> ${JSON.stringify(i)}</p>
+      <p><b>${lang==='id'?'Tegangan':'Stress'}:</b> τ=${fmt(res.tau)} MPa, σb=${fmt(res.sigmaB)} MPa, σt=${fmt(res.sigmaT)} MPa</p>
+      <p><b>${lang==='id'?'Faktor Keamanan':'Safety Factor'}:</b> ${res.SF.toFixed(2)} (${res.status})</p>
+      <p><b>${lang==='id'?'Mode Kegagalan Kritis':'Governing Failure Mode'}:</b> ${res.governing}</p>
+      <h3 style="font-family:sans-serif">${lang==='id'?'Data Eksperimen':'Experiment Data'}</h3>
+      <table border="1" cellpadding="4" style="border-collapse:collapse;font-family:monospace;font-size:11px">
+        <tr>${TABLE_COLS.map(c=>`<th>${c}</th>`).join('')}</tr>
+        ${state.records.map(r=>`<tr>${TABLE_COLS.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}
+      </table>
+      <h3 style="font-family:sans-serif">${lang==='id'?'Kesimpulan Mahasiswa':'Student Conclusion'}</h3>
+      <p>${(document.getElementById('wsConclusion').value || '—')}</p>
+    `;
+  }
+  window.print();
+}
+
+/* =========================================================
+   STATIC I18N SYNC
+   ========================================================= */
+function updateStaticI18N(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-ph');
+    el.placeholder = t(key);
+  });
+  document.documentElement.lang = state.lang;
+}
+
+/* =========================================================
+   MASTER RENDER
+   ========================================================= */
+function renderAll(){
+  const res = computeResults();
+  state._lastResult = res;
+  renderInputs();
+  renderDiagram(res);
+  renderStatusBar(res);
+  renderCards(res);
+  renderCalcSteps(res);
+  try { renderCharts(res); } catch(e){ console.error('renderCharts failed:', e); renderChartsFallback(res); }
+  renderBehaviorTable();
+  renderAssumptions();
+  renderChallenge(res);
+  updateStaticI18N();
+  document.getElementById('animSpeedVal').textContent = state.anim.speed.toFixed(1)+'×';
+  document.getElementById('deflScaleVal').textContent = state.deflScale+'×';
+  return res;
+}
+function renderLangDependentStatic(){
+  renderQuiz();
+  renderWorksheet();
+  renderCompare();
+}
+
+/* =========================================================
+   EVENT WIRING
+   ========================================================= */
+document.getElementById('presetSel').addEventListener('change', e=>{
+  state.preset = e.target.value;
+  applyPresetDefaults(state.preset);
+  state.scenario='normal';
+  renderAll();
+});
+document.getElementById('jointTypeSel').addEventListener('change', e=>{
+  state.jointType = e.target.value;
+  renderAll();
+});
+document.getElementById('learningMode').addEventListener('change', e=>{
+  state.learningMode = e.target.value;
+  state.challengeRevealedCalc = false;
+  renderAll();
+});
+document.querySelectorAll('#langSwitch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.lang = btn.dataset.lang;
+    document.querySelectorAll('#langSwitch button').forEach(b=>b.classList.toggle('active', b===btn));
+    renderAll();
+    renderLangDependentStatic();
+  });
+});
+document.querySelectorAll('.stage-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.stage = parseInt(btn.dataset.stage,10);
+    document.querySelectorAll('.stage-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    renderAll();
+  });
+});
+document.getElementById('btnAutoConvert').addEventListener('click', ()=>{
+  const seq = [1,2,3];
+  let idx=0;
+  function step(){
+    if(idx>=seq.length) return;
+    state.stage = seq[idx];
+    document.querySelectorAll('.stage-btn').forEach(b=>b.classList.toggle('active', parseInt(b.dataset.stage,10)===state.stage));
+    renderAll();
+    idx++;
+    if(idx<seq.length) setTimeout(step, 900);
+  }
+  step();
+});
+document.getElementById('toggleFBD').addEventListener('click', (e)=>{ state.showFBD=!state.showFBD; e.target.classList.toggle('primary', state.showFBD); renderAll(); });
+document.getElementById('toggleReactions').addEventListener('click', (e)=>{ state.showReactions=!state.showReactions; e.target.classList.toggle('primary', state.showReactions); renderAll(); });
+document.getElementById('toggleDims').addEventListener('click', (e)=>{ state.showDims=!state.showDims; e.target.classList.toggle('primary', state.showDims); renderAll(); });
+document.getElementById('toggleEq').addEventListener('click', (e)=>{
+  state.showEq = !state.showEq;
+  e.target.classList.toggle('primary', state.showEq);
+  switchTab('calc');
+  renderCalcSteps(state._lastResult);
+  // The calculation panel lives below the diagram; scroll it into view so the
+  // effect of this toggle is actually visible instead of happening off-screen.
+  const calcPanel = document.getElementById('tab-calc');
+  if(typeof calcPanel.scrollIntoView === 'function'){
+    calcPanel.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  calcPanel.classList.add('flash-highlight');
+  setTimeout(()=>calcPanel.classList.remove('flash-highlight'), 1200);
+});
+
+document.getElementById('btnPlay').addEventListener('click', ()=>{ state.anim.playing=true; renderAll(); });
+document.getElementById('btnPause').addEventListener('click', ()=>{ state.anim.playing=false; renderAll(); });
+document.getElementById('btnStep').addEventListener('click', ()=>{ state.anim.playing=false; state.anim.phase++; renderAll(); });
+document.getElementById('btnReset').addEventListener('click', ()=>{ state.anim.playing=false; state.anim.phase=0; state.scenario='normal'; renderAll(); });
+document.getElementById('animSpeed').addEventListener('input', e=>{ state.anim.speed=parseFloat(e.target.value); renderAll(); });
+document.getElementById('deflScale').addEventListener('input', e=>{ state.deflScale=parseFloat(e.target.value); renderAll(); });
+
+document.getElementById('scnNormal').addEventListener('click', ()=>{ state.scenario='normal'; renderAll(); });
+document.getElementById('scnOverload').addEventListener('click', ()=>{ state.scenario='overload'; renderAll(); });
+document.getElementById('scnLoosen').addEventListener('click', ()=>{ state.scenario='loosen'; renderAll(); });
+document.getElementById('scnFailure').addEventListener('click', ()=>{ state.scenario='failure'; renderAll(); });
+
+function switchTab(name){
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
+  if(name==='charts') setTimeout(()=>{ try { renderCharts(state._lastResult); } catch(e){ console.error('renderCharts failed:', e); renderChartsFallback(state._lastResult); } }, 30);
+  if(name==='compare') renderCompare();
+}
+document.querySelectorAll('.tabbar button').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchTab(btn.dataset.tab));
+});
+
+document.getElementById('btnRecord').addEventListener('click', ()=>recordData(state._lastResult));
+document.getElementById('btnClear').addEventListener('click', ()=>{ state.records=[]; renderDataTable(); });
+document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+document.getElementById('btnPrint').addEventListener('click', ()=>printReport(state._lastResult));
+
+document.getElementById('refLoad').addEventListener('input', renderCompare);
+document.getElementById('btnCheckAnswer').addEventListener('click', ()=>checkChallenge(state._lastResult));
+document.getElementById('btnHint').addEventListener('click', showHint);
+
+/* =========================================================
+   INIT
+   ========================================================= */
+applyPresetDefaults(state.preset);
+renderAll();
+renderLangDependentStatic();
+renderDataTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Lab Elemen Mesin</title>
+<meta name="description" content="Sebelas virtual lab interaktif untuk Elemen Mesin dan Mekanika Teknik: sambungan, tumpuan, transmisi daya, pengereman, penyimpan energi, struktur, perapat, toleransi, gerak linear, perangkat pengaman, dan excavator.">
+<style>
+  :root{
+    --bg:#F3F5F9; --panel:#FFFFFF; --ink:#18213A; --soft:#5E6A82; --line:#DDE3EC;
+    --navy:#14284B; --navy2:#1F3F73; --yellow:#F5B700; --cyan:#12A4C4; --chip:#EEF2F8; --cyan-bg:#E2F5FA;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0F1524; --panel:#18213A; --ink:#E8ECF4; --soft:#A3AEC4; --line:#2A3654; --chip:#22304F; --cyan-bg:#13324170; }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;}
+  header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:40px 16px 52px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px;}
+  header .wrap{padding:0;}
+  .tag{display:inline-block;background:var(--yellow);color:#2B2100;font-weight:800;font-size:12px;letter-spacing:.06em;padding:4px 10px;border-radius:20px;text-transform:uppercase;}
+  h1{margin:12px 0 6px;font-size:clamp(24px,4vw,34px);line-height:1.2;}
+  header p{margin:0;color:#C8D3EA;max-width:660px;font-size:15px;}
+  .tip{margin:-26px auto 18px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--yellow);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--soft);box-shadow:0 6px 20px rgba(20,40,75,.08);}
+  .tip b{color:var(--ink);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:28px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:9px;text-decoration:none;color:inherit;transition:transform .12s,border-color .12s;}
+  .card:hover{transform:translateY(-2px);border-color:var(--cyan);}
+  .top{display:flex;align-items:center;gap:10px;}
+  .ico{font-size:24px;line-height:1;}
+  .num{font-family:"SFMono-Regular",Consolas,monospace;font-weight:800;font-size:12px;color:var(--cyan);background:var(--cyan-bg);padding:3px 9px;border-radius:20px;}
+  .card h2{margin:0;font-size:16.5px;line-height:1.3;}
+  .card p{margin:0;font-size:13px;color:var(--soft);flex:1;}
+  .open{font-weight:700;font-size:13.5px;color:var(--cyan);}
+  footer{border-top:1px solid var(--line);padding:18px 0 40px;font-size:12.5px;color:var(--soft);}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="tag">Elemen Mesin · Mekanika Teknik · PNUP</span>
+    <h1>Virtual Lab Elemen Mesin</h1>
+    <p>Sebelas simulator interaktif: atur parameter, jalankan animasi, amati grafik dan perhitungan teknik, lalu cetak laporan praktikum.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tip"><b>Tips:</b> buka di laptop atau tablet dalam posisi mendatar agar panel kontrol, animasi, dan grafik terlihat lengkap. Sebagian lab bisa dialihkan ke bahasa Inggris (ID/EN).</div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<footer class="wrap">
+  Politeknik Negeri Ujung Pandang · Semester Ganjil 2026/2027.<br>
+  Simulator berjalan sepenuhnya di browser Anda; tidak ada data yang dikirim ke server. Model dalam simulator disederhanakan untuk pembelajaran, jadi untuk perancangan nyata tetap gunakan standar dan katalog produsen.
+</footer>
+
+<script>
+  const LABS = [
+    ["🔩","Sambungan Elemen Mesin","Simulasi sambungan baut, paku keling, las, dan sejenisnya, lengkap dengan data eksperimen dan peringatan kondisi tidak stabil.","01-sambungan.html"],
+    ["🏗️","Jenis-Jenis Tumpuan","Tumpuan sendi, rol, dan jepit pada balok: reaksi tumpuan, momen, dan defleksi (Mekanika Teknik).","02-tumpuan.html"],
+    ["⚙️","Transmisi Daya","Transmisi daya mekanik dengan parameter yang bisa diatur, animasi, dan data eksperimen.","03-transmisi-daya.html"],
+    ["🛑","Pengereman","Sistem rem: gaya pedal, tekanan hidrolik, gesekan, dan konversi energi menjadi panas.","04-pengereman.html"],
+    ["🌀","Penyimpan Energi: Pegas & Roda Gila","Energi pegas dan roda gila, mode belajar, kartu rekayasa, dan status keselamatan.","05-penyimpan-energi.html"],
+    ["🏢","Struktur: Rangka, Casing, Bejana Tekan","Beban vs deformasi, tegangan-regangan, dan faktor keamanan terhadap waktu.","06-struktur-rangka.html"],
+    ["💧","Perapat & Pelumasan","Seal, gasket, dan pelumasan: parameter input, siklus animasi, asumsi, dan kartu rekayasa.","07-perapat-pelumasan.html"],
+    ["📏","Toleransi & Suaian","Interpretasi suaian (fits), metrologi permukaan, proses dan inspeksi, plus soal latihan.","08-toleransi-suaian.html"],
+    ["↔️","Panduan Gerak Linear","Linear guideway dan linear bearing: grafik, perhitungan teknik, dan kartu rekayasa.","09-gerak-linear.html"],
+    ["🛡️","Pengaman: Shear Pin & Relief Valve","Sistem nyata, model proteksi, dan model kuantitatif perangkat pengaman beban lebih, lengkap dengan laporan lab.","10-shear-pin-relief-valve.html"],
+    ["🚜","Excavator","Kinematika sendi, sistem hidrolik, skenario kerja, telemetri, serta grafik tekanan dan torsi boom.","11-excavator.html"]
+  ];
+  const grid = document.getElementById("grid");
+  LABS.forEach(([ico,title,desc,file],i)=>{
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = "lab/" + file;
+    a.innerHTML = `<div class="top"><span class="ico">${ico}</span><span class="num">LAB ${String(i+1).padStart(2,"0")}</span></div>
+      <h2>${title}</h2><p>${desc}</p><span class="open">Buka virtual lab →</span>`;
+    grid.appendChild(a);
+  });
+</script>
+</body>
+</html>

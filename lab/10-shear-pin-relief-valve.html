@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<!--
+  Virtual Laboratory — Perangkat Pengaman: Shear Pin & Relief Valve
+  Single-file offline educational engineering simulator.
+  UI architecture adapted from the user-provided Virtual Lab Transmisi Daya;
+  all external chart/CDN dependencies replaced with native Canvas 2D.
+-->
+
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Virtual Laboratory — Perangkat Pengaman: Shear Pin & Relief Valve</title>
+<style>
+:root{
+  --bg:#0a0f1a;--panel:#111a2b;--panel2:#152238;--steel:#1b2a42;--line:#2a3d59;
+  --text:#eaf2fb;--muted:#93a6ba;--faint:#5f7388;--cyan:#37d0e6;--blue:#4f8cff;
+  --green:#43d193;--yellow:#ffc857;--red:#ff5f69;--violet:#b993ff;--orange:#ff9f43;
+  --shadow:0 12px 34px rgba(0,0,0,.28);--radius:12px;
+}
+*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;font-size:14px}
+body{padding-bottom:44px} button,input,select,textarea{font:inherit} button{cursor:pointer}.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;background:rgba(10,15,26,.97);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand h1{font-size:18px;margin:0}.brand .sub{color:var(--cyan);font-size:12px;margin-top:3px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn,.ctl{border:1px solid var(--line);background:var(--steel);color:var(--text);border-radius:8px;padding:8px 10px}.btn:hover,.ctl:hover{border-color:var(--cyan)}
+.btn.primary{background:var(--cyan);color:#04242a;border-color:var(--cyan);font-weight:700}.btn.active{border-color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(55,208,230,.22)}
+.btn.warn{color:var(--yellow);border-color:#9f7b32}.btn.danger{color:var(--red);border-color:#9a4650}.btn.ok{color:var(--green);border-color:#2f8563}
+.langseg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.langseg button{border:0;background:var(--panel);color:var(--muted);padding:8px 11px}.langseg button.active{background:var(--cyan);color:#032128}
+.layout{display:grid;grid-template-columns:310px minmax(560px,1fr) 320px;gap:12px;padding:12px;align-items:start}.panel{background:linear-gradient(180deg,var(--panel),#0e1727);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--line)}.panel-body{padding:12px}
+.left-scroll{max-height:calc(100vh - 150px);overflow:auto}.group{background:#0d1727;border:1px solid #223750;border-radius:10px;padding:10px;margin-bottom:10px}.group-title{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#bfefff;font-weight:800;margin-bottom:8px}
+.field{margin:9px 0}.field label{display:flex;justify-content:space-between;gap:8px;color:#d6e4f1;font-size:12px;margin-bottom:5px}.field .value{color:var(--cyan);font-family:Consolas,monospace}.field-grid{display:grid;grid-template-columns:1fr 90px;gap:7px;align-items:center}.field input[type=range]{width:100%;accent-color:var(--cyan)}.field input[type=number],.field select{width:100%;background:#091423;border:1px solid #31506f;color:#fff;border-radius:7px;padding:6px 7px}
+.center{display:grid;gap:12px}.stagebar,.actions,.tabs{display:flex;gap:6px;flex-wrap:wrap}.stagebar{padding:10px;border-bottom:1px solid var(--line)}.stagebar .btn{flex:1;min-width:130px}.canvas-wrap{position:relative;aspect-ratio:16/9;background:linear-gradient(rgba(55,208,230,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(55,208,230,.045) 1px,transparent 1px),#07111e;background-size:28px 28px;overflow:hidden}.canvas-wrap canvas{width:100%;height:100%;display:block}.overlay{position:absolute;left:12px;top:12px;background:rgba(4,9,17,.79);border:1px solid #2d4e6d;border-radius:9px;padding:8px 10px;font-size:12px;pointer-events:none}.overlay b{color:var(--cyan)}.actions{padding:10px;border-top:1px solid var(--line)}
+.status-strip{position:sticky;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));gap:1px;background:#263a54;border-top:1px solid var(--line)}.status-item{background:#07111e;padding:7px 9px;min-width:0}.status-item .k{font-size:9px;color:var(--faint);text-transform:uppercase}.status-item .v{font:700 11px Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.safe{color:var(--green)}.caution{color:var(--yellow)}.critical{color:var(--red)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{background:#0a1626;border:1px solid #27445f;border-radius:10px;padding:9px}.card .k{font-size:10px;color:var(--muted)}.card .v{font:700 17px Consolas,monospace;margin-top:3px}.card .u{font-size:10px;color:#7f95aa}.badge{display:inline-block;border:1px solid;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge.safe{background:rgba(67,209,147,.08)}.badge.caution{background:rgba(255,200,87,.08)}.badge.critical{background:rgba(255,95,105,.08)}
+.info{font-size:12px;line-height:1.55;color:#d7e3ef}.info b{color:#afeaff}.assump{font-size:11px;line-height:1.5;color:var(--muted);padding-left:17px}.assump li{margin:5px 0}
+.bottom{padding:0 12px 12px}.tabs{padding:0 12px;border-bottom:1px solid var(--line)}.tab{background:transparent;border:0;color:var(--muted);padding:10px 11px;border-bottom:2px solid transparent}.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}.pane{display:none;padding:12px}.pane.active{display:block}.graphs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.graphbox{background:#07111e;border:1px solid #24415f;border-radius:9px;padding:6px}.graphbox canvas{width:100%;height:220px;display:block}.table-wrap{overflow:auto;max-height:300px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:7px;border-bottom:1px solid #22364d;text-align:left;white-space:nowrap}th{color:#bcecff;position:sticky;top:0;background:#0f1a2b}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ws-block{margin-bottom:10px}.ws-block label{font-size:12px;color:#cfe0ef}.ws-block textarea{width:100%;min-height:78px;margin-top:5px;background:#091523;color:#fff;border:1px solid #31506f;border-radius:7px;padding:8px}.quiz{border:1px solid #27435e;border-radius:9px;padding:10px;margin-bottom:9px;background:#0b1727}.quiz .opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.feedback{margin-top:7px;color:var(--muted);font-size:12px}.challenge{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.mission{border:1px solid #294863;background:#0b1727;border-radius:10px;padding:11px}.mission h4{margin:0 0 7px;color:var(--cyan)}.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-box{background:#0b1727;border:1px solid #27435e;border-radius:10px;padding:10px}.compare-box h4{margin:0 0 8px;color:var(--cyan)}.rowline{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed #263a52;font-size:12px}.small{font-size:11px;color:var(--muted)}.mono{font-family:Consolas,monospace}.formula{white-space:pre-wrap;font-family:Consolas,monospace;font-size:12px;line-height:1.5;background:#07111e;border:1px solid #24415f;border-radius:9px;padding:10px}
+@media(max-width:1180px){.layout{grid-template-columns:280px 1fr}.right{grid-column:1/-1}.left-scroll{max-height:none}.status-strip{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:780px){.layout{display:block}.panel{margin-bottom:10px}.graphs,.formgrid,.compare-grid{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr 80px}.status-strip{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:white;color:#111}.topbar,.layout,.tabs,.status-strip,.no-print{display:none!important}.bottom{padding:0}.panel{border:0;box-shadow:none;background:white}.pane{display:none!important}#worksheetPane{display:block!important}.ws-block textarea{color:#111;background:white;border:1px solid #999}.print-title{display:block!important}}
+.print-title{display:none}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><h1 id="appTitle">Virtual Laboratory — Perangkat Pengaman: Shear Pin & Relief Valve</h1><div class="sub" id="appSub">Laboratorium Virtual Interaktif Perangkat Pengaman Mekanis & Hidrolik</div></div>
+  <div class="toolbar">
+    <select id="preset" class="ctl"></select>
+    <select id="systemType" class="ctl"><option value="pin">Shear Pin</option><option value="valve">Relief Valve</option></select>
+    <div class="langseg"><button id="idBtn" class="active">ID</button><button id="enBtn">EN</button></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="panel">
+    <div class="panel-head"><b id="controlTitle">KONTROL & PARAMETER</b><span class="small">ENGINEERING INPUT</span></div>
+    <div class="panel-body left-scroll">
+      <div class="group pin-only">
+        <div class="group-title" data-i="pinParams">Shear Pin / Mechanical Fuse</div>
+        <div class="field"><label><span data-i="pinDiameter">Diameter pin, d</span><span class="value" id="dVal"></span></label><div class="field-grid"><input id="d" type="range" min="3" max="25" step="0.5"><input id="dN" type="number" min="3" max="25" step="0.5"></div></div>
+        <div class="field"><label><span data-i="pitchRadius">Pitch radius, r</span><span class="value" id="rVal"></span></label><div class="field-grid"><input id="r" type="range" min="20" max="150" step="1"><input id="rN" type="number"></div></div>
+        <div class="field"><label><span data-i="shearMode">Bidang geser</span><span class="value" id="planesVal"></span></label><select id="planes"><option value="1">Single shear</option><option value="2">Double shear</option></select></div>
+        <div class="field"><label><span data-i="material">Material pin</span><span class="value" id="materialVal"></span></label><select id="material"></select></div>
+        <div class="field"><label><span data-i="ultimateShear">Kekuatan geser ultimate, τu</span><span class="value" id="tauUVal"></span></label><div class="field-grid"><input id="tauU" type="range" min="50" max="500" step="5"><input id="tauUN" type="number"></div></div>
+        <div class="field"><label><span data-i="ratedTorque">Torsi operasi rated</span><span class="value" id="ratedVal"></span></label><div class="field-grid"><input id="ratedTorque" type="range" min="10" max="3000" step="10"><input id="ratedTorqueN" type="number"></div></div>
+        <div class="field"><label><span data-i="appliedTorque">Applied Torque</span><span class="value" id="torqueVal"></span></label><div class="field-grid"><input id="appliedTorque" type="range" min="0" max="5000" step="10"><input id="appliedTorqueN" type="number"></div></div>
+      </div>
+
+      <div class="group valve-only hidden">
+        <div class="group-title" data-i="valveParams">Relief Valve / Katup Pelepas Tekanan</div>
+        <div class="field"><label><span data-i="seatDiameter">Diameter seat, ds</span><span class="value" id="dsVal"></span></label><div class="field-grid"><input id="ds" type="range" min="5" max="50" step="0.5"><input id="dsN" type="number"></div></div>
+        <div class="field"><label><span data-i="springK">Konstanta pegas, k</span><span class="value" id="kVal"></span></label><div class="field-grid"><input id="k" type="range" min="5" max="500" step="5"><input id="kN" type="number"></div></div>
+        <div class="field"><label><span data-i="crackPressure">Cracking pressure set</span><span class="value" id="pCrackVal"></span></label><div class="field-grid"><input id="pCrack" type="range" min="0.5" max="30" step="0.1"><input id="pCrackN" type="number"></div></div>
+        <div class="field"><label><span data-i="maxLift">Lift maksimum, xmax</span><span class="value" id="xMaxVal"></span></label><div class="field-grid"><input id="xMax" type="range" min="0.2" max="10" step="0.1"><input id="xMaxN" type="number"></div></div>
+        <div class="field"><label><span data-i="cd">Discharge coefficient, Cd</span><span class="value" id="cdVal"></span></label><div class="field-grid"><input id="Cd" type="range" min="0.2" max="0.95" step="0.01"><input id="CdN" type="number"></div></div>
+        <div class="field"><label><span data-i="fluid">Jenis fluida</span><span class="value" id="fluidVal"></span></label><select id="fluid"><option value="oil">Oli</option><option value="water">Air (Water)</option><option value="air">Udara (Air)</option><option value="steam">Uap (Steam)</option></select></div>
+        <div class="field"><label><span data-i="downPressure">Tekanan hilir</span><span class="value" id="pDownVal"></span></label><div class="field-grid"><input id="pDown" type="range" min="0" max="10" step="0.1"><input id="pDownN" type="number"></div></div>
+        <div class="field"><label><span data-i="blowdown">Blowdown</span><span class="value" id="blowdownVal"></span></label><div class="field-grid"><input id="blowdown" type="range" min="1" max="25" step="0.5"><input id="blowdownN" type="number"></div></div>
+        <div class="field"><label><span data-i="systemPressure">System Pressure</span><span class="value" id="pSysVal"></span></label><div class="field-grid"><input id="pSys" type="range" min="0" max="40" step="0.1"><input id="pSysN" type="number"></div></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title" data-i="animation">Animation & Display</div>
+        <div class="field"><label><span data-i="speed">Animation Speed</span><span class="value" id="speedVal"></span></label><div class="field-grid"><input id="speed" type="range" min="0.25" max="4" step="0.25"><input id="speedN" type="number" min="0.25" max="4" step="0.25"></div></div>
+        <div class="field"><label><span data-i="motionScale">Motion Display Scale</span><span class="value" id="motionScaleVal"></span></label><div class="field-grid"><input id="motionScale" type="range" min="0.5" max="3" step="0.1"><input id="motionScaleN" type="number" min="0.5" max="3" step="0.1"></div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="center">
+    <section class="panel">
+      <div class="stagebar">
+        <button class="btn stage active" data-stage="1" id="stage1">1. REAL SYSTEM</button>
+        <button class="btn stage" data-stage="2" id="stage2">2. PROTECTION MODEL</button>
+        <button class="btn stage" data-stage="3" id="stage3">3. QUANTITATIVE MODEL</button>
+        <button class="btn primary" id="autoConvert">AUTO CONVERT</button>
+      </div>
+      <div class="canvas-wrap"><canvas id="simCanvas" width="1280" height="720"></canvas><div class="overlay"><b id="overlayTitle">SHEAR PIN</b><br><span id="overlayLine">READY</span></div></div>
+      <div class="actions">
+        <button id="play" class="btn ok">▶ PLAY</button><button id="pause" class="btn">⏸ PAUSE</button><button id="step" class="btn">STEP</button><button id="reset" class="btn">RESET</button><button id="cycle" class="btn primary">RUN ONE CYCLE</button>
+        <button id="vectors" class="btn active">VECTORS</button><button id="dimensions" class="btn active">DIMENSIONS</button><button id="formulaToggle" class="btn">FORMULAS</button>
+      </div>
+    </section>
+  </main>
+
+  <aside class="right">
+    <section class="panel">
+      <div class="panel-head"><b id="cardsTitle">ENGINEERING CARDS</b><span id="statusBadge" class="badge safe">SAFE</span></div>
+      <div class="panel-body"><div class="cards" id="cards"></div></div>
+    </section>
+    <section class="panel" style="margin-top:12px">
+      <div class="panel-head"><b id="infoTitle">INFO PANEL — KLIK OBJEK</b></div>
+      <div class="panel-body"><div id="infoPanel" class="info"></div></div>
+    </section>
+    <section class="panel" style="margin-top:12px">
+      <div class="panel-head"><b id="assumpTitle">ENGINEERING ASSUMPTIONS</b></div>
+      <div class="panel-body"><ul id="assumptions" class="assump"></ul></div>
+    </section>
+  </aside>
+</div>
+
+<section class="bottom">
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="graphs" id="tabGraphs">GRAFIK</button>
+      <button class="tab" data-tab="data" id="tabData">TABEL DATA</button>
+      <button class="tab" data-tab="worksheet" id="tabWorksheet">LEMBAR KERJA</button>
+      <button class="tab" data-tab="quiz" id="tabQuiz">KUIS KONSEP</button>
+      <button class="tab" data-tab="challenge" id="tabChallenge">TANTANGAN</button>
+      <button class="tab" data-tab="compare" id="tabCompare">BANDINGKAN</button>
+      <button class="tab" data-tab="calc" id="tabCalc">PERHITUNGAN</button>
+    </div>
+    <div class="pane active" id="graphsPane"><div class="graphs"><div class="graphbox"><canvas id="g1" width="640" height="220"></canvas></div><div class="graphbox"><canvas id="g2" width="640" height="220"></canvas></div><div class="graphbox"><canvas id="g3" width="640" height="220"></canvas></div><div class="graphbox"><canvas id="g4" width="640" height="220"></canvas></div></div></div>
+    <div class="pane" id="dataPane"><div class="actions no-print" style="padding:0 0 10px"><button id="record" class="btn primary">RECORD DATA</button><button id="clearData" class="btn">CLEAR DATA</button><button id="exportCsv" class="btn">EXPORT CSV</button></div><div class="table-wrap"><table><thead id="dataHead"></thead><tbody id="dataBody"></tbody></table></div></div>
+    <div class="pane" id="worksheetPane"><h2 class="print-title">Virtual Lab Report — Shear Pin & Relief Valve</h2><div class="formgrid"><div><div class="ws-block"><label id="wsGoalLbl">Tujuan Eksperimen</label><textarea id="wsGoal"></textarea></div><div class="ws-block"><label id="wsVarsLbl">Variabel</label><textarea id="wsVars"></textarea></div><div class="ws-block"><label id="wsPredictionLbl">Prediksi</label><textarea id="wsPrediction"></textarea></div></div><div><div class="ws-block"><label id="wsCompareLbl">Perbandingan Hasil & Observasi Grafik</label><textarea id="wsCompare"></textarea></div><div class="ws-block"><label id="wsLimitLbl">Evaluasi Batas Model</label><textarea id="wsLimit"></textarea></div><div class="ws-block"><label id="wsConclusionLbl">Kesimpulan</label><textarea id="wsConclusion"></textarea></div></div></div><button id="printReport" class="btn primary no-print">CETAK LAPORAN LAB</button></div>
+    <div class="pane" id="quizPane"><div id="quizList"></div></div>
+    <div class="pane" id="challengePane"><div id="challengeBox" class="challenge"></div></div>
+    <div class="pane" id="comparePane"><div class="actions" style="padding:0 0 10px"><select id="compareA" class="ctl"></select><select id="compareB" class="ctl"></select></div><div id="compareGrid" class="compare-grid"></div></div>
+    <div class="pane" id="calcPane"><div id="calcText" class="formula"></div></div>
+  </div>
+</section>
+
+<footer class="status-strip">
+  <div class="status-item"><div class="k" id="stSystemK">System</div><div class="v" id="stSystem"></div></div>
+  <div class="status-item"><div class="k" id="stPhaseK">Phase</div><div class="v" id="stPhase"></div></div>
+  <div class="status-item"><div class="k" id="stModelK">Model Status</div><div class="v" id="stModel"></div></div>
+  <div class="status-item"><div class="k" id="stInputK">Input</div><div class="v" id="stInput"></div></div>
+  <div class="status-item"><div class="k" id="stOutputK">Output</div><div class="v" id="stOutput"></div></div>
+  <div class="status-item"><div class="k" id="stLimitK">Status Limit</div><div class="v" id="stLimit"></div></div>
+  <div class="status-item"><div class="k" id="stTimeK">Time</div><div class="v" id="stTime"></div></div>
+</footer>
+
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), fmt=(x,d=2)=>Number.isFinite(x)?x.toFixed(d):'N/A';
+const DEG=Math.PI/180;
+const materials={steel:{id:'Baja',en:'Steel',tau:300},stainless:{id:'Stainless',en:'Stainless Steel',tau:260},brass:{id:'Kuningan',en:'Brass',tau:180},aluminum:{id:'Aluminium',en:'Aluminum',tau:110},castiron:{id:'Besi Cor',en:'Cast Iron',tau:150}};
+const fluidProps={oil:{id:'Oli',en:'Oil',kind:'liquid',rho:850},water:{id:'Air',en:'Water',kind:'liquid',rho:998},air:{id:'Udara',en:'Air',kind:'gas',gamma:1.4,R:287,T:293.15},steam:{id:'Uap',en:'Steam',kind:'gas',gamma:1.3,R:461.5,T:453.15}};
+const presets=[
+ {nameID:'Baling-baling Motor Tempel',nameEN:'Outboard Propeller',system:'pin',d:6,r:32,planes:1,material:'brass',tauU:180,ratedTorque:75,appliedTorque:55},
+ {nameID:'PTO Traktor',nameEN:'Tractor PTO',system:'pin',d:10,r:55,planes:2,material:'steel',tauU:300,ratedTorque:420,appliedTorque:300},
+ {nameID:'Konveyor Industri',nameEN:'Industrial Conveyor',system:'pin',d:8,r:45,planes:1,material:'stainless',tauU:260,ratedTorque:180,appliedTorque:130},
+ {nameID:'Sirkuit Pompa Hidrolik',nameEN:'Hydraulic Pump Circuit',system:'valve',ds:14,k:70,pCrack:8,xMax:3.5,Cd:.72,fluid:'oil',pDown:0.5,blowdown:10,pSys:6},
+ {nameID:'Kompresor Udara',nameEN:'Air Compressor',system:'valve',ds:10,k:55,pCrack:9,xMax:2.5,Cd:.68,fluid:'air',pDown:1,blowdown:8,pSys:7},
+ {nameID:'Boiler Uap',nameEN:'Steam Boiler',system:'valve',ds:18,k:120,pCrack:12,xMax:4,Cd:.78,fluid:'steam',pDown:1,blowdown:7,pSys:10}
+];
+const I18N={
+ id:{title:'Virtual Laboratory — Perangkat Pengaman: Shear Pin & Relief Valve',sub:'Laboratorium Virtual Interaktif Perangkat Pengaman Mekanis & Hidrolik',control:'KONTROL & PARAMETER',pinParams:'Shear Pin / Mechanical Fuse',valveParams:'Relief Valve / Katup Pelepas Tekanan',pinDiameter:'Diameter pin, d',pitchRadius:'Pitch radius, r',shearMode:'Bidang geser',material:'Material pin',ultimateShear:'Kekuatan geser ultimate, τu',ratedTorque:'Torsi operasi rated',appliedTorque:'Torsi uji / Applied Torque',seatDiameter:'Diameter seat, ds',springK:'Konstanta pegas, k',crackPressure:'Cracking pressure set',maxLift:'Lift maksimum, xmax',cd:'Discharge coefficient, Cd',fluid:'Jenis fluida',downPressure:'Tekanan hilir, Pdown',blowdown:'Blowdown',systemPressure:'Tekanan sistem',animation:'Animasi & Tampilan',speed:'Kecepatan Animasi',motionScale:'Skala Tampilan Gerak',cards:'KARTU REKAYASA',info:'PANEL INFO — KLIK OBJEK',assump:'ASUMSI REKAYASA',graphs:'GRAFIK',data:'TABEL DATA',worksheet:'LEMBAR KERJA',quiz:'KUIS KONSEP',challenge:'TANTANGAN',compare:'BANDINGKAN',calc:'PERHITUNGAN',stage1:'1. SISTEM NYATA',stage2:'2. MODEL PROTEKSI',stage3:'3. MODEL KUANTITATIF',auto:'AUTO CONVERT',vectors:'VEKTOR',dimensions:'DIMENSI',formulas:'RUMUS',goal:'Tujuan Eksperimen',vars:'Variabel',prediction:'Prediksi',obs:'Perbandingan Hasil & Observasi Grafik',limit:'Evaluasi Batas Model',conclusion:'Kesimpulan',print:'CETAK LAPORAN LAB',system:'Sistem',phase:'Fase',model:'Status Model',input:'Input',output:'Output',statusLimit:'Status Limit',time:'Waktu'},
+ en:{title:'Virtual Laboratory — Safety Devices: Shear Pin & Relief Valve',sub:'Interactive Virtual Laboratory for Mechanical & Hydraulic Safety Devices',control:'CONTROLS & PARAMETERS',pinParams:'Shear Pin / Mechanical Fuse',valveParams:'Relief Valve / Pressure Safety Valve',pinDiameter:'Pin diameter, d',pitchRadius:'Pitch radius, r',shearMode:'Shear planes',material:'Pin material',ultimateShear:'Ultimate shear strength, τu',ratedTorque:'Rated operating torque',appliedTorque:'Applied Torque',seatDiameter:'Seat diameter, ds',springK:'Spring constant, k',crackPressure:'Cracking pressure set',maxLift:'Maximum lift, xmax',cd:'Discharge coefficient, Cd',fluid:'Fluid type',downPressure:'Downstream pressure, Pdown',blowdown:'Blowdown',systemPressure:'System Pressure',animation:'Animation & Display',speed:'Animation Speed',motionScale:'Motion Display Scale',cards:'ENGINEERING CARDS',info:'INFO PANEL — CLICK OBJECT',assump:'ENGINEERING ASSUMPTIONS',graphs:'GRAPHS',data:'DATA TABLE',worksheet:'WORKSHEET',quiz:'CONCEPT QUIZ',challenge:'CHALLENGE',compare:'COMPARE',calc:'CALCULATION',stage1:'1. REAL SYSTEM',stage2:'2. PROTECTION MODEL',stage3:'3. QUANTITATIVE MODEL',auto:'AUTO CONVERT',vectors:'VECTORS',dimensions:'DIMENSIONS',formulas:'FORMULAS',goal:'Experiment Objective',vars:'Variables',prediction:'Prediction',obs:'Result Comparison & Graph Observation',limit:'Model Limitation Evaluation',conclusion:'Conclusion',print:'PRINT LAB REPORT',system:'System',phase:'Phase',model:'Model Status',input:'Input',output:'Output',statusLimit:'Status Limit',time:'Time'}
+};
+const state={lang:'id',system:'pin',stage:1,running:false,oneCycle:false,t:0,simClock:0,cycleDuration:8,phase:'READY',speed:1,motionScale:1,showVectors:true,showDims:true,showFormula:false,pinSheared:false,valveLatched:false,cycleProgress:0,history:[],records:[],selectedHotspot:null,
+ pin:{d:6,r:32,planes:1,material:'brass',tauU:180,ratedTorque:75,appliedTorque:55},
+ valve:{ds:14,k:70,pCrack:8,xMax:3.5,Cd:.72,fluid:'oil',pDown:.5,blowdown:10,pSys:6}
+};
+
+function shearPinModel(p,forcedSheared=false){
+ const d=p.d/1000,r=p.r/1000, tauU=p.tauU*1e6;
+ const areaOne=Math.PI*d*d/4, A=areaOne*p.planes;
+ const F=r>0?p.appliedTorque/r:Infinity, tau=A>0?F/A:Infinity, Tfail=tauU*A*r, ratio=Tfail>0?p.appliedTorque/Tfail:Infinity;
+ let status=forcedSheared||ratio>=1?'SHEARED':ratio>=0.85?'CRACKING':'INTACT';
+ return {areaOne,A,F,tau,Tfail,ratio,status,margin:Tfail-p.appliedTorque,ratedRatio:Tfail>0?p.ratedTorque/Tfail:Infinity};
+}
+function gasMassFlow(Cd,A,P1,P2,gamma,R,T){
+ if(P1<=P2||A<=0)return 0;
+ const pr=P2/P1,critical=Math.pow(2/(gamma+1),gamma/(gamma-1));
+ if(pr<=critical)return Cd*A*P1*Math.sqrt(gamma/(R*T))*Math.pow(2/(gamma+1),(gamma+1)/(2*(gamma-1)));
+ const term=(2*gamma/(R*T*(gamma-1)))*(Math.pow(pr,2/gamma)-Math.pow(pr,(gamma+1)/gamma));
+ return Cd*A*P1*Math.sqrt(Math.max(0,term))/P1; // algebraically equivalent dimensional form with P1 absorbed in sqrt expression below corrected next line
+}
+function gasMassFlowExact(Cd,A,P1,P2,gamma,R,T){
+ if(P1<=P2||A<=0)return 0; const pr=P2/P1,crit=Math.pow(2/(gamma+1),gamma/(gamma-1));
+ if(pr<=crit)return Cd*A*P1*Math.sqrt(gamma/(R*T))*Math.pow(2/(gamma+1),(gamma+1)/(2*(gamma-1)));
+ return Cd*A*P1*Math.sqrt((2*gamma/(R*T*(gamma-1)))*(Math.pow(pr,2/gamma)-Math.pow(pr,(gamma+1)/gamma)));
+}
+function reliefValveModel(v,wasOpen=false){
+ const ds=v.ds/1000,Aseat=Math.PI*ds*ds/4,k=v.k*1000,xmax=v.xMax/1000,Cd=v.Cd;
+ const Pcr=v.pCrack*1e5,Pdown=v.pDown*1e5,Psys=v.pSys*1e5,deltaP=Math.max(0,Psys-Pdown);
+ const F0=Pcr*Aseat,Preseat=v.pCrack*(1-v.blowdown/100),threshold=(wasOpen?Preseat:v.pCrack)*1e5;
+ let x=deltaP>threshold?clamp((deltaP*Aseat-F0)/Math.max(k,1e-9),0,xmax):0;
+ if(wasOpen && deltaP>Preseat*1e5 && deltaP<=Pcr)x=Math.max(x,Math.min(xmax,0.06*xmax));
+ const Aflow=Math.min(Aseat,Math.PI*ds*x);
+ const fp=fluidProps[v.fluid]; let Q=0,mdot=0;
+ if(x>0&&deltaP>0){
+   if(fp.kind==='liquid'){Q=Cd*Aflow*Math.sqrt(2*deltaP/fp.rho);mdot=Q*fp.rho;}
+   else {const P1=Math.max(Psys,1e3),P2=Math.max(Pdown,1e3);mdot=gasMassFlowExact(Cd,Aflow,P1,P2,fp.gamma,fp.R,fp.T);const rho1=P1/(fp.R*fp.T);Q=mdot/Math.max(rho1,1e-9);}
+ }
+ let status='CLOSED';
+ if(x>0){ if(wasOpen&&deltaP<Pcr)status='RESEATING'; else if(x<xmax*0.12)status='CRACKING'; else status='OPEN'; }
+ return {Aseat,F0,Preseat,x,Q,mdot,Aflow,status,deltaP,forceP:deltaP*Aseat,springF:F0+k*x,openRatio:xmax>0?x/xmax:0};
+}
+function currentResult(){return state.system==='pin'?shearPinModel(state.pin,state.pinSheared):reliefValveModel(state.valve,state.valveLatched)}
+function isValid(){if(state.system==='pin'){const p=state.pin;return p.d>0&&p.r>0&&p.planes>0&&p.tauU>0&&p.appliedTorque>=0}const v=state.valve;return v.ds>0&&v.k>0&&v.pCrack>0&&v.xMax>0&&v.Cd>0&&v.Cd<=1&&v.pSys>=0&&v.pDown>=0}
+
+function init(){
+ $('preset').innerHTML=presets.map((p,i)=>`<option value="${i}">${p.nameID}</option>`).join('');
+ $('material').innerHTML=Object.entries(materials).map(([k,v])=>`<option value="${k}">${v.id}</option>`).join('');
+ bindPair('d','dN','pin','d');bindPair('r','rN','pin','r');bindPair('tauU','tauUN','pin','tauU');bindPair('ratedTorque','ratedTorqueN','pin','ratedTorque');bindPair('appliedTorque','appliedTorqueN','pin','appliedTorque');
+ bindPair('ds','dsN','valve','ds');bindPair('k','kN','valve','k');bindPair('pCrack','pCrackN','valve','pCrack');bindPair('xMax','xMaxN','valve','xMax');bindPair('Cd','CdN','valve','Cd');bindPair('pDown','pDownN','valve','pDown');bindPair('blowdown','blowdownN','valve','blowdown');bindPair('pSys','pSysN','valve','pSys');
+ bindTopPair('speed','speedN','speed');bindTopPair('motionScale','motionScaleN','motionScale');
+ $('planes').onchange=e=>{state.pin.planes=+e.target.value;manualChange()};$('material').onchange=e=>{state.pin.material=e.target.value;state.pin.tauU=materials[e.target.value].tau;manualChange();syncInputs()};$('fluid').onchange=e=>{state.valve.fluid=e.target.value;manualChange()};
+ $('systemType').onchange=e=>{state.system=e.target.value;state.running=false;state.selectedHotspot=null;state.history=[];updateAll()};
+ $('preset').onchange=e=>applyPreset(+e.target.value);$('idBtn').onclick=()=>setLang('id');$('enBtn').onclick=()=>setLang('en');
+ $('play').onclick=()=>{state.running=true;state.oneCycle=false};$('pause').onclick=()=>state.running=false;$('step').onclick=()=>{state.running=false;physicsStep(1/60);updateAll(false)};$('reset').onclick=resetSim;$('cycle').onclick=startCycle;
+ $('vectors').onclick=e=>{state.showVectors=!state.showVectors;e.target.classList.toggle('active',state.showVectors);draw()};$('dimensions').onclick=e=>{state.showDims=!state.showDims;e.target.classList.toggle('active',state.showDims);draw()};$('formulaToggle').onclick=e=>{state.showFormula=!state.showFormula;e.target.classList.toggle('active',state.showFormula);draw()};
+ document.querySelectorAll('.stage').forEach(b=>b.onclick=()=>setStage(+b.dataset.stage));$('autoConvert').onclick=autoConvert;
+ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+ $('record').onclick=recordData;$('clearData').onclick=()=>{state.records=[];renderData();renderCompare()};$('exportCsv').onclick=exportCSV;$('printReport').onclick=()=>window.print();$('compareA').onchange=renderCompare;$('compareB').onchange=renderCompare;
+ $('simCanvas').addEventListener('click',canvasClick);
+ applyPreset(0);setLang('id');renderQuiz();renderChallenge();requestAnimationFrame(loop);
+}
+function bindPair(rid,nid,group,key){const r=$(rid),n=$(nid);const set=v=>{const x=parseFloat(v);if(!Number.isFinite(x))return;state[group][key]=x;r.value=x;n.value=x;manualChange()};r.oninput=e=>set(e.target.value);n.onchange=e=>set(e.target.value)}
+function bindTopPair(rid,nid,key){const r=$(rid),n=$(nid);const set=v=>{const x=parseFloat(v);if(!Number.isFinite(x))return;state[key]=x;r.value=x;n.value=x;updateAll(false)};r.oninput=e=>set(e.target.value);n.onchange=e=>set(e.target.value)}
+function manualChange(){state.running=false;state.oneCycle=false;state.pinSheared=false;state.valveLatched=false;state.history=[];state.t=0;updateAll()}
+function applyPreset(i){const p=presets[i];state.system=p.system;Object.entries(p).forEach(([k,v])=>{if(k in state.pin)state.pin[k]=v;if(k in state.valve)state.valve[k]=v});state.pinSheared=false;state.valveLatched=false;state.history=[];state.t=0;state.cycleProgress=0;state.running=false;$('systemType').value=state.system;syncInputs();updateAll()}
+function syncInputs(){const p=state.pin,v=state.valve;['d','r','tauU','ratedTorque','appliedTorque'].forEach(k=>{if($(k)){ $(k).value=p[k];$(k+'N').value=p[k] }});['ds','k','pCrack','xMax','Cd','pDown','blowdown','pSys'].forEach(k=>{if($(k)){ $(k).value=v[k];$(k+'N').value=v[k] }});$('planes').value=p.planes;$('material').value=p.material;$('fluid').value=v.fluid;$('speed').value=$('speedN').value=state.speed;$('motionScale').value=$('motionScaleN').value=state.motionScale}
+function setLang(lang){state.lang=lang;$('idBtn').classList.toggle('active',lang==='id');$('enBtn').classList.toggle('active',lang==='en');$('preset').innerHTML=presets.map((p,i)=>`<option value="${i}">${lang==='id'?p.nameID:p.nameEN}</option>`).join('');updateLanguage();renderQuiz();renderChallenge();updateAll(false)}
+function tr(k){return I18N[state.lang][k]||k}
+function updateLanguage(){ $('appTitle').textContent=tr('title');$('appSub').textContent=tr('sub');$('controlTitle').textContent=tr('control');$('cardsTitle').textContent=tr('cards');$('infoTitle').textContent=tr('info');$('assumpTitle').textContent=tr('assump');
+ document.querySelectorAll('[data-i]').forEach(el=>el.textContent=tr(el.dataset.i));$('stage1').textContent=tr('stage1');$('stage2').textContent=tr('stage2');$('stage3').textContent=tr('stage3');$('autoConvert').textContent=tr('auto');$('vectors').textContent=tr('vectors');$('dimensions').textContent=tr('dimensions');$('formulaToggle').textContent=tr('formulas');
+ $('tabGraphs').textContent=tr('graphs');$('tabData').textContent=tr('data');$('tabWorksheet').textContent=tr('worksheet');$('tabQuiz').textContent=tr('quiz');$('tabChallenge').textContent=tr('challenge');$('tabCompare').textContent=tr('compare');$('tabCalc').textContent=tr('calc');
+ $('wsGoalLbl').textContent=tr('goal');$('wsVarsLbl').textContent=tr('vars');$('wsPredictionLbl').textContent=tr('prediction');$('wsCompareLbl').textContent=tr('obs');$('wsLimitLbl').textContent=tr('limit');$('wsConclusionLbl').textContent=tr('conclusion');$('printReport').textContent=tr('print');
+ $('stSystemK').textContent=tr('system');$('stPhaseK').textContent=tr('phase');$('stModelK').textContent=tr('model');$('stInputK').textContent=tr('input');$('stOutputK').textContent=tr('output');$('stLimitK').textContent=tr('statusLimit');$('stTimeK').textContent=tr('time'); }
+function setStage(s){state.stage=s;document.querySelectorAll('.stage').forEach(b=>b.classList.toggle('active',+b.dataset.stage===s));draw()}
+function autoConvert(){let s=1;setStage(1);const id=setInterval(()=>{s++;if(s<=3)setStage(s);else clearInterval(id)},500)}
+function switchTab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id===name+'Pane'));if(name==='compare')renderCompare();if(name==='data')renderData()}
+function resetSim(){state.running=false;state.oneCycle=false;state.t=0;state.simClock=0;state.cycleProgress=0;state.pinSheared=false;state.valveLatched=false;state.history=[];state.phase='READY';updateAll()}
+function startCycle(){state.oneCycle=true;state.running=true;state.t=0;state.simClock=0;state.cycleProgress=0;state.pinSheared=false;state.valveLatched=false;state.history=[]}
+function physicsStep(dt){state.t+=dt*state.speed;state.simClock+=dt*state.speed;if(state.oneCycle){state.cycleProgress=clamp(state.simClock/state.cycleDuration,0,1);const u=state.cycleProgress,shape=u<.5?u*2:(1-u)*2;if(state.system==='pin'){const max=Math.max(state.pin.ratedTorque*1.45,state.pin.appliedTorque);state.pin.appliedTorque=max*shape}else{const max=Math.max(state.valve.pCrack*1.35,state.valve.pSys);state.valve.pSys=max*shape}if(u>=1){state.running=false;state.oneCycle=false;state.phase='COMPLETE'}}
+ if(state.system==='pin'){const r=shearPinModel(state.pin,state.pinSheared);if(r.ratio>=1)state.pinSheared=true;state.phase=state.pinSheared?'SHEARED':r.status}else{const r=reliefValveModel(state.valve,state.valveLatched);if(r.x>0)state.valveLatched=true;if(state.valveLatched&&r.deltaP<=r.Preseat*1e5)state.valveLatched=false;state.phase=r.status}
+ if(state.history.length===0||state.t-state.history[state.history.length-1].t>=0.05){const r=currentResult();state.history.push(samplePoint(r));if(state.history.length>500)state.history.shift()}}
+function samplePoint(r){return state.system==='pin'?{t:state.t,input:state.pin.appliedTorque,y1:state.pin.appliedTorque,y2:r.tau/1e6,y3:r.Tfail,y4:r.ratio*100}:{t:state.t,input:state.valve.pSys,y1:state.valve.pSys,y2:r.x*1000,y3:r.Q*60000,y4:r.mdot}}
+
+function updateAll(full=true){syncInputs();document.querySelectorAll('.pin-only').forEach(x=>x.classList.toggle('hidden',state.system!=='pin'));document.querySelectorAll('.valve-only').forEach(x=>x.classList.toggle('hidden',state.system!=='valve'));updateValues();updateCards();updateStatus();updateInfo();updateAssumptions();updateCalc();draw();drawGraphs();if(full){renderData();renderCompare()}}
+function updateValues(){const p=state.pin,v=state.valve;$('dVal').textContent=`${fmt(p.d,1)} mm`;$('rVal').textContent=`${fmt(p.r,0)} mm`;$('planesVal').textContent=p.planes===1?'Single':'Double';$('materialVal').textContent=materials[p.material][state.lang];$('tauUVal').textContent=`${fmt(p.tauU,0)} MPa`;$('ratedVal').textContent=`${fmt(p.ratedTorque,0)} N·m`;$('torqueVal').textContent=`${fmt(p.appliedTorque,0)} N·m`;
+ $('dsVal').textContent=`${fmt(v.ds,1)} mm`;$('kVal').textContent=`${fmt(v.k,0)} N/mm`;$('pCrackVal').textContent=`${fmt(v.pCrack,1)} bar`;$('xMaxVal').textContent=`${fmt(v.xMax,1)} mm`;$('cdVal').textContent=fmt(v.Cd,2);$('fluidVal').textContent=fluidProps[v.fluid][state.lang];$('pDownVal').textContent=`${fmt(v.pDown,1)} bar`;$('blowdownVal').textContent=`${fmt(v.blowdown,1)} %`;$('pSysVal').textContent=`${fmt(v.pSys,1)} bar`;$('speedVal').textContent=`${fmt(state.speed,2)}×`;$('motionScaleVal').textContent=`${fmt(state.motionScale,1)}×`;}
+function card(k,v,u=''){return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="u">${u}</div></div>`}
+function updateCards(){const r=currentResult();let a=[];if(state.system==='pin'){a=[card('A shear',fmt(r.A*1e6,2),'mm²'),card('F shear',fmt(r.F,1),'N'),card('τ',fmt(r.tau/1e6,1),'MPa'),card('T fail',fmt(r.Tfail,1),'N·m'),card('Load ratio',fmt(r.ratio*100,1),'%'),card('Margin',fmt(r.margin,1),'N·m')]}else{a=[card('A seat',fmt(r.Aseat*1e6,2),'mm²'),card('F₀ preload',fmt(r.F0,1),'N'),card('P reseat',fmt(r.Preseat,2),'bar'),card('Lift x',fmt(r.x*1000,3),'mm'),card('Flow Q',fmt(r.Q*60000,2),'L/min'),card('ṁ',fmt(r.mdot,4),'kg/s')]}$('cards').innerHTML=a.join('');const status=state.system==='pin'?r.status:r.status;const cls=(status==='INTACT'||status==='CLOSED')?'safe':(status==='CRACKING'||status==='RESEATING')?'caution':'critical';$('statusBadge').className='badge '+cls;$('statusBadge').textContent=status;}
+function updateStatus(){const r=currentResult(),valid=isValid();$('stSystem').textContent=state.system==='pin'?'SHEAR PIN':'RELIEF VALVE';$('stPhase').textContent=state.phase;$('stModel').textContent=valid?'VALID':'INVALID';$('stModel').className='v '+(valid?'safe':'critical');if(state.system==='pin'){$('stInput').textContent=`T=${fmt(state.pin.appliedTorque,0)} N·m`;$('stOutput').textContent=`τ=${fmt(r.tau/1e6,1)} MPa`;$('stLimit').textContent=r.status}else{$('stInput').textContent=`P=${fmt(state.valve.pSys,1)} bar`;$('stOutput').textContent=`x=${fmt(r.x*1000,2)} mm, Q=${fmt(r.Q*60000,1)} L/min`;$('stLimit').textContent=r.status}$('stLimit').className='v '+(($('stLimit').textContent==='INTACT'||$('stLimit').textContent==='CLOSED')?'safe':($('stLimit').textContent==='CRACKING'||$('stLimit').textContent==='RESEATING')?'caution':'critical');$('stTime').textContent=`${fmt(state.t,2)} s ×${state.speed}`;$('overlayTitle').textContent=state.system==='pin'?'SHEAR PIN / MECHANICAL FUSE':'RELIEF VALVE';$('overlayLine').textContent=`${state.phase} | Stage ${state.stage}`;}
+function updateInfo(){if(state.selectedHotspot){$('infoPanel').innerHTML=hotspotText(state.selectedHotspot);return}if(state.system==='pin')$('infoPanel').innerHTML=state.lang==='id'?'<b>Shear pin</b> adalah elemen pengaman yang sengaja dirancang menjadi titik lemah terkontrol. Klik poros, hub, pin, atau panah torsi pada kanvas untuk melihat detail.':'<b>Shear pin</b> is an intentionally sacrificial safety element. Click the shaft, hub, pin, or torque arrow on the canvas for details.';else $('infoPanel').innerHTML=state.lang==='id'?'<b>Relief valve</b> membatasi tekanan dengan melawan gaya tekanan menggunakan preload dan kekakuan pegas. Klik body, spring, seat, inlet, atau outlet pada kanvas.':'<b>Relief valve</b> limits pressure by balancing fluid force against spring preload and stiffness. Click the body, spring, seat, inlet, or outlet.';}
+function hotspotText(k){const id=state.lang==='id';const map={shaft:id?'Poros mentransmisikan torsi ke hub. Pin memutus jalur torsi bila kapasitas geser terlampaui.':'The shaft transmits torque to the hub. The pin interrupts torque transfer when its shear capacity is exceeded.',hub:id?'Hub membawa pin pada pitch radius r; radius yang lebih besar menaikkan kapasitas torsi untuk gaya geser yang sama.':'The hub carries the pin at pitch radius r; a larger radius increases torque capacity for the same shear force.',pin:id?'Pin adalah mechanical fuse. Tegangan geser dihitung dari gaya tangensial dibagi total luas bidang geser.':'The pin acts as a mechanical fuse. Shear stress equals tangential force divided by total shear-plane area.',torque:id?'Torsi uji menghasilkan gaya tangensial F=T/r pada lokasi pin.':'Applied torque produces tangential force F=T/r at the pin radius.',body:id?'Valve body menahan tekanan dan mengarahkan aliran dari inlet ke outlet ketika katup membuka.':'The valve body contains pressure and routes flow from inlet to outlet when the valve opens.',spring:id?'Pegas menghasilkan preload F₀ dan tambahan gaya kx saat lift bertambah.':'The spring provides preload F₀ and additional force kx as lift increases.',seat:id?'Seat area menentukan gaya pembuka akibat beda tekanan: Fp=ΔP·A.':'Seat area determines opening force from pressure differential: Fp=ΔP·A.',inlet:id?'Inlet menerima tekanan sistem. Tekanan ini dibandingkan dengan tekanan hilir dan set pressure.':'The inlet carries system pressure, compared against downstream pressure and set pressure.',outlet:id?'Outlet membawa fluida hasil pelepasan. Pdown memengaruhi beda tekanan efektif.':'The outlet carries discharged fluid. Pdown affects the effective pressure differential.'};return `<b>${k.toUpperCase()}</b><br>${map[k]||''}`}
+function updateAssumptions(){let arr;if(state.system==='pin')arr=state.lang==='id'?['Beban dianggap murni torsional dan terdistribusi seragam pada bidang geser.','Konsentrasi tegangan, fatigue, notch, toleransi, dan bending pin tidak dimodelkan.','τu adalah data pengguna/material nominal; desain nyata memerlukan faktor keselamatan dan data sertifikat material.']:['Pure torsion and uniform shear distribution are assumed.','Stress concentration, fatigue, notch effects, tolerances, and pin bending are omitted.','τu is nominal/user-supplied; real design requires safety factors and certified material data.'];else arr=state.lang==='id'?['Model pegas linear: F=F₀+kx.','Fluida cair menggunakan persamaan orifice inkompresibel; gas/uap menggunakan model aliran kompresibel ideal.','Dinamika spool, damping, backpressure transient, flashing/cavitation, dan karakteristik vendor tidak dimodelkan.','Cracking pressure diperlakukan sebagai differential set pressure terhadap downstream.']:['Linear spring model: F=F₀+kx.','Liquids use incompressible orifice flow; air/steam use an ideal compressible-gas model.','Spool dynamics, damping, transient backpressure, flashing/cavitation, and vendor-specific curves are omitted.','Cracking pressure is treated as differential set pressure relative to downstream.'];$('assumptions').innerHTML=arr.map(x=>`<li>${x}</li>`).join('')}
+function updateCalc(){const r=currentResult();let t='';if(state.system==='pin'){t=`SHEAR PIN / MECHANICAL FUSE\n\nA₁ = πd²/4 = ${fmt(r.areaOne*1e6,4)} mm²\nA_total = n·A₁ = ${state.pin.planes} × ${fmt(r.areaOne*1e6,4)} = ${fmt(r.A*1e6,4)} mm²\nF = T/r = ${fmt(state.pin.appliedTorque,2)} / ${fmt(state.pin.r/1000,4)} = ${fmt(r.F,3)} N\nτ = F/A_total = ${fmt(r.tau/1e6,3)} MPa\nT_fail = τu·A_total·r = ${fmt(r.Tfail,3)} N·m\nLoad ratio = ${fmt(r.ratio*100,2)} %\nStatus = ${r.status}\n\nInterpretation: CRACKING is shown from 85% to <100% of nominal ultimate torque as an educational warning band.`}else{t=`RELIEF VALVE\n\nAseat = πds²/4 = ${fmt(r.Aseat*1e6,4)} mm²\nF₀ = Pcrack·Aseat = ${fmt(r.F0,3)} N\nPreseat = Pcrack(1-blowdown) = ${fmt(r.Preseat,3)} bar\nΔP = Psys - Pdown = ${fmt(r.deltaP/1e5,3)} bar\nFp = ΔP·Aseat = ${fmt(r.forceP,3)} N\nx = clamp[(Fp-F₀)/k, 0, xmax] = ${fmt(r.x*1000,4)} mm\nAflow = min(Aseat, πds·x) = ${fmt(r.Aflow*1e6,4)} mm²\nQ = ${fmt(r.Q*60000,4)} L/min\nṁ = ${fmt(r.mdot,6)} kg/s\nStatus = ${r.status}\n\nFor liquids: Q = Cd A √(2ΔP/ρ). For air/steam: ideal compressible orifice flow with choked-flow check.`}$('calcText').textContent=t;}
+
+function draw(){const c=$('simCanvas'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);state.system==='pin'?drawPin(ctx,w,h):drawValve(ctx,w,h)}
+function drawGrid(ctx,w,h){ctx.strokeStyle='rgba(55,208,230,.055)';ctx.lineWidth=1;for(let x=0;x<w;x+=56){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=56){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}}
+function metalRect(ctx,x,y,w,h,c1='#263a51',c2='#6f8397'){const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,c2);g.addColorStop(.25,c1);g.addColorStop(.65,'#162437');g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(x,y,w,h);ctx.strokeStyle='#9fb3c6';ctx.strokeRect(x,y,w,h)}
+function arrow(ctx,x1,y1,x2,y2,label,color='#37d0e6'){ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-14*Math.cos(a-.45),y2-14*Math.sin(a-.45));ctx.lineTo(x2-14*Math.cos(a+.45),y2-14*Math.sin(a+.45));ctx.closePath();ctx.fill();if(label){ctx.font='16px Segoe UI';ctx.fillText(label,(x1+x2)/2+8,(y1+y2)/2-8)}}
+function dimLine(ctx,x1,y1,x2,y2,label){ctx.strokeStyle='#b993ff';ctx.fillStyle='#d9c8ff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.fillText(label,(x1+x2)/2-30,(y1+y2)/2-8)}
+function drawPin(ctx,w,h){const r=currentResult(),cx=w*.5,cy=h*.48,ang=(state.t*2.0*state.speed)% (Math.PI*2),rot=state.pinSheared?0:ang;ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);const shaftW=430,shaftH=88;metalRect(ctx,-shaftW/2,-shaftH/2,shaftW,shaftH);ctx.fillStyle='#20374e';ctx.beginPath();ctx.arc(0,0,150,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#86a1b8';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#0c1827';ctx.beginPath();ctx.arc(0,0,72,0,Math.PI*2);ctx.fill();ctx.stroke();const pr=108;let px=pr,py=0;ctx.fillStyle=state.pinSheared?'#ff5f69':r.status==='CRACKING'?'#ffc857':'#37d0e6';ctx.beginPath();ctx.arc(px,py,17,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e6f7ff';ctx.lineWidth=2;ctx.stroke();if(state.pinSheared){ctx.strokeStyle='#0a0f1a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-16,py-6);ctx.lineTo(px+15,py+7);ctx.stroke()}ctx.restore();
+ if(state.stage>=2){ctx.fillStyle='#cbeeff';ctx.font='18px Segoe UI';ctx.fillText(state.stage===2?'IDEALIZED TORQUE PATH / PROTECTION MODEL':'QUANTITATIVE LOAD PATH',46,56);if(state.showVectors){arrow(ctx,cx-260,cy-175,cx-100,cy-175,`T = ${fmt(state.pin.appliedTorque,0)} N·m`,'#ff9f43');arrow(ctx,cx+150,cy-15,cx+250,cy-15,`F = ${fmt(r.F,0)} N`,'#ff5f69')}}
+ if(state.showDims){ctx.font='15px Segoe UI';dimLine(ctx,cx,cy+190,cx+108,cy+190,`r = ${state.pin.r} mm`);ctx.fillStyle='#d9c8ff';ctx.fillText(`d = ${state.pin.d} mm`,cx+115,cy+45)}
+ if(state.stage===3){ctx.fillStyle='#c9d8e7';ctx.font='16px Consolas';ctx.fillText(`A = ${fmt(r.A*1e6,1)} mm²`,48,h-95);ctx.fillText(`τ = ${fmt(r.tau/1e6,1)} MPa`,48,h-70);ctx.fillText(`Tfail = ${fmt(r.Tfail,1)} N·m`,48,h-45)}
+ if(state.showFormula){ctx.fillStyle='#bfefff';ctx.font='16px Consolas';ctx.fillText('F = T/r   |   τ = F/A   |   Tfail = τu·A·r',w-520,58)}
+ state._hotspots=[{k:'shaft',x:cx,y:cy,r:80},{k:'hub',x:cx,y:cy,r:150},{k:'pin',x:cx+108*Math.cos(rot),y:cy+108*Math.sin(rot),r:24},{k:'torque',x:cx-180,y:cy-175,r:80}];}
+function springPath(ctx,x,y,w,h,turns){ctx.beginPath();ctx.moveTo(x,y);for(let i=0;i<=turns*2;i++){const xx=x+(i/(turns*2))*w,yy=y+(i%2? -h/2:h/2);ctx.lineTo(xx,yy)}ctx.stroke()}
+function drawValve(ctx,w,h){const r=currentResult(),cx=w*.53,base=h*.68,lift=r.x*1000*18*state.motionScale;const bodyX=cx-220,bodyY=base-260,bodyW=440,bodyH=250;const g=ctx.createLinearGradient(bodyX,bodyY,bodyX+bodyW,bodyY+bodyH);g.addColorStop(0,'#5b7085');g.addColorStop(.45,'#26394f');g.addColorStop(1,'#121d2b');ctx.fillStyle=g;ctx.fillRect(bodyX,bodyY,bodyW,bodyH);ctx.strokeStyle='#9bb1c5';ctx.lineWidth=3;ctx.strokeRect(bodyX,bodyY,bodyW,bodyH);ctx.fillStyle='#07111e';ctx.fillRect(cx-70,base-180,140,190);ctx.fillRect(bodyX-110,base-80,110,80);ctx.fillRect(bodyX+bodyW,base-170,120,70);
+ ctx.fillStyle='#92a7b7';ctx.beginPath();ctx.moveTo(cx-60,base-65-lift);ctx.lineTo(cx+60,base-65-lift);ctx.lineTo(cx+30,base-105-lift);ctx.lineTo(cx-30,base-105-lift);ctx.closePath();ctx.fill();ctx.strokeStyle='#d3e3ef';ctx.stroke();ctx.strokeStyle='#ffc857';ctx.lineWidth=5;springPath(ctx,cx-70,bodyY+48,cx?140:140,120-lift*.4,9);ctx.fillStyle='#c4d8e8';ctx.fillRect(cx-82,bodyY+28,164,18);ctx.fillStyle='#7e93a6';ctx.fillRect(cx-95,base-52,190,15);
+ if(r.x>0){const N=22;for(let i=0;i<N;i++){const u=(i/N+state.t*.35*state.speed)%1;const x=bodyX-90+u*(bodyW+200),y=base-42-50*Math.sin(u*Math.PI);ctx.fillStyle=i%3===0?'#37d0e6':'#4f8cff';ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill()}}
+ if(state.stage>=2&&state.showVectors){arrow(ctx,bodyX-70,base+55,bodyX-70,base-30,`Psys ${fmt(state.valve.pSys,1)} bar`,'#ff5f69');arrow(ctx,cx+125,bodyY+80,cx+125,bodyY+155,`Fs ${fmt(r.springF,0)} N`,'#ffc857')}
+ if(state.showDims){ctx.font='15px Segoe UI';dimLine(ctx,cx-95,base+70,cx+95,base+70,`ds = ${state.valve.ds} mm`);ctx.fillStyle='#d9c8ff';ctx.fillText(`x = ${fmt(r.x*1000,2)} mm`,cx+100,base-95-lift)}
+ if(state.stage===3){ctx.fillStyle='#c9d8e7';ctx.font='16px Consolas';ctx.fillText(`Aseat = ${fmt(r.Aseat*1e6,1)} mm²`,45,h-100);ctx.fillText(`Q = ${fmt(r.Q*60000,2)} L/min`,45,h-74);ctx.fillText(`Preseat = ${fmt(r.Preseat,2)} bar`,45,h-48)}
+ if(state.showFormula){ctx.fillStyle='#bfefff';ctx.font='16px Consolas';ctx.fillText('F₀=Pcrack·A | x=(ΔP·A−F₀)/k | Q=Cd·Aflow·√(2ΔP/ρ)',w-700,58)}
+ ctx.fillStyle='#9fb2c3';ctx.font='15px Segoe UI';ctx.fillText('INLET',bodyX-100,base+30);ctx.fillText('OUTLET',bodyX+bodyW+32,base-125);
+ state._hotspots=[{k:'body',x:cx,y:bodyY+130,r:180},{k:'spring',x:cx,y:bodyY+105,r:70},{k:'seat',x:cx,y:base-50,r:85},{k:'inlet',x:bodyX-70,y:base-40,r:65},{k:'outlet',x:bodyX+bodyW+60,y:base-135,r:65}];}
+function canvasClick(e){const rect=$('simCanvas').getBoundingClientRect(),sx=$('simCanvas').width/rect.width,sy=$('simCanvas').height/rect.height,x=(e.clientX-rect.left)*sx,y=(e.clientY-rect.top)*sy;let hit=null;for(const h of state._hotspots||[]){if(Math.hypot(x-h.x,y-h.y)<=h.r){hit=h.k;break}}state.selectedHotspot=hit;updateInfo()}
+
+function drawGraph(canvas,pts,key,label){const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#07111e';ctx.fillRect(0,0,w,h);const pad=42;ctx.strokeStyle='#29445f';ctx.beginPath();ctx.moveTo(pad,12);ctx.lineTo(pad,h-pad);ctx.lineTo(w-10,h-pad);ctx.stroke();ctx.fillStyle='#9db1c5';ctx.font='11px Segoe UI';ctx.fillText(label,6,14);if(!pts.length)return;const xs=pts.map(p=>p.t),ys=pts.map(p=>p[key]);let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);if(xmax===xmin)xmax=xmin+1;if(ymax===ymin){ymax+=1;ymin-=1}const X=x=>pad+(x-xmin)/(xmax-xmin)*(w-pad-12),Y=y=>h-pad-(y-ymin)/(ymax-ymin)*(h-pad-18);ctx.strokeStyle='#37d0e6';ctx.lineWidth=2;ctx.beginPath();pts.forEach((p,i)=>{const x=X(p.t),y=Y(p[key]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle='#91a6ba';ctx.fillText(fmt(ymax,2),4,28);ctx.fillText(fmt(ymin,2),4,h-pad);ctx.fillText('t (s)',w-40,h-8)}
+function drawGraphs(){let pts=state.history;if(!pts.length){const r=currentResult();pts=[samplePoint(r)]}if(state.system==='pin'){drawGraph($('g1'),pts,'y1','Torque (N·m)');drawGraph($('g2'),pts,'y2','Shear stress τ (MPa)');drawGraph($('g3'),pts,'y3','Failure torque (N·m)');drawGraph($('g4'),pts,'y4','Capacity used (%)')}else{drawGraph($('g1'),pts,'y1','System pressure (bar)');drawGraph($('g2'),pts,'y2','Valve lift (mm)');drawGraph($('g3'),pts,'y3','Flow Q (L/min)');drawGraph($('g4'),pts,'y4','Mass flow (kg/s)')}}
+function recordData(){const r=currentResult(),rec={id:state.records.length+1,system:state.system,time:state.t};if(state.system==='pin')Object.assign(rec,{input:state.pin.appliedTorque,out1:r.tau/1e6,out2:r.Tfail,out3:r.F,status:r.status});else Object.assign(rec,{input:state.valve.pSys,out1:r.x*1000,out2:r.Q*60000,out3:r.Preseat,status:r.status});state.records.push(rec);renderData();renderCompare()}
+function renderData(){if(state.system==='pin')$('dataHead').innerHTML='<tr><th>ID</th><th>System</th><th>t(s)</th><th>Torque(N·m)</th><th>τ(MPa)</th><th>Tfail(N·m)</th><th>F(N)</th><th>Status</th></tr>';else $('dataHead').innerHTML='<tr><th>ID</th><th>System</th><th>t(s)</th><th>Psys(bar)</th><th>Lift(mm)</th><th>Q(L/min)</th><th>Preseat(bar)</th><th>Status</th></tr>';$('dataBody').innerHTML=state.records.map(q=>`<tr><td>${q.id}</td><td>${q.system}</td><td>${fmt(q.time,2)}</td><td>${fmt(q.input,2)}</td><td>${fmt(q.out1,3)}</td><td>${fmt(q.out2,3)}</td><td>${fmt(q.out3,3)}</td><td>${q.status}</td></tr>`).join('')}
+function exportCSV(){const head=['id','system','time_s','input','output1','output2','output3','status'],rows=state.records.map(q=>[q.id,q.system,q.time,q.input,q.out1,q.out2,q.out3,q.status]);const blob=new Blob([[head,...rows].map(r=>r.join(',')).join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='safety_devices_virtual_lab.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+function renderCompare(){const opts=['<option value="">-- Trial --</option>',...state.records.map((r,i)=>`<option value="${i}">#${r.id} ${r.system} — ${fmt(r.input,2)}</option>`)].join('');const va=$('compareA').value,vb=$('compareB').value;$('compareA').innerHTML=opts;$('compareB').innerHTML=opts;if(va)$('compareA').value=va;if(vb)$('compareB').value=vb;const A=state.records[+$('compareA').value],B=state.records[+$('compareB').value];if(!A||!B){$('compareGrid').innerHTML='<div class="small">Record at least two trials, then select Trial A and Trial B.</div>';return}const box=(name,q)=>`<div class="compare-box"><h4>${name}</h4><div class="rowline"><span>System</span><b>${q.system}</b></div><div class="rowline"><span>Input</span><b>${fmt(q.input,3)}</b></div><div class="rowline"><span>Output 1</span><b>${fmt(q.out1,3)}</b></div><div class="rowline"><span>Output 2</span><b>${fmt(q.out2,3)}</b></div><div class="rowline"><span>Output 3</span><b>${fmt(q.out3,3)}</b></div><div class="rowline"><span>Status</span><b>${q.status}</b></div></div>`;$('compareGrid').innerHTML=box('TRIAL A',A)+box('TRIAL B',B)}
+function renderQuiz(){const id=state.lang==='id';const qs=state.system==='pin'?[{q:id?'Jika diameter pin dinaikkan, kapasitas torsi patah cenderung…':'If pin diameter increases, failure torque capacity tends to…',a:['decrease','increase','same'],ok:1,ex:id?'Luas geser ∝ d², sehingga kapasitas naik kuat.':'Shear area scales with d², strongly increasing capacity.'},{q:id?'Double shear dibanding single shear dengan d dan r sama memberi area efektif…':'Double shear versus single shear at same d and r gives effective area…',a:['half','same','double'],ok:2,ex:id?'Dua bidang geser menggandakan total area.':'Two shear planes double total area.'}]:[{q:id?'Blowdown menentukan…':'Blowdown determines…',a:id?['tekanan reseat relatif terhadap set pressure','diameter seat','densitas fluida']:['reseat pressure relative to set pressure','seat diameter','fluid density'],ok:0,ex:id?'Preseat=Pcrack(1−blowdown).':'Preseat=Pcrack(1−blowdown).'},{q:id?'Saat lift meningkat, gaya pegas ideal…':'As lift increases, ideal spring force…',a:id?['turun','tetap','naik sebesar kx']:['decreases','stays constant','increases by kx'],ok:2,ex:'Fspring = F0 + kx.'}];$('quizList').innerHTML=qs.map((q,i)=>`<div class="quiz"><b>${i+1}. ${q.q}</b><div class="opts">${q.a.map((a,j)=>`<button class="btn qopt" data-i="${i}" data-j="${j}">${a}</button>`).join('')}</div><div class="feedback" id="qfb${i}"></div></div>`).join('');document.querySelectorAll('.qopt').forEach(b=>b.onclick=()=>{const q=qs[+b.dataset.i];$('qfb'+b.dataset.i).textContent=(+b.dataset.j===q.ok?(id?'Benar. ':'Correct. '):(id?'Belum tepat. ':'Incorrect. '))+q.ex})}
+function renderChallenge(){const id=state.lang==='id';if(state.system==='pin')$('challengeBox').innerHTML=`<div class="mission"><h4>${id?'Misi 1 — Lindungi drivetrain':'Mission 1 — Protect the drivetrain'}</h4><div class="small">${id?'Atur diameter dan material agar Tfail berada 10–30% di atas rated torque.':'Adjust diameter and material so Tfail is 10–30% above rated torque.'}</div><button class="btn primary checkMission" data-m="pin1">CHECK</button><div id="pin1r" class="feedback"></div></div><div class="mission"><h4>${id?'Misi 2 — Demonstrasi kegagalan':'Mission 2 — Demonstrate failure'}</h4><div class="small">${id?'Naikkan Applied Torque hingga pin SHEARED.':'Increase Applied Torque until the pin becomes SHEARED.'}</div><button class="btn primary checkMission" data-m="pin2">CHECK</button><div id="pin2r" class="feedback"></div></div>`;else $('challengeBox').innerHTML=`<div class="mission"><h4>${id?'Misi 1 — Cracking terkontrol':'Mission 1 — Controlled cracking'}</h4><div class="small">${id?'Atur Psys sehingga status CRACKING dan lift < 15% xmax.':'Set Psys so status is CRACKING and lift < 15% xmax.'}</div><button class="btn primary checkMission" data-m="val1">CHECK</button><div id="val1r" class="feedback"></div></div><div class="mission"><h4>${id?'Misi 2 — Relief capacity':'Mission 2 — Relief capacity'}</h4><div class="small">${id?'Capai Q > 100 L/min tanpa melebihi xmax.':'Reach Q > 100 L/min without exceeding xmax.'}</div><button class="btn primary checkMission" data-m="val2">CHECK</button><div id="val2r" class="feedback"></div></div>`;document.querySelectorAll('.checkMission').forEach(b=>b.onclick=()=>{const r=currentResult();let ok=false;if(b.dataset.m==='pin1'){const ratio=r.Tfail/state.pin.ratedTorque;ok=ratio>=1.10&&ratio<=1.30;$('pin1r').textContent=ok?'PASS':`Tfail/Trated=${fmt(ratio,2)}`}if(b.dataset.m==='pin2'){ok=r.status==='SHEARED';$('pin2r').textContent=ok?'PASS':'Not yet'}if(b.dataset.m==='val1'){ok=r.status==='CRACKING'&&r.openRatio<.15;$('val1r').textContent=ok?'PASS':`status=${r.status}, lift=${fmt(r.openRatio*100,1)}%`}if(b.dataset.m==='val2'){ok=r.Q*60000>100&&r.x<=state.valve.xMax/1000;$('val2r').textContent=ok?'PASS':`Q=${fmt(r.Q*60000,1)} L/min`}})}
+
+let last=performance.now(),acc=0;const fixed=1/60;
+function loop(now){let frame=Math.min(.1,(now-last)/1000);last=now;if(state.running){acc+=frame;while(acc>=fixed){physicsStep(fixed);acc-=fixed}updateAll(false)}else draw();requestAnimationFrame(loop)}
+
+init();
+})();
+</script>
+</body>
+</html>
