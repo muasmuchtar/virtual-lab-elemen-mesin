@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Virtual Lab — Panduan Gerak Linear</title>
+<style>
+:root{
+  --bg:#08111f;--panel:#0f1b2d;--panel2:#13243b;--line:#27415f;--text:#eef6ff;--muted:#9fb3c8;
+  --accent:#46c7ff;--ok:#4fd19a;--warn:#ffb347;--bad:#ff6b6b;--violet:#b996ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#07101d,#0b1627);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.header{position:sticky;top:0;z-index:20;background:rgba(7,16,29,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 18px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.header h1{font-size:18px;margin:0}.sub{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn,.select,.input{background:#12233a;color:var(--text);border:1px solid #315373;border-radius:9px;padding:8px 10px}
+.btn:hover{border-color:var(--accent)} .btn.active{background:#123b54;border-color:var(--accent)}
+.btn.ok{border-color:#2d9f75}.btn.warn{border-color:#b77f2e}.btn.danger{border-color:#b64b4b}
+.layout{display:grid;grid-template-columns:310px minmax(520px,1fr) 320px;gap:12px;padding:12px}
+.panel{background:linear-gradient(180deg,var(--panel),#0b1728);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.22)}
+.panel h2,.panel h3{margin:0}.panel-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.panel-body{padding:12px 14px}
+.controls{max-height:calc(100vh - 150px);overflow:auto}
+.group{border:1px solid #213b57;border-radius:11px;padding:10px;margin-bottom:10px;background:#0d1a2b}
+.group-title{font-size:12px;font-weight:700;letter-spacing:.05em;color:#bfeaff;margin-bottom:8px;text-transform:uppercase}
+.row{display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;margin:7px 0}
+.row label{font-size:12px;color:#d8e7f5}
+.row input[type=number],.row select{width:100%;padding:6px 7px;border-radius:7px;border:1px solid #315373;background:#0a1626;color:#fff}
+.row input[type=range]{grid-column:1/-1;width:100%}
+.small{font-size:11px;color:var(--muted)}
+.center{display:grid;grid-template-rows:auto auto auto;gap:12px}
+.stage-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--line)}
+.canvas-wrap{position:relative;background:
+linear-gradient(rgba(70,199,255,.05) 1px,transparent 1px),
+linear-gradient(90deg,rgba(70,199,255,.05) 1px,transparent 1px),#07111e;
+background-size:24px 24px;min-height:430px}
+canvas{display:block;width:100%;height:430px}
+.overlay{position:absolute;left:12px;top:12px;background:rgba(4,10,18,.76);border:1px solid #2d4f70;border-radius:10px;padding:8px 10px;font-size:12px}
+.overlay b{color:var(--accent)}
+.actions{display:flex;gap:7px;flex-wrap:wrap;padding:10px;border-top:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:#0a1626;border:1px solid #264563;border-radius:11px;padding:10px}
+.card .k{font-size:11px;color:var(--muted)}.card .v{font-size:17px;font-weight:700;margin-top:3px}.card .u{font-size:10px;color:#8fa6bc}
+.badge{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;border:1px solid}
+.badge.ok{color:#8af0c5;border-color:#2b8b69}.badge.warn{color:#ffd088;border-color:#9e6e28}.badge.bad{color:#ff9d9d;border-color:#8d3f3f}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{padding:7px 9px;border-radius:8px;border:1px solid #315373;background:#0b1728;color:#fff}
+.tab.active{border-color:var(--accent);background:#11364d}
+.graph-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.graph{background:#07111e;border:1px solid #24405c;border-radius:10px;padding:6px}
+.graph canvas{height:180px}
+.calc{font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;line-height:1.55;background:#07111e;border:1px solid #24405c;border-radius:10px;padding:10px;max-height:330px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}th,td{border-bottom:1px solid #213850;padding:7px;text-align:left}th{color:#bdeaff}
+.status{position:sticky;bottom:0;z-index:10;background:#06101c;border-top:1px solid var(--line);padding:8px 14px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#c5d6e6}
+.info-list{font-size:12px;line-height:1.5;color:#dce8f3}.info-list b{color:#aee7ff}
+.hidden{display:none!important}
+textarea{width:100%;min-height:72px;background:#091525;color:#fff;border:1px solid #315373;border-radius:8px;padding:8px}
+.q{border:1px solid #264563;border-radius:10px;padding:9px;margin:8px 0}.q button{margin:3px}
+@media(max-width:1100px){.layout{grid-template-columns:260px 1fr}.right{grid-column:1/-1}.controls{max-height:none}}
+@media(max-width:760px){.layout{display:block}.panel{margin-bottom:10px}.graph-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr 90px}}
+@media print{body{background:white;color:#111}.header,.left,.actions,.stage-tabs,.status{display:none!important}.layout{display:block}.panel{border:0;box-shadow:none}.right{display:block}.canvas-wrap{background:white}.calc{color:#111;background:white}.card{color:#111;background:white}canvas{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1 id="title">Virtual Laboratory — Panduan Gerak Linear</h1><div class="sub" id="subtitle">Guideway & Linear Bearing Engineering Simulator</div></div>
+  <div class="toolbar">
+    <select id="preset" class="select"></select>
+    <button id="langBtn" class="btn">ID | EN</button>
+    <button id="levelBtn" class="btn">INTERMEDIATE</button>
+  </div>
+</div>
+
+<div class="layout">
+  <section class="panel left">
+    <div class="panel-head"><h3 id="controlsTitle">Panel Kontrol</h3><span class="small" id="modelTag">MODEL</span></div>
+    <div class="panel-body controls">
+      <div class="group">
+        <div class="group-title" data-i18n="system">Sistem</div>
+        <div class="row"><label>System Type</label><select id="system"></select></div>
+        <div class="row"><label>Motion Profile</label><select id="motion"><option value="trap">Trapezoidal</option><option value="scurve">Smooth S-curve</option></select></div>
+      </div>
+
+      <div class="group common">
+        <div class="group-title">Motion</div>
+        <div class="row"><label>Stroke (mm)</label><input id="strokeN" type="number" value="500" min="50"><input id="stroke" type="range" min="50" max="1500" value="500"></div>
+        <div class="row"><label>V max (mm/s)</label><input id="vmaxN" type="number" value="200" min="1"><input id="vmax" type="range" min="10" max="1000" value="200"></div>
+        <div class="row"><label>a max (mm/s²)</label><input id="amaxN" type="number" value="400" min="1"><input id="amax" type="range" min="20" max="3000" value="400"></div>
+        <div class="row"><label>Mass (kg)</label><input id="massN" type="number" value="80" min="0"><input id="mass" type="range" min="0" max="500" value="80"></div>
+      </div>
+
+      <div class="group slidingFields">
+        <div class="group-title">Sliding Guideway</div>
+        <div class="row"><label>External Down Load (N)</label><input id="extLoadN" type="number" value="1200"><input id="extLoad" type="range" min="0" max="10000" value="1200"></div>
+        <div class="row"><label>μ kinetic</label><input id="muN" type="number" step="0.01" value="0.08"><input id="mu" type="range" min="0" max="0.4" step="0.01" value="0.08"></div>
+        <div class="row"><label>μ static</label><input id="musN" type="number" step="0.01" value="0.12"><input id="mus" type="range" min="0" max="0.5" step="0.01" value="0.12"></div>
+        <div class="row"><label>Contact Area (cm²)</label><input id="areaN" type="number" value="240"><input id="area" type="range" min="20" max="1500" value="240"></div>
+      </div>
+
+      <div class="group profileFields">
+        <div class="group-title">Profile Rail Guide</div>
+        <div class="row"><label>Vertical Load Fy (N)</label><input id="fyN" type="number" value="4000"><input id="fy" type="range" min="100" max="20000" value="4000"></div>
+        <div class="row"><label>Rail spacing B (mm)</label><input id="railBN" type="number" value="300"><input id="railB" type="range" min="80" max="800" value="300"></div>
+        <div class="row"><label>Block spacing Lb (mm)</label><input id="blockLN" type="number" value="400"><input id="blockL" type="range" min="80" max="900" value="400"></div>
+        <div class="row"><label>Eccentricity ez (mm)</label><input id="eccN" type="number" value="0"><input id="ecc" type="range" min="-250" max="250" value="0"></div>
+        <div class="row"><label>k block (N/μm)</label><input id="stiffN" type="number" value="120"><input id="stiff" type="range" min="20" max="400" value="120"></div>
+        <div class="row"><label>Preload (%)</label><input id="preloadN" type="number" value="5"><input id="preload" type="range" min="0" max="20" value="5"></div>
+        <div class="row"><label>Dynamic rating C (N)</label><input id="ratingN" type="number" value="18000"><input id="rating" type="range" min="1000" max="50000" value="18000"></div>
+      </div>
+
+      <div class="group bearingFields">
+        <div class="group-title">Linear Bearing + Shaft</div>
+        <div class="row"><label>Radial Load W (N)</label><input id="radialN" type="number" value="500"><input id="radial" type="range" min="10" max="5000" value="500"></div>
+        <div class="row"><label>Shaft diameter d (mm)</label><input id="shaftDN" type="number" value="25"><input id="shaftD" type="range" min="8" max="60" value="25"></div>
+        <div class="row"><label>Support span L (mm)</label><input id="spanN" type="number" value="600"><input id="span" type="range" min="100" max="1500" value="600"></div>
+        <div class="row"><label>E (GPa)</label><input id="EN" type="number" value="210"><input id="E" type="range" min="50" max="220" value="210"></div>
+        <div class="row"><label>Bearing count</label><input id="bearingCountN" type="number" value="2" min="1" max="4"><input id="bearingCount" type="range" min="1" max="4" step="1" value="2"></div>
+        <div class="row"><label>Dynamic rating C (N)</label><input id="bearingRatingN" type="number" value="9000"><input id="bearingRating" type="range" min="500" max="30000" value="9000"></div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Display</div>
+        <div class="row"><label>Animation Speed</label><input id="animSpeedN" type="number" step="0.25" value="1"><input id="animSpeed" type="range" min="0.25" max="3" step="0.25" value="1"></div>
+        <div class="row"><label>Deflection Visual ×</label><input id="defScaleN" type="number" value="25"><input id="defScale" type="range" min="1" max="100" value="25"></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="center">
+    <section class="panel">
+      <div class="stage-tabs">
+        <button class="btn stage active" data-stage="real">1. REAL SYSTEM</button>
+        <button class="btn stage" data-stage="model">2. CONSTRAINT/LOAD MODEL</button>
+        <button class="btn stage" data-stage="motion">3. MOTION/LOAD MODEL</button>
+        <button id="autoConvert" class="btn">AUTO CONVERT</button>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="simCanvas" width="1100" height="430"></canvas>
+        <div class="overlay"><b id="overlaySystem">Profile Rail Guide</b><br><span id="overlayState">Ready</span></div>
+      </div>
+      <div class="actions">
+        <button id="play" class="btn ok">▶ PLAY</button><button id="pause" class="btn">⏸ PAUSE</button>
+        <button id="step" class="btn">STEP</button><button id="reset" class="btn">RESET</button>
+        <button id="cycle" class="btn">RUN ONE CYCLE</button><button id="reverse" class="btn">REVERSE</button>
+        <button id="forces" class="btn active">FORCES</button><button id="dims" class="btn active">DIMENSIONS</button>
+        <button id="defl" class="btn active">DEFLECTION</button><button id="equations" class="btn">EQUATIONS</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Graphs & Engineering Calculation</h3></div>
+      <div class="panel-body">
+        <div class="tabs">
+          <button class="tab active" data-bottom="graphs">Graphs</button>
+          <button class="tab" data-bottom="calc">Calculation</button>
+          <button class="tab" data-bottom="worksheet">Worksheet</button>
+          <button class="tab" data-bottom="challenge">Challenge</button>
+          <button class="tab" data-bottom="data">Experiment Data</button>
+        </div>
+        <div id="graphsPane">
+          <div class="graph-grid">
+            <div class="graph"><canvas id="g1" width="520" height="180"></canvas></div>
+            <div class="graph"><canvas id="g2" width="520" height="180"></canvas></div>
+            <div class="graph"><canvas id="g3" width="520" height="180"></canvas></div>
+            <div class="graph"><canvas id="g4" width="520" height="180"></canvas></div>
+          </div>
+        </div>
+        <div id="calcPane" class="hidden"><div id="calcText" class="calc"></div></div>
+        <div id="worksheetPane" class="hidden">
+          <div class="info-list">Tujuan / Objective</div><textarea id="wsGoal"></textarea>
+          <div class="info-list">Prediksi / Prediction</div><textarea id="wsPred"></textarea>
+          <div class="info-list">Analisis tren / Trend analysis</div><textarea id="wsTrend"></textarea>
+          <div class="info-list">Kesimpulan / Conclusion</div><textarea id="wsConclusion"></textarea>
+        </div>
+        <div id="challengePane" class="hidden"><div id="challengeBox"></div></div>
+        <div id="dataPane" class="hidden">
+          <div class="toolbar" style="margin-bottom:8px"><button id="record" class="btn">RECORD DATA</button><button id="clearData" class="btn">CLEAR DATA</button><button id="csv" class="btn">EXPORT CSV</button><button id="print" class="btn">PRINT LAB REPORT</button></div>
+          <div style="overflow:auto;max-height:260px"><table><thead><tr><th>ID</th><th>System</th><th>t</th><th>x</th><th>v</th><th>a</th><th>Drive</th><th>Reaction/Load</th><th>Deflection</th><th>Status</th></tr></thead><tbody id="dataBody"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel right">
+    <div class="panel-head"><h3>Engineering Cards</h3><span id="statusBadge" class="badge ok">SAFE</span></div>
+    <div class="panel-body">
+      <div class="cards" id="cards"></div>
+      <div class="group" style="margin-top:10px">
+        <div class="group-title">Interactive Information</div>
+        <div id="info" class="info-list"></div>
+      </div>
+      <div class="group">
+        <div class="group-title">Comparison</div>
+        <select id="compareMode" class="select" style="width:100%"><option value="none">No comparison</option><option value="friction">Low vs High Friction</option><option value="preload">Low vs High Preload</option><option value="shaft">Small vs Large Shaft Diameter</option></select>
+        <div id="compare" class="info-list" style="margin-top:8px"></div>
+      </div>
+      <div class="group">
+        <div class="group-title">Assumptions</div>
+        <div class="small">Rigid carriage/platform unless compliance is explicitly modeled. Ratings are educational/user-supplied. Misalignment, contamination, lubrication, surface hardness, temperature, seal drag, shock, and vibration are not automatically included.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="status">
+  <span id="stSystem">SYSTEM</span><span id="stPhase">PHASE</span><span id="stModel">MODEL: Valid</span>
+  <span id="stInput">INPUT</span><span id="stOutput">OUTPUT</span><span id="stDrive">DRIVE</span><span id="stLimit">LIMIT: SAFE</span><span id="stTime">TIME</span>
+</div>
+
+<script>
+(()=>{"use strict";
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmt=(x,d=2)=>Number.isFinite(x)?x.toFixed(d):"N/A";
+const presets=[
+ {name:"CNC Profile Rail Axis",sys:"profile",fy:4000,railB:300,blockL:400,ecc:0,stiff:120,preload:5,rating:18000,mass:80,stroke:500,vmax:200,amax:400},
+ {name:"Lathe Bed Slideway",sys:"sliding",extLoad:1800,mu:.08,mus:.12,area:320,mass:110,stroke:600,vmax:120,amax:250},
+ {name:"Dovetail Machine Slide",sys:"sliding",extLoad:900,mu:.12,mus:.18,area:180,mass:55,stroke:300,vmax:70,amax:180},
+ {name:"Gantry Linear Guide",sys:"profile",fy:6500,railB:420,blockL:500,ecc:120,stiff:150,preload:8,rating:26000,mass:140,stroke:900,vmax:350,amax:650},
+ {name:"Linear Ball Bearing Shaft",sys:"bearing",radial:500,shaftD:25,span:600,E:210,bearingCount:2,bearingRating:9000,mass:25,stroke:450,vmax:180,amax:450},
+ {name:"Pick-and-Place Axis",sys:"profile",fy:1200,railB:180,blockL:220,ecc:45,stiff:90,preload:3,rating:12000,mass:18,stroke:350,vmax:600,amax:1800}
+];
+const state={
+ lang:"id",level:"INTERMEDIATE",system:"profile",motion:"trap",stage:"real",running:false,oneCycle:false,dir:1,t:0,cycleT:0,
+ stroke:500,vmax:200,amax:400,mass:80,extLoad:1200,mu:.08,mus:.12,area:240,
+ fy:4000,railB:300,blockL:400,ecc:0,stiff:120,preload:5,rating:18000,
+ radial:500,shaftD:25,span:600,E:210,bearingCount:2,bearingRating:9000,
+ animSpeed:1,defScale:25,showForces:true,showDims:true,showDef:true,showEq:false,
+ x:0,v:0,a:0,phase:"HOME",history:[],trials:[]
+};
+const dict={
+ id:{title:"Virtual Laboratory — Panduan Gerak Linear",controls:"Panel Kontrol",ready:"Siap",safe:"AMAN",warn:"PERINGATAN",critical:"KRITIS"},
+ en:{title:"Virtual Laboratory — Linear Motion Guidance",controls:"Control Panel",ready:"Ready",safe:"SAFE",warn:"WARNING",critical:"CRITICAL"}
+};
+function initSelects(){
+ $("preset").innerHTML=presets.map((p,i)=>`<option value="${i}">${p.name}</option>`).join("");
+ $("system").innerHTML=`<option value="sliding">Sliding Guideway</option><option value="profile">Profile Rail Guide</option><option value="bearing">Linear Bearing + Shaft</option>`;
+}
+const bindings=[
+ ["stroke","strokeN","stroke"],["vmax","vmaxN","vmax"],["amax","amaxN","amax"],["mass","massN","mass"],
+ ["extLoad","extLoadN","extLoad"],["mu","muN","mu"],["mus","musN","mus"],["area","areaN","area"],
+ ["fy","fyN","fy"],["railB","railBN","railB"],["blockL","blockLN","blockL"],["ecc","eccN","ecc"],["stiff","stiffN","stiff"],["preload","preloadN","preload"],["rating","ratingN","rating"],
+ ["radial","radialN","radial"],["shaftD","shaftDN","shaftD"],["span","spanN","span"],["E","EN","E"],["bearingCount","bearingCountN","bearingCount"],["bearingRating","bearingRatingN","bearingRating"],
+ ["animSpeed","animSpeedN","animSpeed"],["defScale","defScaleN","defScale"]
+];
+function bindPair(rangeId,numId,key){
+ const r=$(rangeId),n=$(numId);
+ const set=v=>{let x=parseFloat(v); if(!Number.isFinite(x))return; state[key]=x;r.value=x;n.value=x;onParamChange()};
+ r.addEventListener("input",e=>set(e.target.value));n.addEventListener("change",e=>set(e.target.value));
+}
+bindings.forEach(b=>bindPair(...b));
+function syncInputs(){
+ bindings.forEach(([r,n,k])=>{if($(r)){ $(r).value=state[k];$(n).value=state[k]; }});
+ $("system").value=state.system;$("motion").value=state.motion;
+}
+function onParamChange(){state.running=false;state.t=0;state.history=[];computeMotion(0);updateAll();}
+function applyPreset(i){
+ const p=presets[i]; Object.assign(state,p);state.system=p.sys;state.t=0;state.history=[];state.running=false;syncInputs();toggleFields();computeMotion(0);updateAll();
+}
+function toggleFields(){
+ document.querySelectorAll(".slidingFields").forEach(x=>x.classList.toggle("hidden",state.system!=="sliding"));
+ document.querySelectorAll(".profileFields").forEach(x=>x.classList.toggle("hidden",state.system!=="profile"));
+ document.querySelectorAll(".bearingFields").forEach(x=>x.classList.toggle("hidden",state.system!=="bearing"));
+}
+function motionTiming(){
+ let S=state.stroke/1000,V=state.vmax/1000,A=state.amax/1000;
+ let ta=V/A,sa=.5*A*ta*ta,tc;
+ if(2*sa>S){ta=Math.sqrt(S/A);V=A*ta;tc=0}else tc=(S-2*sa)/V;
+ return {S,V,A,ta,tc,T:2*ta+tc};
+}
+function motionAt(t){
+ const m=motionTiming(),T=m.T;
+ let tt=((t%T)+T)%T, x=0,v=0,a=0,phase="";
+ if(state.motion==="scurve"){
+   let u=clamp(tt/T,0,1), q=0.5-0.5*Math.cos(2*Math.PI*u);
+   x=m.S*q;v=m.S*Math.PI/T*Math.sin(2*Math.PI*u);a=m.S*2*Math.PI*Math.PI/(T*T)*Math.cos(2*Math.PI*u);
+   phase=u<.25?"ACCELERATE":u<.5?"DECELERATE":u<.75?"REVERSE ACCEL":"REVERSE DECEL";
+   return {x:x*1000,v:v*1000,a:a*1000,phase,T};
+ }
+ if(tt<m.ta){a=m.A;v=m.A*tt;x=.5*m.A*tt*tt;phase="ACCELERATE";}
+ else if(tt<m.ta+m.tc){a=0;v=m.V;x=.5*m.A*m.ta*m.ta+m.V*(tt-m.ta);phase="CONSTANT SPEED";}
+ else {let td=tt-m.ta-m.tc;a=-m.A;v=m.V-m.A*td;x=.5*m.A*m.ta*m.ta+m.V*m.tc+m.V*td-.5*m.A*td*td;phase="DECELERATE";}
+ return {x:x*1000,v:v*1000,a:a*1000,phase,T};
+}
+function computeMotion(t){
+ const q=motionAt(t); state.x=q.x;state.v=q.v*state.dir;state.a=q.a*state.dir;state.phase=q.phase;state.cycleT=q.T;
+}
+function calc(){
+ const g=9.80665,a=state.a/1000,v=state.v/1000;
+ if(state.system==="sliding"){
+   const N=state.mass*g+state.extLoad,Ff=state.mu*N,Fin=state.mass*a,Fd=Fin+Math.sign(state.v||state.dir)*Ff;
+   const p=N/(state.area*1e-4),loss=Math.abs(Ff*v),breakaway=state.mus*N;
+   let status="SAFE"; if(p>2e6||Math.abs(Fd)>15000)status="WARNING"; if(p>5e6)status="CRITICAL";
+   return {N,Ff,Fin,Fd,p,loss,breakaway,maxLoad:N,defl:0,life:NaN,status};
+ }
+ if(state.system==="profile"){
+   const W=state.fy+state.mass*g, B=state.railB/1000, e=state.ecc/1000;
+   const sideA=W/2 + (W*e)/(2*B),sideB=W/2 - (W*e)/(2*B);
+   const r=[sideA/2,sideA/2,sideB/2,sideB/2], pmax=Math.max(...r),pmin=Math.min(...r);
+   const preloadFactor=1+state.preload/100, k=state.stiff*1e6, defl=pmax*preloadFactor/k;
+   const resistance=0.004*W + state.preload/100*0.01*W;
+   const Fd=state.mass*a+Math.sign(state.v||state.dir)*resistance;
+   const life=(state.rating>0&&pmax>0)?Math.pow(state.rating/(pmax*preloadFactor),3)*100:NaN;
+   let status="SAFE";if(pmin<0||pmax>state.rating*.8||defl>50e-6)status="WARNING";if(pmax>=state.rating||pmin<0)status="CRITICAL";
+   return {W,r,pmax,pmin,defl,Fd,resistance,life,maxLoad:pmax,status};
+ }
+ const W=state.radial+state.mass*g, d=state.shaftD/1000,L=state.span/1000,E=state.E*1e9,I=Math.PI*Math.pow(d,4)/64;
+ const defl=W*Math.pow(L,3)/(48*E*I),P=W/state.bearingCount,resistance=.003*W,Fd=state.mass*a+Math.sign(state.v||state.dir)*resistance;
+ const life=(state.bearingRating>0&&P>0)?Math.pow(state.bearingRating/P,3)*100:NaN;
+ let status="SAFE";if(defl>0.00015||P>state.bearingRating*.8)status="WARNING";if(defl>0.0004||P>=state.bearingRating)status="CRITICAL";
+ return {W,d,L,E,I,defl,P,resistance,Fd,life,maxLoad:P,status};
+}
+function validate(){
+ const req=[state.stroke,state.vmax,state.amax,state.mass]; if(req.some(x=>!Number.isFinite(x)||x<0))return false;
+ if(state.system==="profile"&&(state.railB<=0||state.blockL<=0||state.stiff<=0))return false;
+ if(state.system==="bearing"&&(state.shaftD<=0||state.span<=0||state.E<=0||state.bearingCount<1))return false;
+ return true;
+}
+function draw(){
+ const c=$("simCanvas"),ctx=c.getContext("2d"),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+ ctx.strokeStyle="#2a4c69";ctx.lineWidth=1;for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+ if(state.system==="sliding")drawSliding(ctx,w,h); else if(state.system==="profile")drawProfile(ctx,w,h); else drawBearing(ctx,w,h);
+}
+function arrow(ctx,x1,y1,x2,y2,label,color="#46c7ff"){
+ ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-10*Math.cos(a-.5),y2-10*Math.sin(a-.5));ctx.lineTo(x2-10*Math.cos(a+.5),y2-10*Math.sin(a+.5));ctx.closePath();ctx.fill();
+ if(label){ctx.font="14px Segoe UI";ctx.fillText(label,(x1+x2)/2+6,(y1+y2)/2-6)}
+}
+function drawSliding(ctx,w,h){
+ const x=140+(w-320)*clamp(state.x/state.stroke,0,1),baseY=290;
+ ctx.fillStyle="#485968";ctx.fillRect(80,baseY, w-160,35);ctx.fillStyle="#6f8595";ctx.fillRect(80,baseY, w-160,8);
+ ctx.fillStyle="#1aa6d9";ctx.fillRect(x-80,baseY-70,160,65);ctx.strokeStyle="#bfeaff";ctx.strokeRect(x-80,baseY-70,160,65);
+ ctx.fillStyle="#eef6ff";ctx.font="18px Segoe UI";ctx.fillText("SLIDING CARRIAGE",x-78,baseY-35);
+ if(state.showForces){let r=calc();arrow(ctx,x,baseY-70,x,baseY-145,`N ${fmt(r.N,0)} N`,"#4fd19a");arrow(ctx,x,baseY-35,x+100*Math.sign(state.v||state.dir),baseY-35,`Fd ${fmt(r.Fd,0)} N`,"#ffb347");arrow(ctx,x,baseY-10,x-80*Math.sign(state.v||state.dir),baseY-10,`Ff ${fmt(r.Ff,0)} N`,"#ff6b6b")}
+ if(state.showDims){ctx.fillStyle="#9fb3c8";ctx.fillText(`x = ${fmt(state.x,1)} mm / ${state.stroke} mm`,90,365)}
+}
+function drawProfile(ctx,w,h){
+ const y1=275,y2=345,x0=100,x1=w-100;ctx.lineWidth=8;ctx.strokeStyle="#586c7f";[y1,y2].forEach(y=>{ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke()});
+ const xc=160+(w-360)*clamp(state.x/state.stroke,0,1),bw=190,bh=120;
+ const bx=[xc-bw/2,xc+bw/2], ys=[y1,y2];ctx.fillStyle="#1b96c2";ys.forEach(y=>bx.forEach(x=>ctx.fillRect(x-23,y-18,46,36)));
+ ctx.fillStyle="#1a6f96";ctx.fillRect(xc-130,180,260,70);ctx.strokeStyle="#bfeaff";ctx.strokeRect(xc-130,180,260,70);
+ ctx.fillStyle="#eef6ff";ctx.font="17px Segoe UI";ctx.fillText("MOVING PLATFORM",xc-82,220);
+ const r=calc();
+ if(state.showForces){arrow(ctx,xc+state.ecc*.35,120,xc+state.ecc*.35,180,`Fy ${fmt(r.W,0)} N`,"#ffb347");bx.forEach((x,i)=>ys.forEach((y,j)=>{let idx=(i===0?0:2)+j;arrow(ctx,x,y+15,x,y-38,`${fmt(r.r[idx],0)}`,"#4fd19a")}));}
+ if(state.showDims){ctx.strokeStyle="#b996ff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(xc-bw/2,390);ctx.lineTo(xc+bw/2,390);ctx.stroke();ctx.fillStyle="#d9c8ff";ctx.fillText(`Lb ${state.blockL} mm`,xc-45,414);ctx.fillText(`B ${state.railB} mm`,40,315)}
+ if(state.showDef){const dy=clamp(r.defl*1e6*state.defScale*.08,0,45);ctx.strokeStyle="#b996ff";ctx.beginPath();ctx.moveTo(xc-130,255);ctx.quadraticCurveTo(xc,255+dy,xc+130,255);ctx.stroke();}
+}
+function drawBearing(ctx,w,h){
+ const r=calc(),y=285,x0=110,x1=w-110,xc=160+(w-360)*clamp(state.x/state.stroke,0,1);
+ ctx.strokeStyle="#8799a8";ctx.lineWidth=16;ctx.beginPath();ctx.moveTo(x0,y);ctx.quadraticCurveTo((x0+x1)/2,y+clamp(r.defl*1e6*state.defScale*.05,0,70),x1,y);ctx.stroke();
+ ctx.fillStyle="#6d7f8d";ctx.fillRect(x0-20,y+20,40,55);ctx.fillRect(x1-20,y+20,40,55);
+ ctx.fillStyle="#1596c2";ctx.fillRect(xc-65,y-55,130,90);ctx.strokeStyle="#bfeaff";ctx.strokeRect(xc-65,y-55,130,90);
+ ctx.fillStyle="#eef6ff";ctx.font="17px Segoe UI";ctx.fillText("LINEAR BEARING",xc-62,y-10);
+ if(state.showForces)arrow(ctx,xc,115,xc,230,`W ${fmt(r.W,0)} N`,"#ffb347");
+ if(state.showDims){ctx.fillStyle="#d9c8ff";ctx.fillText(`d = ${state.shaftD} mm`,100,390);ctx.fillText(`span = ${state.span} mm`,420,390)}
+}
+function card(k,v,u=""){return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="u">${u}</div></div>`}
+function updateCards(){
+ const r=calc();let a=[];
+ a.push(card("Position",fmt(state.x,1),"mm"),card("Velocity",fmt(state.v,1),"mm/s"),card("Acceleration",fmt(state.a,1),"mm/s²"),card("Drive Force",fmt(r.Fd,1),"N"));
+ if(state.system==="sliding")a.push(card("Normal Load",fmt(r.N,0),"N"),card("Friction",fmt(r.Ff,1),"N"),card("Mean Pressure",fmt(r.p/1e6,3),"MPa"),card("Power Loss",fmt(r.loss,2),"W"));
+ if(state.system==="profile")a.push(card("Max Block Load",fmt(r.pmax,0),"N"),card("Min Block Load",fmt(r.pmin,0),"N"),card("Deflection",fmt(r.defl*1e6,2),"μm"),card("Life Est.",fmt(r.life,1),"km (educational)"));
+ if(state.system==="bearing")a.push(card("Bearing Load",fmt(r.P,0),"N"),card("Shaft Deflection",fmt(r.defl*1e6,2),"μm"),card("I",r.I.toExponential(3),"m⁴"),card("Life Est.",fmt(r.life,1),"km (educational)"));
+ $("cards").innerHTML=a.join("");
+ const b=$("statusBadge");b.className="badge "+(r.status==="SAFE"?"ok":r.status==="WARNING"?"warn":"bad");b.textContent=r.status;
+}
+function updateInfo(){
+ let s="";
+ if(state.system==="sliding")s=`<b>Object:</b> Sliding guideway<br><b>Function:</b> constrain motion to translation.<br><b>Model:</b> Coulomb friction Ff = μN.<br><b>Constraint:</b> lateral/rotational DOF idealized as fixed.<br><b>Limit:</b> mean pressure is only an average indicator; real pressure distribution and wear are not modeled.`;
+ if(state.system==="profile")s=`<b>Object:</b> Profile rail + 4 blocks<br><b>Function:</b> precise low-friction guidance and moment support.<br><b>Model:</b> static equilibrium, rigid platform, local δ=P/k.<br><b>Life:</b> L=(C/P)³×100 km educational convention.<br><b>Limit:</b> manufacturer moment factors, mounting compliance, lubrication and contamination are excluded.`;
+ if(state.system==="bearing")s=`<b>Object:</b> Linear ball bearing + round shaft<br><b>Model:</b> simply-supported shaft with central equivalent load.<br><b>Equation:</b> I=πd⁴/64; δmax=WL³/(48EI).<br><b>Limit:</b> housing deformation, shaft hardness and alignment are not modeled.`;
+ $("info").innerHTML=s;
+}
+function updateCalc(){
+ const r=calc(),m=motionTiming();let t=`SYSTEM: ${state.system.toUpperCase()}\n\nMOTION PROFILE\nStroke = ${state.stroke} mm\nVmax = ${state.vmax} mm/s\nAmax = ${state.amax} mm/s²\nCalculated cycle segment T = ${fmt(m.T,3)} s\nCurrent x = ${fmt(state.x,3)} mm\nv = ${fmt(state.v,3)} mm/s\na = ${fmt(state.a,3)} mm/s²\n\n`;
+ if(state.system==="sliding")t+=`SLIDING GUIDEWAY\nN = m g + Fext\n  = ${state.mass} × 9.80665 + ${state.extLoad}\n  = ${fmt(r.N,3)} N\nFf = μN = ${state.mu} × ${fmt(r.N,3)} = ${fmt(r.Ff,3)} N\nma = ${state.mass} × ${fmt(state.a/1000,4)} = ${fmt(r.Fin,3)} N\nFd,req = ma + sign(v)Ff = ${fmt(r.Fd,3)} N\np̄ = N/A = ${fmt(r.p/1e6,4)} MPa\nP_loss = Ff |v| = ${fmt(r.loss,3)} W\nStatic breakaway indicator = μs N = ${fmt(r.breakaway,3)} N`;
+ if(state.system==="profile")t+=`PROFILE RAIL — 2 RAIL × 2 BLOCK\nTotal vertical load W = Fy + mg = ${fmt(r.W,3)} N\nMoment from eccentricity M = W·e = ${fmt(r.W*state.ecc/1000,3)} N·m\nSide reactions from ΣF=0, ΣM=0:\nSide A = W/2 + We/(2B) = ${fmt(r.r[0]*2,3)} N\nSide B = W/2 - We/(2B) = ${fmt(r.r[2]*2,3)} N\nEach side split across 2 blocks.\nBlock reactions = [${r.r.map(x=>fmt(x,1)).join(", ")}] N\nPmax = ${fmt(r.pmax,3)} N\nδ = P/k = ${fmt(r.defl*1e6,3)} μm (preload factor included)\nL = (C/P)³ × 100 km = ${fmt(r.life,3)} km\nCheck: ΣR = ${fmt(r.r.reduce((a,b)=>a+b,0),3)} N ≈ W`;
+ if(state.system==="bearing")t+=`LINEAR BEARING + SHAFT\nW = radial load + mg = ${fmt(r.W,3)} N\nI = πd⁴/64\n  = ${r.I.toExponential(6)} m⁴\nδmax = WL³/(48EI)\n  = ${fmt(r.defl*1e6,3)} μm\nBearing load P ≈ W/nb = ${fmt(r.P,3)} N\nL = (C/P)³ × 100 km = ${fmt(r.life,3)} km\nShaft deflection and internal bearing deflection are distinct quantities.`;
+ t+=`\n\nSTATUS: ${r.status}\nAll ratings/life values are educational unless user/manufacturer data are supplied.`;
+ $("calcText").textContent=t;
+}
+function drawGraph(canvas,series,labelY,labelX="time (s)"){
+ const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#07111e";ctx.fillRect(0,0,w,h);
+ const pad=36;ctx.strokeStyle="#315373";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,10);ctx.lineTo(pad,h-pad);ctx.lineTo(w-8,h-pad);ctx.stroke();
+ if(!series.length)return;let xs=series.map(p=>p[0]),ys=series.map(p=>p[1]);let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);if(xmax===xmin)xmax=xmin+1;if(ymax===ymin){ymax+=1;ymin-=1}
+ const X=x=>pad+(x-xmin)/(xmax-xmin)*(w-pad-12),Y=y=>h-pad-(y-ymin)/(ymax-ymin)*(h-pad-18);
+ ctx.strokeStyle="#46c7ff";ctx.lineWidth=2;ctx.beginPath();series.forEach((p,i)=>{let x=X(p[0]),y=Y(p[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ ctx.fillStyle="#a9bdd0";ctx.font="11px Segoe UI";ctx.fillText(labelY,5,14);ctx.fillText(labelX,w-70,h-8);ctx.fillText(fmt(ymax,1),3,26);ctx.fillText(fmt(ymin,1),3,h-pad);
+}
+function updateGraphs(){
+ const m=motionTiming(),arr=[];for(let i=0;i<=120;i++){let t=m.T*i/120,q=motionAt(t),old={x:state.x,v:state.v,a:state.a};state.x=q.x;state.v=q.v;state.a=q.a;let r=calc();arr.push({t,x:q.x,v:q.v,a:q.a,F:r.Fd,D:r.defl||0,L:r.maxLoad||0});Object.assign(state,old)}
+ drawGraph($("g1"),arr.map(p=>[p.t,p.x]),"Position (mm)");
+ drawGraph($("g2"),arr.map(p=>[p.t,p.v]),"Velocity (mm/s)");
+ drawGraph($("g3"),arr.map(p=>[p.t,p.F]),"Drive Force (N)");
+ drawGraph($("g4"),arr.map(p=>[p.t,state.system==="sliding"?p.L:p.D*1e6]),state.system==="sliding"?"Normal Load (N)":"Deflection (μm)");
+}
+function updateCompare(){
+ let txt="";const mode=$("compareMode").value;
+ if(mode==="friction"){const N=state.mass*9.80665+(state.system==="sliding"?state.extLoad:0);txt=`Low μ=0.04 → F≈${fmt(.04*N,1)} N<br>High μ=0.16 → F≈${fmt(.16*N,1)} N<br>Higher sliding friction raises drive demand and power loss.`}
+ if(mode==="preload"){txt=`Low preload reduces internal drag but usually lowers rigidity.<br>High preload can improve stiffness/response but raises internal load and drag. This simulator uses an educational factor, not a manufacturer curve.`}
+ if(mode==="shaft"){const base=state.radial+state.mass*9.80665,L=state.span/1000,E=state.E*1e9;const f=d=>base*L**3/(48*E*(Math.PI*(d/1000)**4/64))*1e6;txt=`d=${Math.max(8,state.shaftD-5)} mm → δ≈${fmt(f(Math.max(8,state.shaftD-5)),2)} μm<br>d=${state.shaftD+5} mm → δ≈${fmt(f(state.shaftD+5),2)} μm<br>Beam deflection is strongly sensitive to d⁴.`}
+ $("compare").innerHTML=txt||"Choose a comparison mode.";
+}
+function updateChallenge(){
+ let html="";
+ if(state.system==="sliding")html=`<div class="q"><b>Challenge:</b> N=2000 N, μ=0.08. What is Ff?<br><button class="btn ans" data-ok="0">80 N</button><button class="btn ans" data-ok="1">160 N</button><button class="btn ans" data-ok="0">250 N</button><div class="small result"></div></div>`;
+ if(state.system==="profile")html=`<div class="q"><b>Challenge:</b> 4 identical blocks support Fy=4000 N symmetrically. Load per block?<br><button class="btn ans" data-ok="1">1000 N</button><button class="btn ans" data-ok="0">2000 N</button><button class="btn ans" data-ok="0">4000 N</button><div class="small result"></div></div>`;
+ if(state.system==="bearing")html=`<div class="q"><b>Challenge:</b> If shaft diameter increases, with all else fixed, beam deflection generally…<br><button class="btn ans" data-ok="1">decreases strongly</button><button class="btn ans" data-ok="0">increases</button><button class="btn ans" data-ok="0">stays constant</button><div class="small result"></div></div>`;
+ $("challengeBox").innerHTML=html;
+ document.querySelectorAll(".ans").forEach(b=>b.onclick=()=>{b.parentElement.querySelector(".result").textContent=b.dataset.ok==="1"?"Correct.":"Not yet. Use the governing equation shown in Calculation.";});
+}
+function updateStatus(){
+ const r=calc();$("stSystem").textContent=`SYSTEM: ${state.system}`;$("stPhase").textContent=`PHASE: ${state.phase}`;$("stModel").textContent=`MODEL: ${validate()?"Valid":"Invalid input"}`;$("stInput").textContent=`INPUT: a=${fmt(state.a,0)} mm/s²`;$("stOutput").textContent=`OUTPUT: x=${fmt(state.x,1)} mm, v=${fmt(state.v,1)} mm/s`;$("stDrive").textContent=`DRIVE: ${fmt(r.Fd,1)} N`;$("stLimit").textContent=`LIMIT: ${r.status}`;$("stTime").textContent=`TIME: ${fmt(state.t,2)} s ×${state.animSpeed}`;
+ $("overlaySystem").textContent=state.system==="sliding"?"Sliding Guideway":state.system==="profile"?"Profile Rail Guide":"Linear Bearing + Shaft";$("overlayState").textContent=`${state.phase} | x=${fmt(state.x,1)} mm | ${r.status}`;
+}
+function updateLanguage(){
+ const d=dict[state.lang];$("title").textContent=d.title;$("controlsTitle").textContent=d.controls;$("langBtn").textContent=state.lang==="id"?"ID | EN":"EN | ID";
+}
+function updateAll(){toggleFields();draw();updateCards();updateInfo();updateCalc();updateGraphs();updateCompare();updateChallenge();updateStatus();updateLanguage()}
+function recordData(){
+ const r=calc();state.trials.push({id:state.trials.length+1,system:state.system,t:state.t,x:state.x,v:state.v,a:state.a,drive:r.Fd,load:r.maxLoad,defl:r.defl||0,status:r.status});renderData();
+}
+function renderData(){$("dataBody").innerHTML=state.trials.map(q=>`<tr><td>${q.id}</td><td>${q.system}</td><td>${fmt(q.t,2)}</td><td>${fmt(q.x,1)}</td><td>${fmt(q.v,1)}</td><td>${fmt(q.a,1)}</td><td>${fmt(q.drive,1)}</td><td>${fmt(q.load,1)}</td><td>${fmt(q.defl*1e6,2)} μm</td><td>${q.status}</td></tr>`).join("")}
+function exportCSV(){
+ const head=["Trial ID","System","time_s","x_mm","v_mm_s","a_mm_s2","drive_N","reaction_or_load_N","deflection_m","status"];
+ const rows=state.trials.map(q=>[q.id,q.system,q.t,q.x,q.v,q.a,q.drive,q.load,q.defl,q.status]);
+ const blob=new Blob([[head,...rows].map(r=>r.join(",")).join("\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="linear_guidance_experiment.csv";a.click();URL.revokeObjectURL(a.href);
+}
+function switchBottom(name){
+ ["graphs","calc","worksheet","challenge","data"].forEach(n=>$(n+"Pane").classList.toggle("hidden",n!==name));
+ document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.bottom===name));
+}
+$("preset").onchange=e=>applyPreset(+e.target.value);
+$("system").onchange=e=>{state.system=e.target.value;onParamChange()};
+$("motion").onchange=e=>{state.motion=e.target.value;onParamChange()};
+$("langBtn").onclick=()=>{state.lang=state.lang==="id"?"en":"id";updateLanguage()};
+$("levelBtn").onclick=()=>{const levels=["BEGINNER","INTERMEDIATE","ADVANCED"],i=(levels.indexOf(state.level)+1)%3;state.level=levels[i];$("levelBtn").textContent=state.level};
+$("play").onclick=()=>state.running=true;$("pause").onclick=()=>state.running=false;
+$("step").onclick=()=>{state.running=false;state.t+=.05;computeMotion(state.t);updateAll()};
+$("reset").onclick=()=>{state.running=false;state.t=0;state.dir=1;state.history=[];computeMotion(0);updateAll()};
+$("cycle").onclick=()=>{state.oneCycle=true;state.running=true;state.t=0};
+$("reverse").onclick=()=>{state.dir*=-1;state.running=true};
+$("forces").onclick=e=>{state.showForces=!state.showForces;e.target.classList.toggle("active",state.showForces);draw()};
+$("dims").onclick=e=>{state.showDims=!state.showDims;e.target.classList.toggle("active",state.showDims);draw()};
+$("defl").onclick=e=>{state.showDef=!state.showDef;e.target.classList.toggle("active",state.showDef);draw()};
+$("equations").onclick=()=>switchBottom("calc");
+document.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{state.stage=b.dataset.stage;document.querySelectorAll(".stage").forEach(x=>x.classList.toggle("active",x===b));draw()});
+$("autoConvert").onclick=()=>{const seq=["real","model","motion"];let i=0;const timer=setInterval(()=>{state.stage=seq[i];document.querySelectorAll(".stage").forEach(x=>x.classList.toggle("active",x.dataset.stage===state.stage));draw();if(++i>=seq.length)clearInterval(timer)},450)};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>switchBottom(b.dataset.bottom));
+$("record").onclick=recordData;$("clearData").onclick=()=>{state.trials=[];renderData()};$("csv").onclick=exportCSV;$("print").onclick=()=>window.print();$("compareMode").onchange=updateCompare;
+let last=performance.now();
+function animate(now){let dt=Math.min(.05,(now-last)/1000);last=now;if(state.running){state.t+=dt*state.animSpeed;computeMotion(state.t);if(state.oneCycle&&state.t>=state.cycleT){state.running=false;state.oneCycle=false;state.t=state.cycleT;computeMotion(state.t)}updateCards();updateStatus();draw()}requestAnimationFrame(animate)}
+initSelects();syncInputs();toggleFields();computeMotion(0);updateAll();requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>
