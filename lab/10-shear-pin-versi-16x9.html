@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Lab — Pengaman: Shear Pin &amp; Relief Valve</title>
+<style>
+:root{
+  --bg-deep:#0a0f1a;
+  --bg-panel:#111a2b;
+  --bg-panel-2:#16223a;
+  --bg-raised:#1c2b47;
+  --border:#2a3a56;
+  --border-soft:#213047;
+  --text-primary:#e9eefb;
+  --text-muted:#8fa0c2;
+  --text-dim:#5f7096;
+  --accent-cyan:#37d0e6;
+  --accent-blue:#4f8cff;
+  --safe:#33d17a;
+  --warn:#ffb020;
+  --crit:#ff5a5a;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg-deep);color:var(--text-primary);font-family:var(--sans);}
+body{min-height:100vh;}
+button{font-family:var(--sans);cursor:pointer;}
+input,select,textarea{font-family:var(--sans);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:var(--bg-panel);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+
+/* ---------- Header ---------- */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;background:linear-gradient(180deg,#0d1524,#0a0f1a);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;
+  flex-wrap:wrap;gap:10px;
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand .mark{
+  width:34px;height:34px;border-radius:7px;
+  background:conic-gradient(from 220deg, var(--accent-cyan), var(--accent-blue));
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#031018;font-size:15px;
+}
+.brand h1{font-size:15px;margin:0;line-height:1.25;font-weight:600;letter-spacing:.2px;}
+.brand h1 small{display:block;font-weight:400;color:var(--text-muted);font-size:11.5px;margin-top:2px;}
+.header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.select-wrap select{
+  background:var(--bg-panel-2);color:var(--text-primary);border:1px solid var(--border);
+  border-radius:6px;padding:7px 10px;font-size:12.5px;min-width:160px;
+}
+.lang-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.lang-switch button{
+  background:var(--bg-panel-2);color:var(--text-muted);border:none;padding:7px 12px;font-size:12px;font-weight:600;
+}
+.lang-switch button.active{background:var(--accent-cyan);color:#031018;}
+
+/* ---------- Status bar ---------- */
+.statusbar{
+  display:flex;gap:0;flex-wrap:wrap;background:var(--bg-panel);border-bottom:1px solid var(--border);
+  padding:8px 20px;font-size:11.5px;color:var(--text-muted);position:sticky;top:60px;z-index:40;
+}
+.statusbar .item{padding:4px 14px;border-right:1px solid var(--border-soft);white-space:nowrap;}
+.statusbar .item:last-child{border-right:none;}
+.statusbar .item b{color:var(--text-primary);font-family:var(--mono);font-weight:600;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;letter-spacing:.3px;}
+.badge.safe{background:rgba(51,209,122,.15);color:var(--safe);border:1px solid rgba(51,209,122,.4);}
+.badge.warn{background:rgba(255,176,32,.15);color:var(--warn);border:1px solid rgba(255,176,32,.4);}
+.badge.crit{background:rgba(255,90,90,.15);color:var(--crit);border:1px solid rgba(255,90,90,.4);}
+.badge.info{background:rgba(79,140,255,.15);color:var(--accent-blue);border:1px solid rgba(79,140,255,.4);}
+
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:290px 1fr 320px;gap:14px;padding:14px 16px;align-items:start;}
+@media(max-width:1100px){.layout{grid-template-columns:1fr;}}
+.panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.panel + .panel{margin-top:14px;}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin:0 0 12px;font-weight:700;}
+.panel h3{font-size:12.5px;color:var(--text-primary);margin:14px 0 8px;font-weight:600;}
+.field{margin-bottom:12px;}
+.field label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:5px;}
+.field label span.val{font-family:var(--mono);color:var(--accent-cyan);font-weight:600;}
+.field input[type=range]{width:100%;accent-color:var(--accent-cyan);}
+.field input[type=number],.field select{
+  width:100%;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--text-primary);
+  border-radius:6px;padding:6px 8px;font-size:12.5px;
+}
+.radio-row{display:flex;gap:14px;font-size:12px;color:var(--text-muted);}
+.radio-row label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.btn-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.btn{
+  background:var(--bg-raised);border:1px solid var(--border);color:var(--text-primary);
+  padding:7px 11px;border-radius:6px;font-size:11.5px;font-weight:600;letter-spacing:.2px;
+}
+.btn:hover{border-color:var(--accent-cyan);}
+.btn.primary{background:var(--accent-cyan);color:#031018;border-color:var(--accent-cyan);}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.ghost{background:transparent;}
+.btn.small{padding:5px 9px;font-size:11px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.run-indicator{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted);margin:8px 0 2px;}
+.run-dot{width:9px;height:9px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+.run-dot.running{background:var(--safe);box-shadow:0 0 0 0 rgba(51,209,122,.6);animation:pulseDot 1.1s infinite;}
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(51,209,122,.55);}
+  70%{box-shadow:0 0 0 7px rgba(51,209,122,0);}
+  100%{box-shadow:0 0 0 0 rgba(51,209,122,0);}
+}
+.idle-hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  background:rgba(10,15,26,.85);border:1px solid var(--border);color:var(--warn);
+  font-size:11px;padding:6px 12px;border-radius:6px;text-align:center;max-width:88%;display:none;
+}
+.tooltip-chip{
+  display:inline-flex;align-items:center;gap:5px;background:var(--bg-panel-2);border:1px solid var(--border-soft);
+  border-radius:5px;padding:3px 8px;font-size:11px;color:var(--text-muted);margin:2px 4px 2px 0;cursor:help;
+}
+.tooltip-chip b{color:var(--accent-cyan);font-family:var(--mono);}
+
+/* stage tabs */
+.stage-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.stage-tabs button{
+  flex:1;min-width:120px;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--text-muted);
+  padding:8px 8px;border-radius:6px;font-size:11.5px;font-weight:600;
+}
+.stage-tabs button.active{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);}
+
+.canvas-wrap{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:8px;position:relative;}
+#mainCanvas{display:block;width:100%;aspect-ratio:16/9;height:auto;background:#0c1424;border-radius:5px;}
+.chart-card canvas{display:block;width:100%;aspect-ratio:16/9;height:auto;background:#0c1424;border-radius:5px;}
+.canvas-caption{font-size:10.5px;color:var(--text-dim);margin-top:6px;text-align:center;}
+.hotspot-hint{position:absolute;top:12px;right:12px;font-size:10px;color:var(--text-dim);background:rgba(10,15,26,.7);padding:3px 8px;border-radius:5px;}
+
+/* cards */
+.card{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+.card .row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed var(--border-soft);}
+.card .row:last-child{border-bottom:none;}
+.card .row span:first-child{color:var(--text-muted);}
+.card .row span:last-child{font-family:var(--mono);font-weight:600;}
+.card.status-INTACT, .card.status-CLOSED{border-left:3px solid var(--safe);}
+.card.status-SHEARED, .card.status-OPEN{border-left:3px solid var(--crit);}
+.card.status-CRACKING{border-left:3px solid var(--warn);}
+.card.status-RESEATING{border-left:3px solid var(--accent-blue);}
+
+/* info panel */
+.info-panel{min-height:110px;}
+.info-panel .empty{color:var(--text-dim);font-size:12px;text-align:center;padding:20px 4px;}
+.info-panel dt{font-size:10.5px;text-transform:uppercase;color:var(--text-dim);letter-spacing:.4px;margin-top:8px;}
+.info-panel dd{margin:2px 0 0;font-size:12.5px;color:var(--text-primary);}
+
+/* flow diagram */
+.flow-box{fill:var(--bg-raised);stroke:var(--border);stroke-width:1;}
+.flow-text{fill:var(--text-primary);font-size:11px;font-family:var(--sans);}
+.flow-text-mono{fill:var(--accent-cyan);font-size:11px;font-family:monospace;}
+.flow-arrow{stroke:var(--text-muted);stroke-width:1.6;marker-end:url(#arrowhead);fill:none;}
+
+/* calc steps */
+.calc-steps{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.65;}
+.calc-steps .step{margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border-soft);}
+.calc-steps .step:last-child{border-bottom:none;margin-bottom:0;}
+.calc-steps .formula{font-family:var(--mono);color:var(--accent-cyan);}
+.calc-steps .label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+
+/* bottom tabs */
+.bottom-tabs{display:flex;gap:4px;margin:18px 16px 0;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.bottom-tabs button{
+  background:transparent;border:none;color:var(--text-muted);padding:10px 16px;font-size:12.5px;font-weight:600;
+  border-bottom:2px solid transparent;
+}
+.bottom-tabs button.active{color:var(--accent-cyan);border-bottom-color:var(--accent-cyan);}
+.bottom-panel{margin:0 16px 24px;background:var(--bg-panel);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:18px;}
+.bottom-view{display:none;}
+.bottom-view.active{display:block;}
+
+.chart-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:10px;}
+.chart-card h4{margin:0 0 6px;font-size:11.5px;color:var(--text-muted);font-weight:600;}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+table.data-table th,table.data-table td{border:1px solid var(--border-soft);padding:6px 8px;text-align:center;white-space:nowrap;}
+table.data-table th{background:var(--bg-raised);color:var(--text-muted);font-weight:600;position:sticky;top:0;}
+.table-scroll{max-height:340px;overflow:auto;border:1px solid var(--border-soft);border-radius:6px;}
+
+.worksheet-field{margin-bottom:14px;}
+.worksheet-field label{display:block;font-size:12.5px;color:var(--text-primary);font-weight:600;margin-bottom:6px;}
+.worksheet-field textarea{width:100%;min-height:64px;background:var(--bg-panel-2);border:1px solid var(--border);
+  color:var(--text-primary);border-radius:6px;padding:8px;font-size:12.5px;resize:vertical;}
+
+.quiz-q{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:14px;margin-bottom:12px;}
+.quiz-q p.qtext{margin:0 0 10px;font-size:13px;font-weight:600;}
+.quiz-opt{display:block;font-size:12.5px;padding:6px 8px;border-radius:6px;margin-bottom:4px;cursor:pointer;border:1px solid transparent;}
+.quiz-opt:hover{background:var(--bg-raised);}
+.quiz-opt input{margin-right:8px;}
+.quiz-feedback{font-size:12px;margin-top:8px;padding:8px 10px;border-radius:6px;display:none;}
+.quiz-feedback.correct{background:rgba(51,209,122,.12);color:var(--safe);display:block;}
+.quiz-feedback.incorrect{background:rgba(255,90,90,.12);color:var(--crit);display:block;}
+
+.challenge-card{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:16px;margin-bottom:14px;}
+.hint-box{background:var(--bg-raised);border-radius:6px;padding:8px 10px;font-size:12px;margin-top:8px;color:var(--text-muted);}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:800px){.compare-grid{grid-template-columns:1fr;}}
+.compare-col{background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:14px;}
+.compare-col h4{margin:0 0 10px;font-size:12.5px;color:var(--accent-cyan);}
+
+footer{text-align:center;color:var(--text-dim);font-size:11px;padding:20px;}
+
+@media print{
+  header,.statusbar,.bottom-tabs,#leftPanel,#rightPanel,.stage-tabs,.btn-row,footer{display:none !important;}
+  .layout{grid-template-columns:1fr !important;padding:0;}
+  body{background:#fff;color:#000;}
+  .panel,.bottom-panel,.card,.chart-card,.calc-steps,.worksheet-field textarea{background:#fff !important;color:#000 !important;border-color:#999 !important;}
+  .bottom-view{display:block !important;}
+  #printOnly{display:block !important;}
+}
+#printOnly{display:none;}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0"><defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L6,3 L0,6 Z" fill="#8fa0c2"/>
+  </marker>
+</defs></svg>
+
+<header>
+  <div class="brand">
+    <div class="mark">PS</div>
+    <h1 data-i18n="appTitle">PERANGKAT PENGAMAN: SHEAR PIN &amp; RELIEF VALVE
+      <small data-i18n="appSubtitle">Virtual Laboratory — Mechanical &amp; Hydraulic Protective Devices</small>
+    </h1>
+  </div>
+  <div class="header-controls">
+    <div class="select-wrap">
+      <select id="presetSelect"></select>
+    </div>
+    <div class="lang-switch">
+      <button id="langID" class="active">ID</button>
+      <button id="langEN">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="statusbar" id="statusBar"></div>
+
+<div class="layout">
+
+  <!-- ================= LEFT PANEL ================= -->
+  <div id="leftPanel">
+    <div class="panel">
+      <h2 data-i18n="lblSystemType">Jenis Sistem</h2>
+      <div class="field">
+        <select id="systemTypeSelect">
+          <option value="pin" data-i18n="optPin">Shear Pin (Pin Geser Pengaman)</option>
+          <option value="valve" data-i18n="optValve">Relief Valve (Katup Pelepas Tekanan)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblLearningMode">Mode Belajar</span></label>
+        <select id="learningModeSelect">
+          <option value="beginner" data-i18n="optBeginner">Beginner</option>
+          <option value="intermediate" selected data-i18n="optIntermediate">Intermediate</option>
+          <option value="advanced" data-i18n="optAdvanced">Advanced</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SHEAR PIN CONTROLS -->
+    <div class="panel" id="pinControls">
+      <h2 data-i18n="hdgPinControls">Parameter Shear Pin</h2>
+      <div class="field">
+        <label><span data-i18n="lblShearMode">Mode Geser</span></label>
+        <div class="radio-row">
+          <label><input type="radio" name="shearMode" value="single" checked> <span data-i18n="optSingleShear">Single Shear</span></label>
+          <label><input type="radio" name="shearMode" value="double"> <span data-i18n="optDoubleShear">Double Shear</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblDiameter">Diameter Pin, d</span><span class="val"><span id="dVal">6.0</span> mm</span></label>
+        <input type="range" id="dSlider" min="2" max="25" step="0.1" value="6">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblPitchRadius">Pitch Radius, r</span><span class="val"><span id="rVal">25</span> mm</span></label>
+        <input type="range" id="rSlider" min="5" max="80" step="1" value="25">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblMaterial">Material Pin</span></label>
+        <select id="materialSelect"></select>
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblTauU">Kekuatan Geser Ultimate, τu</span><span class="val"><span id="tauUVal">250</span> MPa</span></label>
+        <input type="range" id="tauUSlider" min="50" max="450" step="5" value="250">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblTrated">Torsi Operasi Rated, T_rated</span><span class="val"><span id="tratedVal">150</span> N·m</span></label>
+        <input type="range" id="tratedSlider" min="5" max="500" step="5" value="150">
+      </div>
+      <h3 data-i18n="hdgAppliedLoad">Beban Uji</h3>
+      <div class="field">
+        <label><span data-i18n="lblAppliedT">Applied Torque, T</span><span class="val"><span id="appliedTVal">0</span> N·m</span></label>
+        <input type="range" id="appliedTSlider" min="0" max="600" step="1" value="0">
+      </div>
+    </div>
+
+    <!-- RELIEF VALVE CONTROLS -->
+    <div class="panel" id="valveControls" style="display:none;">
+      <h2 data-i18n="hdgValveControls">Parameter Relief Valve</h2>
+      <div class="field">
+        <label><span data-i18n="lblSeatDia">Diameter Seat, ds</span><span class="val"><span id="dsVal">8.0</span> mm</span></label>
+        <input type="range" id="dsSlider" min="3" max="30" step="0.5" value="8">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblSpringK">Konstanta Pegas, k</span><span class="val"><span id="kVal">15</span> N/mm</span></label>
+        <input type="range" id="kSlider" min="1" max="100" step="1" value="15">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblPcrackSet">Set Cracking Pressure, P_crack</span><span class="val"><span id="pcrackSetVal">150</span> bar</span></label>
+        <input type="range" id="pcrackSetSlider" min="1" max="300" step="1" value="150">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblXmax">Lift Maksimum, x_max</span><span class="val"><span id="xmaxVal">6.0</span> mm</span></label>
+        <input type="range" id="xmaxSlider" min="1" max="15" step="0.5" value="6">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblCd">Discharge Coefficient, Cd</span><span class="val"><span id="cdVal">0.60</span></span></label>
+        <input type="range" id="cdSlider" min="0.4" max="1.0" step="0.01" value="0.6">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblFluid">Fluida</span></label>
+        <select id="fluidSelect"></select>
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblPdown">Tekanan Hilir (Tangki), P_down</span><span class="val"><span id="pdownVal">0</span> bar</span></label>
+        <input type="range" id="pdownSlider" min="0" max="20" step="0.5" value="0">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblBlowdown">Blowdown</span><span class="val"><span id="blowdownVal">10</span> %</span></label>
+        <input type="range" id="blowdownSlider" min="2" max="30" step="1" value="10">
+      </div>
+      <h3 data-i18n="hdgAppliedLoad2">Beban Uji</h3>
+      <div class="field">
+        <label><span data-i18n="lblSysP">System Pressure, P</span><span class="val"><span id="sysPVal">0</span> bar</span></label>
+        <input type="range" id="sysPSlider" min="0" max="400" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 data-i18n="hdgAnimation">Kontrol Animasi</h2>
+      <div class="field">
+        <label><span data-i18n="lblAnimSpeed">Animation Speed</span><span class="val"><span id="animSpeedVal">1.0</span>×</span></label>
+        <input type="range" id="animSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+      </div>
+      <div class="field">
+        <label><span data-i18n="lblMotionScale">Motion Display Scale</span><span class="val"><span id="motionScaleVal">1.0</span>×</span></label>
+        <input type="range" id="motionScaleSlider" min="1" max="6" step="0.5" value="1">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="playBtn" data-i18n="btnPlay">▶ PLAY</button>
+        <button class="btn" id="pauseBtn" data-i18n="btnPause">⏸ PAUSE</button>
+        <button class="btn" id="stepBtn" data-i18n="btnStep">⏭ STEP</button>
+        <button class="btn" id="resetBtn" data-i18n="btnReset">⟲ RESET</button>
+        <button class="btn" id="runCycleBtn" data-i18n="btnRunCycle">RUN ONE CYCLE</button>
+      </div>
+      <div class="run-indicator"><span class="run-dot" id="runDot"></span><span id="runLabel"></span></div>
+      <div class="btn-row">
+        <button class="btn ghost small toggle-btn active" id="toggleFlow" data-i18n="btnShowFlow">SHOW PROTECTION FLOW</button>
+        <button class="btn ghost small toggle-btn active" id="toggleForce" data-i18n="btnShowForce">SHOW FORCE/PRESSURE</button>
+        <button class="btn ghost small toggle-btn" id="toggleDim" data-i18n="btnShowDim">SHOW DIMENSIONS</button>
+        <button class="btn ghost small toggle-btn" id="toggleEq" data-i18n="btnShowEq">SHOW EQUATIONS</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="recordBtn" data-i18n="btnRecord">● RECORD DATA</button>
+        <button class="btn" id="compareBtn" data-i18n="btnCompare">COMPARE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div id="centerPanel">
+    <div class="panel">
+      <h2 data-i18n="hdgStage">3-Stage Engineering Conversion</h2>
+      <div class="stage-tabs">
+        <button class="stage-btn active" data-stage="1" data-i18n="tabStage1">1. REAL SYSTEM</button>
+        <button class="stage-btn" data-stage="2" data-i18n="tabStage2">2. PROTECTION MODEL</button>
+        <button class="stage-btn" data-stage="3" data-i18n="tabStage3">3. LOAD/PRESSURE MODEL</button>
+        <button class="btn primary small" id="autoConvertBtn" data-i18n="btnAutoConvert" style="flex:0 0 auto;">AUTO CONVERT</button>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="mainCanvas" width="900" height="440"></canvas>
+        <div class="hotspot-hint" data-i18n="hintClick">Klik komponen untuk detail →</div>
+        <div class="idle-hint" id="idleHint"></div>
+      </div>
+      <div class="canvas-caption" id="canvasCaption"></div>
+    </div>
+
+    <div class="panel" id="flowPanel">
+      <h2 data-i18n="hdgFlowDiagram">Diagram Alur Pengaman / Protection Flow Diagram</h2>
+      <svg id="flowSvg" viewBox="0 0 900 160" style="width:100%;height:auto;background:var(--bg-panel-2);border:1px solid var(--border-soft);border-radius:8px;"></svg>
+    </div>
+
+    <div class="panel" id="eqPanel" style="display:none;">
+      <h2 data-i18n="hdgCalcSteps">Simulasi Perhitungan Step-by-Step</h2>
+      <div class="calc-steps" id="calcSteps"></div>
+    </div>
+  </div>
+
+  <!-- ================= RIGHT PANEL ================= -->
+  <div id="rightPanel">
+    <div class="panel">
+      <h2 data-i18n="hdgCards">Engineering Cards</h2>
+      <div id="cardsWrap"></div>
+    </div>
+    <div class="panel">
+      <h2 data-i18n="hdgInfoPanel">Panel Informasi</h2>
+      <div class="info-panel" id="infoPanel"><div class="empty" data-i18n="infoEmpty">Klik komponen pada diagram untuk melihat detail OBJECT, FUNCTION, PARAMETERS, EQUATION, ASSUMPTIONS, LIMITS, dan APPLICATION.</div></div>
+    </div>
+    <div class="panel">
+      <h2 data-i18n="hdgGlossary">Engineering Tooltip / Glossary</h2>
+      <div id="glossaryWrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BOTTOM TABS ================= -->
+<div class="bottom-tabs" id="bottomTabs">
+  <button class="active" data-tab="graphs" data-i18n="tabGraphs">GRAFIK</button>
+  <button data-tab="table" data-i18n="tabTable">TABEL DATA</button>
+  <button data-tab="worksheet" data-i18n="tabWorksheet">LEMBAR KERJA</button>
+  <button data-tab="quiz" data-i18n="tabQuiz">KUIS KONSEP</button>
+  <button data-tab="challenge" data-i18n="tabChallenge">TANTANGAN</button>
+  <button data-tab="compare" data-i18n="tabCompareView">BANDINGKAN</button>
+</div>
+
+<div class="bottom-panel">
+  <div class="bottom-view active" id="view-graphs">
+    <div class="chart-grid" id="chartGrid"></div>
+  </div>
+
+  <div class="bottom-view" id="view-table">
+    <div class="btn-row" style="margin-bottom:10px;">
+      <button class="btn" id="clearDataBtn" data-i18n="btnClearData">CLEAR DATA</button>
+      <button class="btn primary" id="exportCsvBtn" data-i18n="btnExportCsv">EXPORT CSV</button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="bottom-view" id="view-worksheet">
+    <div class="worksheet-field">
+      <label data-i18n="wsObjective">Tujuan Eksperimen (Objective)</label>
+      <textarea id="wsObjective"></textarea>
+    </div>
+    <div class="worksheet-field">
+      <label data-i18n="wsVariables">Variabel Bebas / Terkontrol</label>
+      <textarea id="wsVariables"></textarea>
+    </div>
+    <div class="worksheet-field">
+      <label data-i18n="wsPrediction">Prediksi Sebelum Menjalankan Trial</label>
+      <textarea id="wsPrediction"></textarea>
+    </div>
+    <div class="worksheet-field">
+      <label data-i18n="wsObservation">Perbandingan Prediksi vs Hasil &amp; Tren Grafik</label>
+      <textarea id="wsObservation"></textarea>
+    </div>
+    <div class="worksheet-field">
+      <label data-i18n="wsLimits">Evaluasi Batas Model</label>
+      <textarea id="wsLimits"></textarea>
+    </div>
+    <div class="worksheet-field">
+      <label data-i18n="wsConclusion">Kesimpulan &amp; Kaitan dengan Aplikasi Mesin/Manufaktur</label>
+      <textarea id="wsConclusion"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="printBtn" data-i18n="btnPrint">PRINT LAB REPORT</button>
+    </div>
+    <p style="font-size:11.5px;color:var(--text-dim);" id="trialCountNote"></p>
+  </div>
+
+  <div class="bottom-view" id="view-quiz">
+    <div id="quizWrap"></div>
+  </div>
+
+  <div class="bottom-view" id="view-challenge">
+    <div id="challengeWrap"></div>
+  </div>
+
+  <div class="bottom-view" id="view-compare">
+    <div class="compare-grid" id="compareGrid"></div>
+    <div class="table-scroll" style="margin-top:14px;">
+      <table class="data-table" id="compareTable"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="printOnly"></div>
+
+<footer data-i18n="footerNote">Virtual Lab ini berjalan sepenuhnya offline pada satu file HTML — tanpa koneksi internet, CDN, atau proses build.</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* =====================================================================
+   1. I18N DICTIONARY
+   ===================================================================== */
+const I18N = {
+  appTitle:{id:"PERANGKAT PENGAMAN: SHEAR PIN & RELIEF VALVE",en:"PROTECTIVE DEVICES: SHEAR PIN & RELIEF VALVE"},
+  appSubtitle:{id:"Virtual Laboratory — Perangkat Pengaman Mekanis & Hidrolik",en:"Virtual Laboratory — Mechanical & Hydraulic Protective Devices"},
+  lblSystemType:{id:"Jenis Sistem",en:"System Type"},
+  optPin:{id:"Shear Pin (Pin Geser Pengaman)",en:"Shear Pin (Mechanical Fuse)"},
+  optValve:{id:"Relief Valve (Katup Pelepas Tekanan)",en:"Relief Valve (Pressure Relief)"},
+  lblLearningMode:{id:"Mode Belajar",en:"Learning Mode"},
+  optBeginner:{id:"Beginner",en:"Beginner"},
+  optIntermediate:{id:"Intermediate",en:"Intermediate"},
+  optAdvanced:{id:"Advanced",en:"Advanced"},
+  hdgPinControls:{id:"Parameter Shear Pin",en:"Shear Pin Parameters"},
+  lblShearMode:{id:"Mode Geser",en:"Shear Mode"},
+  optSingleShear:{id:"Single Shear",en:"Single Shear"},
+  optDoubleShear:{id:"Double Shear",en:"Double Shear"},
+  lblDiameter:{id:"Diameter Pin, d",en:"Pin Diameter, d"},
+  lblPitchRadius:{id:"Pitch Radius, r",en:"Pitch Radius, r"},
+  lblMaterial:{id:"Material Pin",en:"Pin Material"},
+  lblTauU:{id:"Kekuatan Geser Ultimate, τu",en:"Ultimate Shear Strength, τu"},
+  lblTrated:{id:"Torsi Operasi Rated, T_rated",en:"Rated Operating Torque, T_rated"},
+  hdgAppliedLoad:{id:"Beban Uji",en:"Test Load"},
+  hdgAppliedLoad2:{id:"Beban Uji",en:"Test Load"},
+  lblAppliedT:{id:"Applied Torque, T",en:"Applied Torque, T"},
+  hdgValveControls:{id:"Parameter Relief Valve",en:"Relief Valve Parameters"},
+  lblSeatDia:{id:"Diameter Seat, ds",en:"Seat Diameter, ds"},
+  lblSpringK:{id:"Konstanta Pegas, k",en:"Spring Constant, k"},
+  lblPcrackSet:{id:"Set Cracking Pressure, P_crack",en:"Set Cracking Pressure, P_crack"},
+  lblXmax:{id:"Lift Maksimum, x_max",en:"Maximum Lift, x_max"},
+  lblCd:{id:"Discharge Coefficient, Cd",en:"Discharge Coefficient, Cd"},
+  lblFluid:{id:"Fluida",en:"Fluid"},
+  lblPdown:{id:"Tekanan Hilir (Tangki), P_down",en:"Downstream (Tank) Pressure, P_down"},
+  lblBlowdown:{id:"Blowdown",en:"Blowdown"},
+  lblSysP:{id:"System Pressure, P",en:"System Pressure, P"},
+  hdgAnimation:{id:"Kontrol Animasi",en:"Animation Controls"},
+  lblAnimSpeed:{id:"Animation Speed",en:"Animation Speed"},
+  lblMotionScale:{id:"Motion Display Scale",en:"Motion Display Scale"},
+  btnPlay:{id:"▶ PLAY",en:"▶ PLAY"},
+  btnPause:{id:"⏸ PAUSE",en:"⏸ PAUSE"},
+  btnStep:{id:"⏭ STEP",en:"⏭ STEP"},
+  btnReset:{id:"⟲ RESET",en:"⟲ RESET"},
+  btnRunCycle:{id:"RUN ONE CYCLE",en:"RUN ONE CYCLE"},
+  btnShowFlow:{id:"TAMPILKAN ALUR",en:"SHOW FLOW"},
+  btnShowForce:{id:"TAMPILKAN GAYA/TEKANAN",en:"SHOW FORCE/PRESSURE"},
+  btnShowDim:{id:"TAMPILKAN DIMENSI",en:"SHOW DIMENSIONS"},
+  btnShowEq:{id:"TAMPILKAN PERSAMAAN",en:"SHOW EQUATIONS"},
+  btnRecord:{id:"● RECORD DATA",en:"● RECORD DATA"},
+  btnCompare:{id:"COMPARE",en:"COMPARE"},
+  hdgStage:{id:"3-Stage Engineering Conversion",en:"3-Stage Engineering Conversion"},
+  tabStage1:{id:"1. SISTEM NYATA",en:"1. REAL SYSTEM"},
+  tabStage2:{id:"2. MODEL PENGAMAN",en:"2. PROTECTION MODEL"},
+  tabStage3:{id:"3. MODEL BEBAN/TEKANAN",en:"3. LOAD/PRESSURE MODEL"},
+  btnAutoConvert:{id:"KONVERSI OTOMATIS",en:"AUTO CONVERT"},
+  hintClick:{id:"Klik komponen untuk detail →",en:"Click a component for detail →"},
+  hdgFlowDiagram:{id:"Diagram Alur Pengaman / Protection Flow Diagram",en:"Protection Flow Diagram"},
+  hdgCalcSteps:{id:"Simulasi Perhitungan Step-by-Step",en:"Step-by-Step Engineering Calculation"},
+  hdgCards:{id:"Engineering Cards",en:"Engineering Cards"},
+  hdgInfoPanel:{id:"Panel Informasi",en:"Information Panel"},
+  infoEmpty:{id:"Klik komponen pada diagram untuk melihat detail OBJECT, FUNCTION, PARAMETERS, EQUATION, ASSUMPTIONS, LIMITS, dan APPLICATION.",en:"Click a component on the diagram to see OBJECT, FUNCTION, PARAMETERS, EQUATION, ASSUMPTIONS, LIMITS, and APPLICATION."},
+  hdgGlossary:{id:"Engineering Tooltip / Glosarium",en:"Engineering Tooltip / Glossary"},
+  tabGraphs:{id:"GRAFIK",en:"GRAPHS"},
+  tabTable:{id:"TABEL DATA",en:"DATA TABLE"},
+  tabWorksheet:{id:"LEMBAR KERJA",en:"WORKSHEET"},
+  tabQuiz:{id:"KUIS KONSEP",en:"CONCEPT QUIZ"},
+  tabChallenge:{id:"TANTANGAN",en:"CHALLENGE"},
+  tabCompareView:{id:"BANDINGKAN",en:"COMPARE"},
+  btnClearData:{id:"CLEAR DATA",en:"CLEAR DATA"},
+  btnExportCsv:{id:"EXPORT CSV",en:"EXPORT CSV"},
+  wsObjective:{id:"Tujuan Eksperimen (Objective)",en:"Experiment Objective"},
+  wsVariables:{id:"Variabel Bebas / Terkontrol",en:"Independent / Controlled Variables"},
+  wsPrediction:{id:"Prediksi Sebelum Menjalankan Trial",en:"Prediction Before Running Trials"},
+  wsObservation:{id:"Perbandingan Prediksi vs Hasil & Tren Grafik",en:"Prediction vs Result Comparison & Graph Trend"},
+  wsLimits:{id:"Evaluasi Batas Model",en:"Model Limitation Evaluation"},
+  wsConclusion:{id:"Kesimpulan & Kaitan dengan Aplikasi Mesin/Manufaktur",en:"Conclusion & Link to Machine/Manufacturing Application"},
+  btnPrint:{id:"CETAK LAPORAN LAB",en:"PRINT LAB REPORT"},
+  footerNote:{id:"Virtual Lab ini berjalan sepenuhnya offline pada satu file HTML — tanpa koneksi internet, CDN, atau proses build.",en:"This Virtual Lab runs fully offline from a single HTML file — no internet connection, CDN, or build process."},
+  stSystem:{id:"SISTEM",en:"SYSTEM"},
+  stPhase:{id:"FASE",en:"PHASE"},
+  stModel:{id:"MODEL",en:"MODEL"},
+  stInput:{id:"INPUT",en:"INPUT"},
+  stOutput:{id:"OUTPUT",en:"OUTPUT"},
+  stForce:{id:"GAYA/TEGANGAN",en:"FORCE/STRESS"},
+  stPressureFlow:{id:"TEKANAN/ALIR",en:"PRESSURE/FLOW"},
+  stLimit:{id:"STATUS BATAS",en:"LIMIT STATUS"},
+  stTime:{id:"WAKTU",en:"TIME"},
+  modelValid:{id:"Valid",en:"Valid"},
+  modelInvalid:{id:"Input Tidak Valid",en:"Invalid Input"},
+  modelLimit:{id:"Batas Model Terlampaui",en:"Model Limit Exceeded"},
+  safe:{id:"AMAN",en:"SAFE"},
+  warning:{id:"PERINGATAN",en:"WARNING"},
+  critical:{id:"KRITIS",en:"CRITICAL"},
+  notEval:{id:"Belum Dievaluasi",en:"Not Evaluated"},
+  runIndicatorRunning:{id:"Simulasi berjalan…",en:"Simulation running…"},
+  runIndicatorPaused:{id:"Simulasi dijeda",en:"Simulation paused"},
+  idleHintValve:{id:"Belum ada aktivasi — naikkan slider System Pressure di atas P_crack, atau klik RUN ONE CYCLE untuk melihat valve membuka.",en:"No activation yet — raise the System Pressure slider above P_crack, or click RUN ONE CYCLE to see the valve open."},
+  idleHintPin:{id:"Poros berputar normal — naikkan slider Applied Torque mendekati/melebihi T_fail, atau klik RUN ONE CYCLE untuk melihat pin patah.",en:"Shaft is rotating normally — raise the Applied Torque slider near/above T_fail, or click RUN ONE CYCLE to see the pin shear."},
+};
+
+let LANG = "id";
+function t(key){ return (I18N[key] && I18N[key][LANG]) || key; }
+function applyStaticI18n(){
+  // Leaf text-only elements get a full textContent replace;
+  // the one element with a nested <small> (brand title) gets special handling.
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k = el.getAttribute("data-i18n");
+    if(!I18N[k]) return;
+    if(k === "appTitle"){
+      el.firstChild.textContent = I18N[k][LANG] + " ";
+      return;
+    }
+    if(el.querySelector && el.querySelector("small")) return; // skip container with nested small
+    el.textContent = I18N[k][LANG];
+  });
+}
+
+/* =====================================================================
+   2. CALCULATION ENGINE (pure functions)
+   ===================================================================== */
+function shearPinArea(d_mm, shearMode){
+  const d = d_mm/1000;
+  const a1 = Math.PI/4*d*d;
+  return shearMode==="double" ? 2*a1 : a1;
+}
+function shearPinForce(T_Nm, r_mm){
+  const r = r_mm/1000;
+  if(r<=0) return 0;
+  return T_Nm/r;
+}
+function shearPinStress(F_N, A_m2){
+  if(A_m2<=0) return 0;
+  return F_N/A_m2;
+}
+function shearPinFailureTorque(tauU_MPa, A_m2, r_mm){
+  const tauU = tauU_MPa*1e6;
+  const r = r_mm/1000;
+  return tauU*A_m2*r;
+}
+function shearPinFullState(T_Nm, d_mm, shearMode, r_mm, tauU_MPa){
+  const A = shearPinArea(d_mm, shearMode);
+  const F = shearPinForce(T_Nm, r_mm);
+  const tau = shearPinStress(F, A);
+  const T_fail = shearPinFailureTorque(tauU_MPa, A, r_mm);
+  const tauU_Pa = tauU_MPa*1e6;
+  let status = "INTACT";
+  if(tau >= tauU_Pa) status = "SHEARED";
+  else if(tau >= 0.9*tauU_Pa) status = "CRACKING";
+  return {A,F,tau,T_fail,status};
+}
+function valveSeatArea(ds_mm){
+  const ds = ds_mm/1000;
+  return Math.PI/4*ds*ds;
+}
+function crackingPressureFromPreload(F0_N, A_m2){
+  if(A_m2<=0) return 0;
+  return F0_N/A_m2;
+}
+function preloadFromCrackingPressure(Pcrack_bar, A_m2){
+  return Pcrack_bar*1e5*A_m2;
+}
+function valveLift(P_bar, F0_N, k_Nmm, A_m2, xmax_mm){
+  const P = P_bar*1e5;
+  const forceOnDisc = P*A_m2;
+  if(forceOnDisc<=F0_N) return 0;
+  const k_Nm = k_Nmm*1000;
+  let x_m = (forceOnDisc-F0_N)/k_Nm;
+  let x_mm = x_m*1000;
+  if(x_mm>xmax_mm) x_mm = xmax_mm;
+  if(x_mm<0) x_mm = 0;
+  return x_mm;
+}
+function orificeArea(ds_mm, x_mm){
+  const ds = ds_mm/1000, x = x_mm/1000;
+  return Math.PI*ds*x;
+}
+function valveFlow(Cd, ds_mm, x_mm, P_bar, Pdown_bar, rho){
+  const dP = (P_bar-Pdown_bar)*1e5;
+  if(x_mm<=0 || dP<=0) return 0;
+  const Ao = orificeArea(ds_mm, x_mm);
+  return Cd*Ao*Math.sqrt(2*dP/rho);
+}
+function valveFullState(P_bar, p){
+  const A = valveSeatArea(p.ds_mm);
+  const Pcrack_bar = crackingPressureFromPreload(p.F0_N, A)/1e5;
+  const Preseat_bar = Pcrack_bar*(1-p.blowdownPct/100);
+  const x = valveLift(P_bar, p.F0_N, p.k_Nmm, A, p.xmax_mm);
+  const Q = valveFlow(p.Cd, p.ds_mm, x, P_bar, p.Pdown_bar, p.rho);
+  const t = p.trend||"rising";
+  let status;
+  if(x<=1e-9) status="CLOSED";
+  else if(x>=0.95*p.xmax_mm) status="OPEN";
+  else if(t==="falling") status="RESEATING";
+  else status="CRACKING";
+  return {A,Pcrack_bar,Preseat_bar,x,Q,status};
+}
+
+/* =====================================================================
+   3. STATIC DATA: materials, fluids, presets
+   ===================================================================== */
+const MATERIALS = [
+  {id:"steel", nameID:"Baja Karbon Sedang", nameEN:"Medium Carbon Steel", tauU:250},
+  {id:"stainless", nameID:"Baja Tahan Karat 304", nameEN:"Stainless Steel 304", tauU:350},
+  {id:"brass", nameID:"Kuningan", nameEN:"Brass", tauU:150},
+  {id:"aluminum", nameID:"Aluminium 6061", nameEN:"Aluminum 6061", tauU:190},
+  {id:"castiron", nameID:"Besi Cor", nameEN:"Cast Iron", tauU:100},
+];
+const FLUIDS = [
+  {id:"oil", nameID:"Oli Hidrolik", nameEN:"Hydraulic Oil", rho:850},
+  {id:"water", nameID:"Air", nameEN:"Water", rho:1000},
+  {id:"air", nameID:"Udara (disederhanakan)", nameEN:"Air (simplified)", rho:1.2},
+  {id:"steam", nameID:"Uap (ilustratif)", nameEN:"Steam (illustrative)", rho:5},
+];
+
+const PRESETS = [
+  {id:"p1", system:"pin",
+    nameID:"Preset 1 — Baling-baling Motor Tempel", nameEN:"Preset 1 — Outboard Motor Propeller",
+    sourceID:"Motor Tempel (Gearbox)", sourceEN:"Outboard Motor (Gearbox)",
+    loadID:"Poros Baling-baling", loadEN:"Propeller Shaft",
+    pin:{d:5, mode:"single", r:12, material:"aluminum", trated:25, appliedT:0}},
+  {id:"p2", system:"pin",
+    nameID:"Preset 2 — Poros PTO Traktor", nameEN:"Preset 2 — Tractor PTO Shaft",
+    sourceID:"Traktor (PTO Output)", sourceEN:"Tractor (PTO Output)",
+    loadID:"Gearbox Implement (Rotary Tiller)", loadEN:"Implement Gearbox (Rotary Tiller)",
+    pin:{d:10, mode:"single", r:20, material:"steel", trated:300, appliedT:0}},
+  {id:"p3", system:"pin",
+    nameID:"Preset 3 — Kopling Drive Konveyor", nameEN:"Preset 3 — Conveyor Drive Coupling",
+    sourceID:"Motor + Gearbox", sourceEN:"Motor + Gearbox",
+    loadID:"Drum Penggerak Konveyor", loadEN:"Conveyor Drive Drum",
+    pin:{d:8, mode:"double", r:30, material:"brass", trated:120, appliedT:0}},
+  {id:"p4", system:"valve",
+    nameID:"Preset 4 — Sirkuit Pompa Hidrolik", nameEN:"Preset 4 — Hydraulic Pump Circuit",
+    sourceID:"Pompa Hidrolik (Power Pack)", sourceEN:"Hydraulic Pump (Power Pack)",
+    loadID:"Tangki Reservoir", loadEN:"Reservoir Tank",
+    valve:{ds:8, k:15, pcrack:150, xmax:6, cd:0.6, fluid:"oil", pdown:2, blowdown:10, sysP:0}},
+  {id:"p5", system:"valve",
+    nameID:"Preset 5 — Tangki Kompresor Udara", nameEN:"Preset 5 — Air Compressor Receiver",
+    sourceID:"Kompresor Torak", sourceEN:"Reciprocating Compressor",
+    loadID:"Atmosfer", loadEN:"Atmosphere",
+    valve:{ds:10, k:8, pcrack:10, xmax:5, cd:0.65, fluid:"air", pdown:0, blowdown:15, sysP:0}},
+  {id:"p6", system:"valve",
+    nameID:"Preset 6 — Boiler / Bejana Tekan", nameEN:"Preset 6 — Boiler / Pressure Vessel",
+    sourceID:"Boiler (Ruang Uap)", sourceEN:"Boiler (Steam Space)",
+    loadID:"Atmosfer / Stack", loadEN:"Atmosphere / Stack",
+    valve:{ds:15, k:25, pcrack:12, xmax:8, cd:0.7, fluid:"steam", pdown:0, blowdown:8, sysP:0}},
+];
+
+/* =====================================================================
+   4. SIMULATION STATE
+   ===================================================================== */
+const S = {
+  systemType:"pin",
+  learningMode:"intermediate",
+  activePreset:"p1",
+  stage:2,
+  running:false,
+  simTime:0,
+  animSpeed:1,
+  motionScale:1,
+  showFlow:true,
+  showForce:true,
+  showDim:false,
+  showEq:false,
+  cycleActive:false,
+  cycleT0:0,
+  pin:{
+    d:6, mode:"single", r:25, material:"steel", tauU:250, trated:150, appliedT:0,
+    intact:true, replacedCount:0, history:[]
+  },
+  valve:{
+    ds:8, k:15, pcrackSet:150, xmax:6, cd:0.6, fluid:"oil", rho:850, pdown:0, blowdown:10,
+    sysP:0, prevP:0, trend:"rising", history:[]
+  },
+  trials:[],
+  lastFrameT:null,
+  accumulator:0,
+  hotspots:[],
+  autoConverting:false,
+};
+
+function currentMaterial(){ return MATERIALS.find(m=>m.id===S.pin.material) || MATERIALS[0]; }
+function currentFluid(){ return FLUIDS.find(f=>f.id===S.valve.fluid) || FLUIDS[0]; }
+
+function computePinState(overrideT){
+  const p = S.pin;
+  const T = (overrideT===undefined) ? p.appliedT : overrideT;
+  return shearPinFullState(T, p.d, p.mode, p.r, p.tauU);
+}
+function valveParamsFromState(){
+  const p = S.valve;
+  const A = valveSeatArea(p.ds);
+  const F0 = preloadFromCrackingPressure(p.pcrackSet, A);
+  return {ds_mm:p.ds, F0_N:F0, k_Nmm:p.k, xmax_mm:p.xmax, Cd:p.cd, Pdown_bar:p.pdown, rho:p.rho, blowdownPct:p.blowdown, trend:p.trend};
+}
+function computeValveState(overrideP){
+  const p = S.valve;
+  const P = (overrideP===undefined) ? p.sysP : overrideP;
+  return valveFullState(P, valveParamsFromState());
+}
+
+/* =====================================================================
+   5. DOM REFS
+   ===================================================================== */
+const $ = (id)=>document.getElementById(id);
+const canvas = $("mainCanvas");
+const ctx = canvas.getContext("2d");
+
+/* =====================================================================
+   6. INIT UI: selects, presets, materials, fluids
+   ===================================================================== */
+function fillSelect(sel, items, labelFn, valFn){
+  sel.innerHTML = "";
+  items.forEach(it=>{
+    const o = document.createElement("option");
+    o.value = valFn(it);
+    o.textContent = labelFn(it);
+    sel.appendChild(o);
+  });
+}
+function refreshMaterialSelect(){
+  fillSelect($("materialSelect"), MATERIALS, m => (LANG==="id"?m.nameID:m.nameEN)+" (τu="+m.tauU+" MPa)", m=>m.id);
+  $("materialSelect").value = S.pin.material;
+}
+function refreshFluidSelect(){
+  fillSelect($("fluidSelect"), FLUIDS, f => (LANG==="id"?f.nameID:f.nameEN)+" (ρ="+f.rho+" kg/m³)", f=>f.id);
+  $("fluidSelect").value = S.valve.fluid;
+}
+function refreshPresetSelect(){
+  fillSelect($("presetSelect"), PRESETS, p=> (LANG==="id"?p.nameID:p.nameEN), p=>p.id);
+  $("presetSelect").value = S.activePreset;
+}
+
+function loadPreset(id){
+  const preset = PRESETS.find(p=>p.id===id);
+  if(!preset) return;
+  S.activePreset = id;
+  S.systemType = preset.system;
+  if(preset.system==="pin"){
+    Object.assign(S.pin, {
+      d:preset.pin.d, mode:preset.pin.mode, r:preset.pin.r, material:preset.pin.material,
+      tauU: MATERIALS.find(m=>m.id===preset.pin.material).tauU,
+      trated:preset.pin.trated, appliedT:preset.pin.appliedT, intact:true, history:[]
+    });
+  } else {
+    Object.assign(S.valve, {
+      ds:preset.valve.ds, k:preset.valve.k, pcrackSet:preset.valve.pcrack, xmax:preset.valve.xmax,
+      cd:preset.valve.cd, fluid:preset.valve.fluid, rho:FLUIDS.find(f=>f.id===preset.valve.fluid).rho,
+      pdown:preset.valve.pdown, blowdown:preset.valve.blowdown, sysP:preset.valve.sysP, prevP:preset.valve.sysP, trend:"rising", history:[]
+    });
+  }
+  syncControlsFromState();
+  updateSystemVisibility();
+  S.simTime = 0;
+  refreshPresetSelect(); // keep the preset dropdown in sync with the loaded state
+  fullUpdate();
+}
+
+function syncControlsFromState(){
+  $("systemTypeSelect").value = S.systemType;
+  // pin
+  document.querySelectorAll("input[name=shearMode]").forEach(r=>{ r.checked = (r.value===S.pin.mode); });
+  $("dSlider").value = S.pin.d; $("dVal").textContent = S.pin.d.toFixed(1);
+  $("rSlider").value = S.pin.r; $("rVal").textContent = S.pin.r.toFixed(0);
+  refreshMaterialSelect();
+  $("tauUSlider").value = S.pin.tauU; $("tauUVal").textContent = S.pin.tauU.toFixed(0);
+  $("tratedSlider").value = S.pin.trated; $("tratedVal").textContent = S.pin.trated.toFixed(0);
+  $("appliedTSlider").value = S.pin.appliedT; $("appliedTVal").textContent = S.pin.appliedT.toFixed(0);
+  // valve
+  $("dsSlider").value = S.valve.ds; $("dsVal").textContent = S.valve.ds.toFixed(1);
+  $("kSlider").value = S.valve.k; $("kVal").textContent = S.valve.k.toFixed(0);
+  $("pcrackSetSlider").value = S.valve.pcrackSet; $("pcrackSetVal").textContent = S.valve.pcrackSet.toFixed(0);
+  $("xmaxSlider").value = S.valve.xmax; $("xmaxVal").textContent = S.valve.xmax.toFixed(1);
+  $("cdSlider").value = S.valve.cd; $("cdVal").textContent = S.valve.cd.toFixed(2);
+  refreshFluidSelect();
+  $("pdownSlider").value = S.valve.pdown; $("pdownVal").textContent = S.valve.pdown.toFixed(1);
+  $("blowdownSlider").value = S.valve.blowdown; $("blowdownVal").textContent = S.valve.blowdown.toFixed(0);
+  $("sysPSlider").value = S.valve.sysP; $("sysPVal").textContent = S.valve.sysP.toFixed(0);
+}
+
+function updateSystemVisibility(){
+  $("pinControls").style.display = S.systemType==="pin" ? "" : "none";
+  $("valveControls").style.display = S.systemType==="valve" ? "" : "none";
+}
+
+/* =====================================================================
+   7. CONTROL EVENT WIRING
+   ===================================================================== */
+function bindRangeAndLabel(sliderId, labelId, stateSetter, decimals){
+  const el = $(sliderId);
+  el.addEventListener("input", ()=>{
+    const v = parseFloat(el.value);
+    $(labelId).textContent = v.toFixed(decimals);
+    stateSetter(v);
+    fullUpdate();
+  });
+}
+
+function initControlBindings(){
+  $("presetSelect").addEventListener("change", e=> loadPreset(e.target.value));
+  $("langID").addEventListener("click", ()=> setLang("id"));
+  $("langEN").addEventListener("click", ()=> setLang("en"));
+
+  $("systemTypeSelect").addEventListener("change", e=>{
+    S.systemType = e.target.value;
+    updateSystemVisibility();
+    fullUpdate();
+  });
+  $("learningModeSelect").addEventListener("change", e=>{
+    S.learningMode = e.target.value;
+    updateCalcSteps();
+  });
+
+  document.querySelectorAll("input[name=shearMode]").forEach(r=>{
+    r.addEventListener("change", ()=>{ S.pin.mode = r.value; fullUpdate(); });
+  });
+  bindRangeAndLabel("dSlider","dVal", v=>S.pin.d=v, 1);
+  bindRangeAndLabel("rSlider","rVal", v=>S.pin.r=v, 0);
+  $("materialSelect").addEventListener("change", e=>{
+    S.pin.material = e.target.value;
+    S.pin.tauU = currentMaterial().tauU;
+    $("tauUSlider").value = S.pin.tauU; $("tauUVal").textContent = S.pin.tauU.toFixed(0);
+    fullUpdate();
+  });
+  bindRangeAndLabel("tauUSlider","tauUVal", v=>S.pin.tauU=v, 0);
+  bindRangeAndLabel("tratedSlider","tratedVal", v=>S.pin.trated=v, 0);
+  bindRangeAndLabel("appliedTSlider","appliedTVal", v=>S.pin.appliedT=v, 0);
+
+  bindRangeAndLabel("dsSlider","dsVal", v=>S.valve.ds=v, 1);
+  bindRangeAndLabel("kSlider","kVal", v=>S.valve.k=v, 0);
+  bindRangeAndLabel("pcrackSetSlider","pcrackSetVal", v=>S.valve.pcrackSet=v, 0);
+  bindRangeAndLabel("xmaxSlider","xmaxVal", v=>S.valve.xmax=v, 1);
+  bindRangeAndLabel("cdSlider","cdVal", v=>S.valve.cd=v, 2);
+  $("fluidSelect").addEventListener("change", e=>{
+    S.valve.fluid = e.target.value;
+    S.valve.rho = currentFluid().rho;
+    fullUpdate();
+  });
+  bindRangeAndLabel("pdownSlider","pdownVal", v=>S.valve.pdown=v, 1);
+  bindRangeAndLabel("blowdownSlider","blowdownVal", v=>S.valve.blowdown=v, 0);
+  bindRangeAndLabel("sysPSlider","sysPVal", v=>{
+    S.valve.trend = v > S.valve.sysP ? "rising" : (v < S.valve.sysP ? "falling" : S.valve.trend);
+    S.valve.prevP = S.valve.sysP;
+    S.valve.sysP = v;
+  }, 0);
+
+  $("animSpeedSlider").addEventListener("input", e=>{
+    S.animSpeed = parseFloat(e.target.value);
+    $("animSpeedVal").textContent = S.animSpeed.toFixed(2);
+  });
+  $("motionScaleSlider").addEventListener("input", e=>{
+    S.motionScale = parseFloat(e.target.value);
+    $("motionScaleVal").textContent = S.motionScale.toFixed(1);
+  });
+
+  $("playBtn").addEventListener("click", ()=>{ S.running = true; S.lastFrameT=null; updateRunIndicator(); });
+  $("pauseBtn").addEventListener("click", ()=>{ S.running = false; updateRunIndicator(); });
+  $("stepBtn").addEventListener("click", ()=>{ stepSimulation(1/30); fullUpdate(); });
+  $("resetBtn").addEventListener("click", resetSimulation);
+  $("runCycleBtn").addEventListener("click", runOneCycle);
+
+  $("toggleFlow").addEventListener("click", (e)=>{ S.showFlow=!S.showFlow; e.target.classList.toggle("active",S.showFlow); $("flowPanel").style.display = S.showFlow?"":"none"; });
+  $("toggleForce").addEventListener("click", (e)=>{ S.showForce=!S.showForce; e.target.classList.toggle("active",S.showForce); drawScene(); });
+  $("toggleDim").addEventListener("click", (e)=>{ S.showDim=!S.showDim; e.target.classList.toggle("active",S.showDim); drawScene(); });
+  $("toggleEq").addEventListener("click", (e)=>{ S.showEq=!S.showEq; e.target.classList.toggle("active",S.showEq); $("eqPanel").style.display = S.showEq?"":"none"; });
+
+  $("recordBtn").addEventListener("click", recordTrial);
+  $("clearDataBtn").addEventListener("click", ()=>{ S.trials=[]; renderDataTable(); });
+  $("exportCsvBtn").addEventListener("click", exportCsv);
+
+  document.querySelectorAll(".stage-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".stage-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      S.stage = parseInt(btn.getAttribute("data-stage"),10);
+      drawScene();
+    });
+  });
+  $("autoConvertBtn").addEventListener("click", autoConvert);
+
+  document.querySelectorAll("#bottomTabs button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll("#bottomTabs button").forEach(b=>b.classList.remove("active"));
+      document.querySelectorAll(".bottom-view").forEach(v=>v.classList.remove("active"));
+      btn.classList.add("active");
+      $("view-"+btn.getAttribute("data-tab")).classList.add("active");
+    });
+  });
+
+  $("compareBtn").addEventListener("click", ()=>{
+    document.querySelectorAll("#bottomTabs button").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".bottom-view").forEach(v=>v.classList.remove("active"));
+    document.querySelector('#bottomTabs button[data-tab="compare"]').classList.add("active");
+    $("view-compare").classList.add("active");
+    window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+  });
+
+  $("printBtn").addEventListener("click", preparePrintAndPrint);
+
+  canvas.addEventListener("click", onCanvasClick);
+}
+
+function setLang(l){
+  LANG = l;
+  $("langID").classList.toggle("active", l==="id");
+  $("langEN").classList.toggle("active", l==="en");
+  applyStaticI18n();
+  refreshPresetSelect();
+  refreshMaterialSelect();
+  refreshFluidSelect();
+  chartGridSystemType = null; // force chart card titles to rebuild in the new language
+  fullUpdate();
+  renderQuiz();
+  renderChallenge();
+}
+
+/* =====================================================================
+   8. SIMULATION STEPPING (fixed timestep accumulator)
+   ===================================================================== */
+const FIXED_DT = 1/60;
+
+function stepSimulation(dt){
+  S.simTime += dt;
+  if(S.systemType==="valve"){
+    // history push
+    const st = computeValveState();
+    S.valve.history.push({t:S.simTime, P:S.valve.sysP, x:st.x, Q:st.Q*60000});
+    if(S.valve.history.length>360) S.valve.history.shift();
+  } else {
+    const st = computePinState();
+    S.pin.history.push({t:S.simTime, T:S.pin.appliedT, tau:st.tau/1e6});
+    if(S.pin.history.length>360) S.pin.history.shift();
+    if(st.status==="SHEARED") S.pin.intact = false;
+  }
+
+  if(S.cycleActive){
+    advanceCycle(dt);
+  }
+}
+
+function advanceCycle(dt){
+  const elapsed = S.simTime - S.cycleT0;
+  const DURATION = 8; // seconds for a full ramp-up/down cycle
+  if(S.systemType==="pin"){
+    const targetPeak = Math.max(shearPinFailureTorque(S.pin.tauU, shearPinArea(S.pin.d,S.pin.mode), S.pin.r) * 1.4, S.pin.trated*1.2);
+    let frac = elapsed/DURATION;
+    if(frac>=1){ S.cycleActive=false; return; }
+    const T = targetPeak * Math.min(1, frac/0.6);
+    S.pin.appliedT = T;
+    $("appliedTSlider").value = T; $("appliedTVal").textContent = T.toFixed(0);
+  } else {
+    let frac = elapsed/DURATION;
+    if(frac>=1){ S.cycleActive=false; return; }
+    const pv = valveParamsFromState();
+    const peakP = pv.F0_N>0 ? (crackingPressureFromPreload(pv.F0_N, valveSeatArea(S.valve.ds))/1e5)*1.35 : 100;
+    let P;
+    if(frac<0.5){ P = peakP * (frac/0.5); S.valve.trend="rising"; }
+    else { P = peakP * (1-(frac-0.5)/0.5); S.valve.trend="falling"; }
+    S.valve.prevP = S.valve.sysP;
+    S.valve.sysP = Math.max(0,P);
+    $("sysPSlider").value = S.valve.sysP; $("sysPVal").textContent = S.valve.sysP.toFixed(0);
+  }
+}
+
+function runOneCycle(){
+  S.cycleActive = true;
+  S.cycleT0 = S.simTime;
+  S.running = true;
+  S.lastFrameT = null;
+  updateRunIndicator();
+}
+
+function resetSimulation(){
+  S.running = false;
+  S.cycleActive = false;
+  S.simTime = 0;
+  if(S.systemType==="pin"){
+    S.pin.intact = true;
+    S.pin.appliedT = 0;
+    S.pin.history = [];
+    $("appliedTSlider").value = 0; $("appliedTVal").textContent="0";
+  } else {
+    S.valve.sysP = 0; S.valve.prevP = 0; S.valve.trend="rising";
+    S.valve.history = [];
+    $("sysPSlider").value = 0; $("sysPVal").textContent="0";
+  }
+  fullUpdate();
+}
+
+function animate(ts){
+  requestAnimationFrame(animate);
+  if(!S.running) return;
+  if(S.lastFrameT===null){ S.lastFrameT = ts; return; }
+  let dtReal = (ts - S.lastFrameT)/1000;
+  S.lastFrameT = ts;
+  dtReal = Math.min(dtReal, 0.1);
+  S.accumulator += dtReal * S.animSpeed;
+  let steps = 0;
+  while(S.accumulator >= FIXED_DT && steps<10){
+    stepSimulation(FIXED_DT);
+    S.accumulator -= FIXED_DT;
+    steps++;
+  }
+  fullUpdate();
+}
+requestAnimationFrame(animate);
+
+/* =====================================================================
+   9. CANVAS DRAWING
+   ===================================================================== */
+function resizeCanvas(){
+  const wrap = canvas.parentElement;
+  const w = Math.max(320, wrap.clientWidth - 16);
+  const h = w * 9 / 16; // fixed 16:9 simulation viewport
+  const dpr = window.devicePixelRatio || 1;
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
+  canvas.width = Math.round(w*dpr);
+  canvas.height = Math.round(h*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", ()=>{ resizeCanvas(); drawScene(); });
+
+function cssW(){ return canvas.clientWidth; }
+function cssH(){ return canvas.clientHeight; }
+
+function clearCanvas(){
+  ctx.clearRect(0,0,cssW(),cssH());
+  ctx.fillStyle = "#0c1424";
+  ctx.fillRect(0,0,cssW(),cssH());
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,0.035)";
+  ctx.lineWidth = 1;
+  for(let x=0; x<cssW(); x+=24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cssH()); ctx.stroke(); }
+  for(let y=0; y<cssH(); y+=24){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cssW(),y); ctx.stroke(); }
+}
+
+function drawScene(){
+  clearCanvas();
+  S.hotspots = [];
+  const caption = $("canvasCaption");
+  if(S.systemType==="pin"){
+    if(S.stage===1) drawPinStage1();
+    else if(S.stage===2) drawPinStage2();
+    else drawPinStage3();
+    caption.textContent = S.stage===1 ? t("tabStage1")+": "+captionSourceLoad() :
+                           S.stage===2 ? (LANG==="id"?"Model idealisasi kinematik/gaya pin geser":"Idealized force model of the shear pin") :
+                           (LANG==="id"?"Alur beban kuantitatif hingga status kegagalan":"Quantitative load flow to failure status");
+  } else {
+    if(S.stage===1) drawValveStage1();
+    else if(S.stage===2) drawValveStage2();
+    else drawValveStage3();
+    caption.textContent = S.stage===1 ? t("tabStage1")+": "+captionSourceLoad() :
+                           S.stage===2 ? (LANG==="id"?"Model keseimbangan gaya pegas vs tekanan":"Spring force vs pressure balance model") :
+                           (LANG==="id"?"Alur tekanan kuantitatif hingga status katup":"Quantitative pressure flow to valve status");
+  }
+  updateFlowSvg();
+}
+
+function captionSourceLoad(){
+  const preset = PRESETS.find(p=>p.id===S.activePreset);
+  if(!preset) return "";
+  return (LANG==="id"?preset.sourceID:preset.sourceEN) + "  →  " + (LANG==="id"?preset.loadID:preset.loadEN);
+}
+
+function addHotspot(x,y,w,h,key){ S.hotspots.push({x,y,w,h,key}); }
+
+/* ---- Stage 1 (Real system, generic block diagram with preset labels) ---- */
+function drawBlockDiagramGeneric(sourceLabel, midLabel, loadLabel, midKey){
+  const W=cssW(), H=cssH();
+  const boxY = H/2-30, boxH=60;
+  const b1 = {x:30,y:boxY,w:180,h:boxH};
+  const b2 = {x:W/2-90,y:boxY,w:180,h:boxH};
+  const b3 = {x:W-210,y:boxY,w:180,h:boxH};
+  [ [b1,sourceLabel,"#28324a"], [b2,midLabel,"#1f3a52"], [b3,loadLabel,"#28324a"] ].forEach(([b,label,fill])=>{
+    ctx.fillStyle = fill; ctx.strokeStyle="#3a4d70"; ctx.lineWidth=1.4;
+    roundRect(ctx,b.x,b.y,b.w,b.h,8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#e9eefb"; ctx.font="12px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    wrapText(ctx,label,b.x+b.w/2,b.y+b.h/2,b.w-16,14);
+  });
+  ctx.strokeStyle="#37d0e6"; ctx.fillStyle="#37d0e6"; ctx.lineWidth=2;
+  drawArrow(ctx, b1.x+b1.w, boxY+boxH/2, b2.x, boxY+boxH/2);
+  drawArrow(ctx, b2.x+b2.w, boxY+boxH/2, b3.x, boxY+boxH/2);
+  if(midKey) addHotspot(b2.x,b2.y,b2.w,b2.h,midKey);
+}
+function drawPinStage1(){
+  const preset = PRESETS.find(p=>p.id===S.activePreset);
+  const src = preset ? (LANG==="id"?preset.sourceID:preset.sourceEN) : (LANG==="id"?"Sumber Putaran":"Rotation Source");
+  const load = preset ? (LANG==="id"?preset.loadID:preset.loadEN) : (LANG==="id"?"Beban":"Load");
+  drawBlockDiagramGeneric(src, (LANG==="id"?"KOPLING + SHEAR PIN":"COUPLING + SHEAR PIN"), load, "pin_overview");
+}
+function drawValveStage1(){
+  const preset = PRESETS.find(p=>p.id===S.activePreset);
+  const src = preset ? (LANG==="id"?preset.sourceID:preset.sourceEN) : (LANG==="id"?"Sumber Tekanan":"Pressure Source");
+  const load = preset ? (LANG==="id"?preset.loadID:preset.loadEN) : (LANG==="id"?"Pembuangan":"Discharge");
+  drawBlockDiagramGeneric(src, (LANG==="id"?"RELIEF VALVE":"RELIEF VALVE"), load, "valve_overview");
+}
+
+/* ---- Stage 2 (Protection model — main animated technical schematic) ---- */
+function drawPinStage2(){
+  const W=cssW(), H=cssH();
+  const cx = W/2, cy = H/2;
+  const st = computePinState();
+  const shaftR = Math.min(W,H)*0.14;
+  const hubR = shaftR*1.6;
+  const pinVisualR = 6 + (S.pin.d/25)*10; // visual thickness scaled by real diameter
+  const angle = (S.simTime*1.4) % (2*Math.PI);
+
+  // input shaft (left)
+  ctx.strokeStyle="#5f7096"; ctx.lineWidth=10; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(60, cy); ctx.lineTo(cx-hubR-10, cy); ctx.stroke();
+  // output shaft (right) - only rotates if intact
+  ctx.beginPath(); ctx.moveTo(cx+hubR+10, cy); ctx.lineTo(W-60, cy); ctx.stroke();
+
+  // input hub
+  drawRotatingHub(cx-hubR*0.55, cy, hubR, angle, "#28324a", "#4f8cff");
+  addHotspot(cx-hubR*1.5, cy-hubR, hubR*1.6, hubR*2, "hub_input");
+  // output hub (rotates only if intact)
+  const outAngle = st.status==="SHEARED" ? S.pin.shearFreezeAngle||0 : angle;
+  if(st.status!=="SHEARED") S.pin.shearFreezeAngle = angle;
+  drawRotatingHub(cx+hubR*0.55, cy, hubR, outAngle, "#28324a", "#37d0e6");
+  addHotspot(cx-0.1*hubR, cy-hubR, hubR*1.6, hubR*2, "hub_output");
+
+  // pin location at pitch radius (visualized along vertical, scaled)
+  const scaleR = Math.min(hubR*0.85, 6+ (S.pin.r/80)*hubR*0.85);
+  const pinX = cx;
+  const pinTopY = cy - scaleR - pinVisualR;
+  const pinBotY = cy + scaleR + pinVisualR;
+
+  if(st.status==="SHEARED"){
+    // draw two separated pieces with a gap + crack mark
+    ctx.fillStyle="#ff5a5a";
+    ctx.fillRect(pinX-pinVisualR, pinTopY, pinVisualR*2, scaleR*0.75);
+    ctx.fillRect(pinX-pinVisualR, cy+scaleR*0.25, pinVisualR*2, scaleR*0.75);
+    ctx.strokeStyle="#ff9e9e"; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(pinX-pinVisualR-4, cy-4); ctx.lineTo(pinX+2,cy+3); ctx.lineTo(pinX-3,cy+9); ctx.lineTo(pinX+pinVisualR+4,cy+16);
+    ctx.stroke();
+    ctx.fillStyle="#ff5a5a"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(LANG==="id"?"PIN PATAH":"PIN SHEARED", pinX, cy+scaleR+pinVisualR+26);
+  } else {
+    const fillColor = st.status==="CRACKING" ? "#ffb020" : "#8fa0c2";
+    ctx.fillStyle=fillColor;
+    roundRect(ctx, pinX-pinVisualR, pinTopY, pinVisualR*2, pinBotY-pinTopY, 3); ctx.fill();
+    ctx.strokeStyle="#0c1424"; ctx.lineWidth=1; ctx.stroke();
+  }
+  addHotspot(pinX-pinVisualR-10, pinTopY-6, pinVisualR*2+20, (pinBotY-pinTopY)+12, "pin");
+
+  // force arrow F
+  if(S.showForce){
+    ctx.strokeStyle="#37d0e6"; ctx.fillStyle="#37d0e6"; ctx.lineWidth=2;
+    drawArrow(ctx, pinX+pinVisualR+14, cy-scaleR, pinX+pinVisualR+14, cy+scaleR);
+    ctx.font="11px monospace"; ctx.textAlign="left";
+    ctx.fillText("F = "+fmt(st.F,0)+" N", pinX+pinVisualR+20, cy-scaleR-4);
+  }
+  // dimensions
+  if(S.showDim){
+    ctx.strokeStyle="#5f7096"; ctx.fillStyle="#8fa0c2"; ctx.font="10.5px monospace"; ctx.lineWidth=1;
+    dimLineH(ctx, cx-pinVisualR-30, cy, cx, cy, "r="+S.pin.r.toFixed(0)+"mm", -18);
+    dimLineV(ctx, pinX+pinVisualR+50, pinTopY, pinBotY, "d="+S.pin.d.toFixed(1)+"mm");
+  }
+
+  ctx.fillStyle="#5f7096"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+  ctx.fillText(LANG==="id"?"INPUT (SUMBER)":"INPUT (SOURCE)", cx-hubR*1.3, cy-hubR-14);
+  ctx.fillText(LANG==="id"?"OUTPUT (BEBAN)":"OUTPUT (LOAD)", cx+hubR*1.3, cy-hubR-14);
+}
+
+function drawRotatingHub(x,y,r,angle,fill,stroke){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.rotate(angle);
+  ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.lineWidth=2;
+  for(let i=0;i<4;i++){
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r*0.85,0); ctx.stroke();
+    ctx.rotate(Math.PI/2);
+  }
+  ctx.restore();
+}
+
+function drawValveStage2(){
+  const W=cssW(), H=cssH();
+  const st = computeValveState();
+  const bodyW = W*0.26, bodyX = W/2-bodyW/2;
+  const seatY = H*0.78, topY = H*0.18;
+  const liftPx = (st.x/S.valve.xmax) * (seatY-topY-40) * S.motionScale;
+  const clampedLift = Math.min(liftPx, seatY-topY-40);
+  const discY = seatY - 30 - clampedLift;
+
+  // valve body outline
+  ctx.strokeStyle="#3a4d70"; ctx.lineWidth=2; ctx.fillStyle="#161f33";
+  roundRect(ctx, bodyX, topY, bodyW, seatY-topY, 10); ctx.fill(); ctx.stroke();
+  addHotspot(bodyX,topY,bodyW,seatY-topY,"valve_body");
+
+  // inlet pipe (bottom) with pressure gauge label
+  ctx.strokeStyle="#5f7096"; ctx.lineWidth=14; ctx.lineCap="butt";
+  ctx.beginPath(); ctx.moveTo(bodyX+bodyW/2, H-20); ctx.lineTo(bodyX+bodyW/2, seatY); ctx.stroke();
+  ctx.fillStyle="#e9eefb"; ctx.font="12px monospace"; ctx.textAlign="center";
+  ctx.fillText("P = "+fmt(S.valve.sysP,1)+" bar", bodyX+bodyW/2, H-30);
+  addHotspot(bodyX+bodyW/2-25, seatY, 50, H-20-seatY, "inlet");
+
+  // seat
+  ctx.fillStyle="#28324a"; ctx.fillRect(bodyX+bodyW*0.2, seatY-8, bodyW*0.6, 8);
+
+  // spring (zigzag) from top cap down to disc
+  const springTopY = topY+18;
+  ctx.strokeStyle="#8fa0c2"; ctx.lineWidth=2;
+  drawSpring(ctx, bodyX+bodyW/2, springTopY, discY, bodyW*0.18);
+  addHotspot(bodyX+bodyW*0.28, springTopY, bodyW*0.44, discY-springTopY, "spring");
+
+  // disc / poppet
+  const discColor = st.status==="CLOSED" ? "#8fa0c2" : st.status==="OPEN" ? "#ff5a5a" : "#ffb020";
+  ctx.fillStyle=discColor;
+  ctx.beginPath(); ctx.ellipse(bodyX+bodyW/2, discY, bodyW*0.28, 9, 0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#0c1424"; ctx.lineWidth=1; ctx.stroke();
+  addHotspot(bodyX+bodyW*0.2, discY-10, bodyW*0.6, 20, "disc");
+
+  // outlet port (side) with flow when open
+  ctx.strokeStyle="#5f7096"; ctx.lineWidth=12;
+  ctx.beginPath(); ctx.moveTo(bodyX+bodyW, topY+40); ctx.lineTo(W-50, topY+40); ctx.stroke();
+  addHotspot(bodyX+bodyW, topY+30, W-50-(bodyX+bodyW), 20, "outlet");
+  if(st.x>0){
+    const nParticles = 6;
+    ctx.fillStyle="#37d0e6";
+    for(let i=0;i<nParticles;i++){
+      const phase = (S.simTime*3 + i/nParticles) % 1;
+      const px = bodyX+bodyW + phase*(W-50-(bodyX+bodyW));
+      ctx.beginPath(); ctx.arc(px, topY+40, 3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle="#e9eefb"; ctx.font="11px monospace"; ctx.textAlign="left";
+    ctx.fillText("Q = "+fmt(st.Q*60000,1)+" L/min", bodyX+bodyW+10, topY+30);
+  }
+
+  // top cap with preload adjustment marker
+  ctx.fillStyle="#28324a"; ctx.fillRect(bodyX+bodyW*0.15, topY, bodyW*0.7, 14);
+
+  if(S.showForce){
+    ctx.strokeStyle="#37d0e6"; ctx.fillStyle="#37d0e6"; ctx.lineWidth=2;
+    drawArrow(ctx, bodyX-24, discY+20, bodyX-24, discY-20);
+    ctx.font="10.5px monospace"; ctx.textAlign="left";
+    ctx.fillText("P·A", bodyX-24, discY+34);
+    drawArrow(ctx, bodyX+bodyW+24, discY-20, bodyX+bodyW+24, discY+20);
+    ctx.textAlign="left";
+    ctx.fillText("F0+kx", bodyX+bodyW+8, discY-24);
+  }
+  if(S.showDim){
+    ctx.strokeStyle="#5f7096"; ctx.fillStyle="#8fa0c2"; ctx.font="10.5px monospace";
+    dimLineV(ctx, bodyX-46, discY, seatY-30, "x="+fmt(st.x,2)+"mm");
+    dimLineH(ctx, bodyX, seatY+16, bodyX+bodyW, seatY+16, "ds="+S.valve.ds.toFixed(1)+"mm", 16);
+  }
+  ctx.fillStyle="#5f7096"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+  ctx.fillText(LANG==="id"?"MASUKAN (SISTEM)":"INLET (SYSTEM)", bodyX+bodyW/2, H-8);
+  ctx.textAlign="left";
+  ctx.fillText(LANG==="id"?"KELUARAN":"OUTLET", W-95, topY+22);
+}
+
+function drawSpring(ctx,x,yTop,yBot,w){
+  const n = 8;
+  const seg = (yBot-yTop)/n;
+  ctx.beginPath();
+  ctx.moveTo(x,yTop);
+  for(let i=0;i<n;i++){
+    const yy = yTop + seg*(i+0.5);
+    ctx.lineTo(x + (i%2===0? w/2 : -w/2), yy);
+  }
+  ctx.lineTo(x,yBot);
+  ctx.stroke();
+}
+
+/* ---- Stage 3 (quantitative flow-oriented view) ---- */
+function drawFlowBoxesGeneric(items){
+  const W=cssW(), H=cssH();
+  const n = items.length;
+  const boxW = Math.min(150, (W-40)/n - 14);
+  const boxH = 58;
+  const totalW = n*boxW + (n-1)*30;
+  let x = (W-totalW)/2;
+  const y = H/2 - boxH/2;
+  items.forEach((it,i)=>{
+    ctx.fillStyle = it.highlight ? "#1f3a52" : "#1c2b47";
+    ctx.strokeStyle = it.highlight ? "#37d0e6" : "#3a4d70";
+    ctx.lineWidth = it.highlight ? 2 : 1.2;
+    roundRect(ctx,x,y,boxW,boxH,8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#8fa0c2"; ctx.font="9.5px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(it.label, x+boxW/2, y+16);
+    ctx.fillStyle="#37d0e6"; ctx.font="bold 12px monospace";
+    ctx.fillText(it.value, x+boxW/2, y+37);
+    if(it.key) addHotspot(x,y,boxW,boxH,it.key);
+    if(i<n-1){
+      ctx.strokeStyle="#8fa0c2"; ctx.fillStyle="#8fa0c2"; ctx.lineWidth=1.6;
+      drawArrow(ctx, x+boxW, y+boxH/2, x+boxW+30, y+boxH/2);
+    }
+    x += boxW+30;
+  });
+}
+function drawPinStage3(){
+  const st = computePinState();
+  drawFlowBoxesGeneric([
+    {label:"TORQUE T", value:fmt(S.pin.appliedT,0)+" N·m", key:"pin"},
+    {label:"FORCE F=T/r", value:fmt(st.F,0)+" N"},
+    {label:"AREA A", value:fmt(st.A*1e6,1)+" mm²"},
+    {label:"STRESS τ", value:fmt(st.tau/1e6,1)+" MPa"},
+    {label:LANG==="id"?"STATUS":"STATUS", value: st.status, highlight:true},
+  ]);
+}
+function drawValveStage3(){
+  const st = computeValveState();
+  drawFlowBoxesGeneric([
+    {label:"PRESSURE P", value:fmt(S.valve.sysP,0)+" bar", key:"inlet"},
+    {label:"P·A vs F0+kx", value: (S.valve.sysP*1e5*st.A).toFixed(0)+" N"},
+    {label:"LIFT x", value:fmt(st.x,2)+" mm", key:"disc"},
+    {label:"FLOW Q", value:fmt(st.Q*60000,1)+" L/min", key:"outlet"},
+    {label:LANG==="id"?"STATUS":"STATUS", value: st.status, highlight:true},
+  ]);
+}
+
+/* ---- drawing helpers ---- */
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function drawArrow(ctx,x1,y1,x2,y2){
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang = Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*Math.cos(ang-0.4), y2-8*Math.sin(ang-0.4));
+  ctx.lineTo(x2-8*Math.cos(ang+0.4), y2-8*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+}
+function wrapText(ctx,text,cx,cy,maxWidth,lh){
+  const words = text.split(" ");
+  let line="", lines=[];
+  for(const w of words){
+    const test = line? line+" "+w : w;
+    if(ctx.measureText(test).width>maxWidth && line){ lines.push(line); line=w; }
+    else line=test;
+  }
+  lines.push(line);
+  const startY = cy - (lines.length-1)*lh/2;
+  lines.forEach((l,i)=> ctx.fillText(l, cx, startY+i*lh));
+}
+function dimLineH(ctx,x1,y1,x2,y2,label,offset){
+  ctx.beginPath(); ctx.moveTo(x1,y1+offset); ctx.lineTo(x2,y2+offset); ctx.stroke();
+  ctx.textAlign="center"; ctx.fillText(label, (x1+x2)/2, y1+offset-4);
+}
+function dimLineV(ctx,x,y1,y2,label){
+  ctx.beginPath(); ctx.moveTo(x,y1); ctx.lineTo(x,y2); ctx.stroke();
+  ctx.save(); ctx.translate(x+12,(y1+y2)/2); ctx.rotate(-Math.PI/2); ctx.textAlign="center"; ctx.fillText(label,0,0); ctx.restore();
+}
+function fmt(v,d){ if(v===undefined||v===null||isNaN(v)) return "N/A"; return v.toFixed(d); }
+
+/* click handling for hotspots -> info panel */
+function onCanvasClick(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX-rect.left, y = e.clientY-rect.top;
+  for(const h of S.hotspots){
+    if(x>=h.x && x<=h.x+h.w && y>=h.y && y<=h.y+h.h){
+      showInfoPanel(h.key);
+      return;
+    }
+  }
+}
+
+/* =====================================================================
+   10. INFO PANEL CONTENT
+   ===================================================================== */
+const INFO_DB = {
+  pin_overview:{
+    nameID:"Sistem Transmisi dengan Shear Pin", nameEN:"Drive System with Shear Pin",
+    funcID:"Menghubungkan sumber putaran dan beban, sekaligus menjadi titik lemah terkendali.", funcEN:"Connects the rotation source and the load while acting as a controlled weak point.",
+  },
+  hub_input:{nameID:"Hub Input", nameEN:"Input Hub", funcID:"Menerima torsi dari sumber penggerak.", funcEN:"Receives torque from the drive source."},
+  hub_output:{nameID:"Hub Output", nameEN:"Output Hub", funcID:"Meneruskan torsi ke beban selama pin masih utuh.", funcEN:"Transmits torque to the load while the pin remains intact."},
+  pin:{
+    nameID:"Shear Pin", nameEN:"Shear Pin",
+    funcID:"Elemen pengaman yang sengaja dirancang patah pada torsi berlebih.", funcEN:"Protective element deliberately designed to shear under excess torque.",
+  },
+  valve_overview:{
+    nameID:"Sirkuit dengan Relief Valve", nameEN:"Circuit with Relief Valve",
+    funcID:"Membatasi tekanan maksimum sirkuit dengan melepaskan sebagian aliran.", funcEN:"Limits maximum circuit pressure by releasing part of the flow.",
+  },
+  valve_body:{nameID:"Body Valve", nameEN:"Valve Body", funcID:"Rumah katup yang menahan tekanan sistem.", funcEN:"Housing that contains the system pressure."},
+  inlet:{nameID:"Port Masuk (Inlet)", nameEN:"Inlet Port", funcID:"Jalur masuknya fluida bertekanan dari sistem.", funcEN:"Path through which pressurized fluid enters from the system."},
+  spring:{nameID:"Pegas (Spring)", nameEN:"Spring", funcID:"Memberi gaya penahan yang menentukan cracking pressure.", funcEN:"Provides the restraining force that sets the cracking pressure."},
+  disc:{nameID:"Disc / Poppet", nameEN:"Disc / Poppet", funcID:"Elemen penutup yang terangkat saat tekanan melebihi setting.", funcEN:"Closing element that lifts when pressure exceeds the setting."},
+  outlet:{nameID:"Port Keluar (Outlet)", nameEN:"Outlet Port", funcID:"Jalur keluarnya fluida saat valve terbuka.", funcEN:"Path through which fluid exits when the valve opens."},
+};
+
+function showInfoPanel(key){
+  const base = INFO_DB[key];
+  if(!base) return;
+  const panel = $("infoPanel");
+  let extra = "";
+  if(key==="pin"){
+    const st = computePinState();
+    extra = `
+      <dt>PARAMETERS</dt><dd>d=${S.pin.d.toFixed(1)} mm, r=${S.pin.r.toFixed(0)} mm, mode=${S.pin.mode}, τu=${S.pin.tauU} MPa</dd>
+      <dt>EQUATION</dt><dd>τ = F/A = (T/r)/A ; T_fail = τu·A·r</dd>
+      <dt>CURRENT VALUE</dt><dd>τ = ${fmt(st.tau/1e6,1)} MPa, T_fail = ${fmt(st.T_fail,1)} N·m, status = ${st.status}</dd>
+      <dt>ASSUMPTIONS</dt><dd>${LANG==="id"?"Material homogen, kegagalan geser statik, efek stress concentration disederhanakan.":"Homogeneous material, static shear failure, stress concentration simplified."}</dd>
+      <dt>OPERATING LIMITS</dt><dd>${LANG==="id"?"Non-resettable — pin harus diganti setelah patah.":"Non-resettable — pin must be replaced after shearing."}</dd>
+    `;
+  } else if(["valve_body","spring","disc","inlet","outlet"].includes(key)){
+    const st = computeValveState();
+    extra = `
+      <dt>PARAMETERS</dt><dd>ds=${S.valve.ds.toFixed(1)} mm, k=${S.valve.k} N/mm, P_crack=${S.valve.pcrackSet} bar</dd>
+      <dt>EQUATION</dt><dd>P·A = F0 + k·x ; Q = Cd·Ao(x)·√(2ΔP/ρ)</dd>
+      <dt>CURRENT VALUE</dt><dd>x = ${fmt(st.x,2)} mm, Q = ${fmt(st.Q*60000,1)} L/min, status = ${st.status}</dd>
+      <dt>ASSUMPTIONS</dt><dd>${LANG==="id"?"Pegas linear ideal, aliran orifice inkompresibel sederhana.":"Ideal linear spring, simplified incompressible orifice flow."}</dd>
+      <dt>OPERATING LIMITS</dt><dd>${LANG==="id"?"Resettable otomatis — menutup kembali saat tekanan turun di bawah reseat pressure.":"Auto-resettable — recloses once pressure drops below reseat pressure."}</dd>
+    `;
+  }
+  panel.innerHTML = `
+    <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${LANG==="id"?base.nameID:base.nameEN}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${LANG==="id"?base.funcID:base.funcEN}</div>
+    <dl style="margin:0;">${extra}</dl>
+  `;
+}
+
+/* =====================================================================
+   11. FLOW SVG DIAGRAM
+   ===================================================================== */
+function svgEl(tag,attrs){
+  const el = document.createElementNS("http://www.w3.org/2000/svg",tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function updateFlowSvg(){
+  const svg = $("flowSvg");
+  svg.innerHTML = "";
+  let items;
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    items = [
+      {label:"Input Torque θ,T", value:fmt(S.pin.appliedT,0)+" N·m"},
+      {label:"Force F=T/r", value:fmt(st.F,0)+" N"},
+      {label:"Shear Area A", value:fmt(st.A*1e6,1)+" mm²"},
+      {label:"Shear Stress τ", value:fmt(st.tau/1e6,1)+" MPa"},
+      {label:"vs τu = "+S.pin.tauU+" MPa", value:st.status},
+    ];
+  } else {
+    const st = computeValveState();
+    items = [
+      {label:"Input Pressure P", value:fmt(S.valve.sysP,0)+" bar"},
+      {label:"Force P·A", value:(S.valve.sysP*1e5*st.A).toFixed(0)+" N"},
+      {label:"vs Spring F0+kx", value:"F0="+(S.valve.pcrackSet? preloadFromCrackingPressure(S.valve.pcrackSet, st.A).toFixed(0):"0")+" N"},
+      {label:"Lift x", value:fmt(st.x,2)+" mm"},
+      {label:"Flow Q", value:fmt(st.Q*60000,1)+" L/min"},
+      {label:"Status", value:st.status},
+    ];
+  }
+  const n = items.length;
+  const boxW = 130, boxH=64, gap=(900-n*boxW)/(n+1);
+  let x = gap;
+  const y = 48;
+  items.forEach((it,i)=>{
+    const g = svgEl("g",{});
+    const rect = svgEl("rect",{x,y,width:boxW,height:boxH,rx:8,class:"flow-box"});
+    g.appendChild(rect);
+    const t1 = svgEl("text",{x:x+boxW/2,y:y+20,"text-anchor":"middle",class:"flow-text"});
+    t1.textContent = it.label; g.appendChild(t1);
+    const t2 = svgEl("text",{x:x+boxW/2,y:y+42,"text-anchor":"middle",class:"flow-text-mono"});
+    t2.textContent = it.value; g.appendChild(t2);
+    svg.appendChild(g);
+    if(i<n-1){
+      const line = svgEl("line",{x1:x+boxW,y1:y+boxH/2,x2:x+boxW+gap,y2:y+boxH/2,class:"flow-arrow"});
+      svg.appendChild(line);
+    }
+    x += boxW+gap;
+  });
+}
+
+/* =====================================================================
+   12. CARDS + STATUS BAR + CALC STEPS
+   ===================================================================== */
+function updateCards(){
+  const wrap = $("cardsWrap");
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    const overload = st.T_fail>0 ? (st.T_fail/S.pin.trated) : NaN;
+    wrap.innerHTML = `
+      <div class="card status-${st.status}">
+        <div class="row"><span>d</span><span>${S.pin.d.toFixed(1)} mm</span></div>
+        <div class="row"><span>${LANG==="id"?"Mode":"Mode"}</span><span>${S.pin.mode}</span></div>
+        <div class="row"><span>r</span><span>${S.pin.r.toFixed(0)} mm</span></div>
+        <div class="row"><span>τu</span><span>${S.pin.tauU} MPa</span></div>
+        <div class="row"><span>τ</span><span>${fmt(st.tau/1e6,1)} MPa</span></div>
+        <div class="row"><span>T_fail</span><span>${fmt(st.T_fail,1)} N·m</span></div>
+        <div class="row"><span>T_rated</span><span>${S.pin.trated} N·m</span></div>
+        <div class="row"><span>${LANG==="id"?"Rasio Overload":"Overload Ratio"}</span><span>${fmt(overload,2)}</span></div>
+        <div class="row"><span>STATUS</span><span>${st.status}</span></div>
+      </div>`;
+  } else {
+    const st = computeValveState();
+    wrap.innerHTML = `
+      <div class="card status-${st.status}">
+        <div class="row"><span>A</span><span>${fmt(st.A*1e6,1)} mm²</span></div>
+        <div class="row"><span>P_crack</span><span>${fmt(st.Pcrack_bar,1)} bar</span></div>
+        <div class="row"><span>P_reseat</span><span>${fmt(st.Preseat_bar,1)} bar</span></div>
+        <div class="row"><span>${LANG==="id"?"Tekanan Sistem":"System Pressure"}</span><span>${S.valve.sysP.toFixed(0)} bar</span></div>
+        <div class="row"><span>${LANG==="id"?"Bukaan":"Lift"} x</span><span>${fmt(st.x,2)} mm</span></div>
+        <div class="row"><span>Q</span><span>${fmt(st.Q*60000,1)} L/min</span></div>
+        <div class="row"><span>Blowdown</span><span>${S.valve.blowdown}%</span></div>
+        <div class="row"><span>STATUS</span><span>${st.status}</span></div>
+      </div>`;
+  }
+}
+
+function limitStatusFor(){
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    const overload = st.T_fail / S.pin.trated;
+    if(!isFinite(overload) || S.pin.trated<=0) return {level:"warn", text:t("notEval")};
+    if(overload < 1.05) return {level:"crit", text:t("critical")};
+    if(overload < 1.15 || overload > 3) return {level:"warn", text:t("warning")};
+    return {level:"safe", text:t("safe")};
+  } else {
+    const st = computeValveState();
+    if(S.valve.sysP > st.Pcrack_bar*1.5) return {level:"crit", text:t("critical")};
+    if(st.status==="OPEN" && st.x>=S.valve.xmax*0.98) return {level:"warn", text:t("warning")};
+    return {level:"safe", text:t("safe")};
+  }
+}
+
+function updateStatusBar(){
+  const bar = $("statusBar");
+  const preset = PRESETS.find(p=>p.id===S.activePreset);
+  const presetName = preset ? (LANG==="id"?preset.nameID:preset.nameEN) : "-";
+  let phase, input, output, forceStr;
+  const limit = limitStatusFor();
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    phase = st.status;
+    input = fmt(S.pin.appliedT,0)+" N·m";
+    output = st.status;
+    forceStr = fmt(st.tau/1e6,1)+" MPa";
+  } else {
+    const st = computeValveState();
+    phase = st.status;
+    input = S.valve.sysP.toFixed(0)+" bar";
+    output = fmt(st.x,2)+" mm";
+    forceStr = fmt(st.Q*60000,1)+" L/min";
+  }
+  bar.innerHTML = `
+    <span class="item">${t("stSystem")}: <b>${presetName}</b></span>
+    <span class="item">${t("stPhase")}: <b>${phase}</b></span>
+    <span class="item">${t("stModel")}: <b>${t("modelValid")}</b></span>
+    <span class="item">${t("stInput")}: <b>${input}</b></span>
+    <span class="item">${t("stOutput")}: <b>${output}</b></span>
+    <span class="item">${S.systemType==="pin"?t("stForce"):t("stPressureFlow")}: <b>${forceStr}</b></span>
+    <span class="item">${t("stLimit")}: <span class="badge ${limit.level}">${limit.text}</span></span>
+    <span class="item">${t("stTime")}: <b>${S.simTime.toFixed(1)}s</b> @ ${S.animSpeed.toFixed(2)}×</span>
+  `;
+}
+
+function updateCalcSteps(){
+  const el = $("calcSteps");
+  if(!S.showEq){ return; }
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    el.innerHTML = `
+      <div class="step"><div class="label">1. ${LANG==="id"?"Luas Geser":"Shear Area"}</div>
+        <div class="formula">A = ${S.pin.mode==="double"?"2×":""}(π/4)·d² = ${S.pin.mode==="double"?"2×":""}(π/4)·(${S.pin.d.toFixed(1)}mm)² = ${fmt(st.A*1e6,2)} mm²</div></div>
+      <div class="step"><div class="label">2. ${LANG==="id"?"Gaya pada Pin":"Force on Pin"}</div>
+        <div class="formula">F = T/r = ${S.pin.appliedT.toFixed(0)} N·m / ${(S.pin.r/1000).toFixed(3)} m = ${fmt(st.F,1)} N</div></div>
+      <div class="step"><div class="label">3. ${LANG==="id"?"Tegangan Geser":"Shear Stress"}</div>
+        <div class="formula">τ = F/A = ${fmt(st.F,1)} N / ${fmt(st.A*1e6,2)}mm² = ${fmt(st.tau/1e6,2)} MPa</div></div>
+      <div class="step"><div class="label">4. ${LANG==="id"?"Torsi Kegagalan":"Failure Torque"}</div>
+        <div class="formula">T_fail = τu·A·r = ${S.pin.tauU}MPa × ${fmt(st.A*1e6,2)}mm² × ${(S.pin.r/1000).toFixed(3)}m = ${fmt(st.T_fail,2)} N·m</div></div>
+      <div class="step"><div class="label">5. ${LANG==="id"?"Pemeriksaan Konsistensi":"Consistency Check"}</div>
+        <div class="formula">τ (${fmt(st.tau/1e6,1)} MPa) ${st.tau>=S.pin.tauU*1e6?"≥":"<"} τu (${S.pin.tauU} MPa) → STATUS = ${st.status}</div></div>
+    `;
+  } else {
+    const st = computeValveState();
+    const F0 = preloadFromCrackingPressure(S.valve.pcrackSet, st.A);
+    el.innerHTML = `
+      <div class="step"><div class="label">1. ${LANG==="id"?"Luas Seat":"Seat Area"}</div>
+        <div class="formula">A = (π/4)·ds² = (π/4)·(${S.valve.ds.toFixed(1)}mm)² = ${fmt(st.A*1e6,2)} mm²</div></div>
+      <div class="step"><div class="label">2. ${LANG==="id"?"Preload dari Set Pressure":"Preload from Set Pressure"}</div>
+        <div class="formula">F0 = P_crack·A = ${S.valve.pcrackSet}bar × ${fmt(st.A*1e6,2)}mm² = ${fmt(F0,1)} N</div></div>
+      <div class="step"><div class="label">3. ${LANG==="id"?"Keseimbangan Gaya & Lift":"Force Balance & Lift"}</div>
+        <div class="formula">x = (P·A − F0)/k = (${S.valve.sysP}bar×${fmt(st.A*1e6,2)}mm² − ${fmt(F0,1)}N)/${S.valve.k}N/mm = ${fmt(st.x,2)} mm</div></div>
+      <div class="step"><div class="label">4. ${LANG==="id"?"Laju Alir":"Flow Rate"}</div>
+        <div class="formula">Q = Cd·Ao(x)·√(2ΔP/ρ) = ${fmt(st.Q*60000,2)} L/min</div></div>
+      <div class="step"><div class="label">5. ${LANG==="id"?"Blowdown & Status":"Blowdown & Status"}</div>
+        <div class="formula">P_reseat = P_crack×(1−${S.valve.blowdown}%) = ${fmt(st.Preseat_bar,1)} bar → STATUS = ${st.status}</div></div>
+    `;
+  }
+}
+
+/* =====================================================================
+   13. GLOSSARY / TOOLTIPS
+   ===================================================================== */
+const GLOSSARY = {
+  pin:[
+    {sym:"d", id:"Diameter pin geser", en:"Shear pin diameter"},
+    {sym:"τ", id:"Tegangan geser pada pin", en:"Shear stress on the pin"},
+    {sym:"τu", id:"Kekuatan geser maksimum material", en:"Ultimate shear strength of the material"},
+    {sym:"r", id:"Jarak pusat pin ke sumbu poros", en:"Distance from pin center to shaft axis"},
+    {sym:"T_fail", id:"Torsi saat pin patah", en:"Torque at which the pin shears"},
+  ],
+  valve:[
+    {sym:"A", id:"Luas seat/orifice katup", en:"Valve seat/orifice area"},
+    {sym:"F0", id:"Gaya awal pegas (preload)", en:"Initial spring force (preload)"},
+    {sym:"k", id:"Kekakuan pegas", en:"Spring stiffness"},
+    {sym:"P_crack", id:"Tekanan mulai membuka katup", en:"Pressure at which the valve starts to open"},
+    {sym:"Q", id:"Laju alir fluida melalui valve terbuka", en:"Fluid flow rate through the open valve"},
+  ]
+};
+function updateGlossary(){
+  const list = GLOSSARY[S.systemType];
+  $("glossaryWrap").innerHTML = list.map(g=>`<span class="tooltip-chip" title="${LANG==="id"?g.id:g.en}"><b>${g.sym}</b> — ${LANG==="id"?g.id:g.en}</span>`).join("");
+}
+
+/* =====================================================================
+   14. CHARTS (generic canvas line chart)
+   ===================================================================== */
+function makeChartCanvas(id,title){
+  const card = document.createElement("div");
+  card.className="chart-card";
+  card.innerHTML = `<h4>${title}</h4><canvas id="${id}" width="320" height="180"></canvas>`;
+  return card;
+}
+function drawLineChart(canvasEl, series, opts){
+  const c = canvasEl, cx = c.getContext("2d");
+  const w = c.width, h = c.height;
+  cx.clearRect(0,0,w,h);
+  cx.fillStyle="#0c1424"; cx.fillRect(0,0,w,h);
+  const pad = {l:38,r:10,t:10,b:22};
+  const plotW = w-pad.l-pad.r, plotH = h-pad.t-pad.b;
+  let allX=[],allY=[];
+  series.forEach(s=> s.points.forEach(p=>{allX.push(p.x); allY.push(p.y);}));
+  if(opts.refLines) opts.refLines.forEach(r=>allY.push(r.y));
+  if(allX.length===0){ cx.fillStyle="#5f7096"; cx.font="10px sans-serif"; cx.textAlign="center"; cx.fillText("no data", w/2,h/2); return; }
+  let xMin = opts.xMin!==undefined?opts.xMin:Math.min(...allX);
+  let xMax = opts.xMax!==undefined?opts.xMax:Math.max(...allX);
+  let yMin = opts.yMin!==undefined?opts.yMin:Math.min(0,Math.min(...allY));
+  let yMax = opts.yMax!==undefined?opts.yMax:Math.max(...allY)*1.15;
+  if(xMax-xMin<1e-9) xMax=xMin+1;
+  if(yMax-yMin<1e-9) yMax=yMin+1;
+  const X = (x)=> pad.l + (x-xMin)/(xMax-xMin)*plotW;
+  const Y = (y)=> pad.t + plotH - (y-yMin)/(yMax-yMin)*plotH;
+  // axes
+  cx.strokeStyle="#2a3a56"; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(pad.l,pad.t); cx.lineTo(pad.l,pad.t+plotH); cx.lineTo(pad.l+plotW,pad.t+plotH); cx.stroke();
+  cx.fillStyle="#5f7096"; cx.font="9px monospace"; cx.textAlign="right";
+  cx.fillText(yMax.toFixed(1), pad.l-4, pad.t+8);
+  cx.fillText(yMin.toFixed(1), pad.l-4, pad.t+plotH);
+  cx.textAlign="center";
+  cx.fillText(xMin.toFixed(1), pad.l+2, h-6);
+  cx.fillText(xMax.toFixed(1), pad.l+plotW-10, h-6);
+  // ref lines
+  if(opts.refLines){
+    opts.refLines.forEach(r=>{
+      cx.strokeStyle = r.color||"#ff5a5a"; cx.setLineDash([4,3]); cx.lineWidth=1.2;
+      cx.beginPath(); cx.moveTo(pad.l, Y(r.y)); cx.lineTo(pad.l+plotW, Y(r.y)); cx.stroke();
+      cx.setLineDash([]);
+      cx.fillStyle=r.color||"#ff5a5a"; cx.font="9px sans-serif"; cx.textAlign="left";
+      cx.fillText(r.label, pad.l+4, Y(r.y)-3);
+    });
+  }
+  // series
+  series.forEach(s=>{
+    cx.strokeStyle = s.color; cx.lineWidth=1.8; cx.beginPath();
+    s.points.forEach((p,i)=>{ const px=X(p.x), py=Y(p.y); i===0?cx.moveTo(px,py):cx.lineTo(px,py); });
+    cx.stroke();
+    if(opts.markLast){
+      const last = s.points[s.points.length-1];
+      cx.fillStyle = s.color;
+      cx.beginPath(); cx.arc(X(last.x),Y(last.y),3,0,Math.PI*2); cx.fill();
+    }
+  });
+}
+
+let chartCanvases = {};
+let chartGridSystemType = null;
+function buildChartGrid(){
+  const grid = $("chartGrid");
+  grid.innerHTML = "";
+  chartCanvases = {};
+  let defs;
+  if(S.systemType==="pin"){
+    defs = [
+      {id:"chart_pin_t_torque", title: LANG==="id"?"Waktu vs Applied Torque":"Time vs Applied Torque"},
+      {id:"chart_pin_t_stress", title: LANG==="id"?"Waktu vs Tegangan Geser":"Time vs Shear Stress"},
+      {id:"chart_pin_torque_stress", title: LANG==="id"?"Torsi vs Tegangan (relasi)":"Torque vs Stress (relation)"},
+    ];
+  } else {
+    defs = [
+      {id:"chart_valve_t_pressure", title: LANG==="id"?"Waktu vs Tekanan Sistem":"Time vs System Pressure"},
+      {id:"chart_valve_p_lift", title: LANG==="id"?"Tekanan vs Bukaan (Lift)":"Pressure vs Lift"},
+      {id:"chart_valve_p_flow", title: LANG==="id"?"Tekanan vs Laju Alir":"Pressure vs Flow"},
+    ];
+  }
+  defs.forEach(d=>{
+    const card = makeChartCanvas(d.id, d.title);
+    grid.appendChild(card);
+    chartCanvases[d.id] = document.getElementById(d.id);
+  });
+  chartGridSystemType = S.systemType;
+}
+function updateCharts(){
+  if(Object.keys(chartCanvases).length===0 || chartGridSystemType!==S.systemType) buildChartGrid();
+  if(S.systemType==="pin"){
+    const hist = S.pin.history;
+    const st = computePinState();
+    drawLineChart(chartCanvases.chart_pin_t_torque, [{color:"#37d0e6", points: hist.map(h=>({x:h.t,y:h.T}))}],
+      {refLines:[{y:st.T_fail, label:"T_fail", color:"#ff5a5a"}, {y:S.pin.trated,label:"T_rated",color:"#33d17a"}], markLast:true});
+    drawLineChart(chartCanvases.chart_pin_t_stress, [{color:"#ffb020", points: hist.map(h=>({x:h.t,y:h.tau}))}],
+      {refLines:[{y:S.pin.tauU, label:"τu", color:"#ff5a5a"}], markLast:true});
+    // relation curve: sweep applied torque 0..1.5*T_fail_estimate
+    const maxT = Math.max(st.T_fail*1.5, S.pin.trated*1.5, 10);
+    const pts=[];
+    for(let i=0;i<=30;i++){
+      const T = maxT*i/30;
+      const s2 = computePinState(T);
+      pts.push({x:T, y:s2.tau/1e6});
+    }
+    drawLineChart(chartCanvases.chart_pin_torque_stress, [{color:"#4f8cff", points:pts}],
+      {refLines:[{y:S.pin.tauU,label:"τu",color:"#ff5a5a"}], xMin:0, xMax:maxT});
+  } else {
+    const hist = S.valve.history;
+    const st = computeValveState();
+    drawLineChart(chartCanvases.chart_valve_t_pressure, [{color:"#37d0e6", points: hist.map(h=>({x:h.t,y:h.P}))}],
+      {refLines:[{y:st.Pcrack_bar,label:"P_crack",color:"#ffb020"},{y:st.Preseat_bar,label:"P_reseat",color:"#4f8cff"}], markLast:true});
+    const maxP = Math.max(st.Pcrack_bar*1.6, 10);
+    const ptsLift=[], ptsFlow=[];
+    for(let i=0;i<=30;i++){
+      const P = maxP*i/30;
+      const s2 = computeValveState(P);
+      ptsLift.push({x:P,y:s2.x});
+      ptsFlow.push({x:P,y:s2.Q*60000});
+    }
+    drawLineChart(chartCanvases.chart_valve_p_lift, [{color:"#4f8cff", points:ptsLift}], {xMin:0,xMax:maxP, refLines:[{y:0,label:"",color:"transparent"}]});
+    drawLineChart(chartCanvases.chart_valve_p_flow, [{color:"#33d17a", points:ptsFlow}], {xMin:0,xMax:maxP});
+  }
+}
+
+/* =====================================================================
+   15. DATA TABLE / RECORD / EXPORT CSV
+   ===================================================================== */
+function recordTrial(){
+  const trial = {id:S.trials.length+1, preset:S.activePreset, system:S.systemType, simTime:S.simTime.toFixed(2)};
+  if(S.systemType==="pin"){
+    const st = computePinState();
+    Object.assign(trial, {
+      d:S.pin.d, mode:S.pin.mode, r:S.pin.r, material:S.pin.material, tauU:S.pin.tauU,
+      appliedT:S.pin.appliedT, tau_MPa:(st.tau/1e6).toFixed(2), T_fail:st.T_fail.toFixed(2), status:st.status
+    });
+  } else {
+    const st = computeValveState();
+    Object.assign(trial, {
+      ds:S.valve.ds, k:S.valve.k, Pcrack:st.Pcrack_bar.toFixed(1), sysP:S.valve.sysP,
+      lift_mm:st.x.toFixed(2), Q_Lmin:(st.Q*60000).toFixed(2), status:st.status
+    });
+  }
+  S.trials.push(trial);
+  renderDataTable();
+  updateWorksheetNote();
+}
+function getTrialColumns(){
+  const preferred = ["id","preset","system","simTime"];
+  const seen = new Set(preferred);
+  const extras = [];
+  S.trials.forEach(row=>Object.keys(row).forEach(k=>{
+    if(!seen.has(k)){ seen.add(k); extras.push(k); }
+  }));
+  return preferred.filter(k=>S.trials.some(r=>k in r)).concat(extras);
+}
+function escapeHtmlCell(v){
+  return String(v ?? "N/A").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+}
+function renderDataTable(){
+  const table = $("dataTable");
+  if(S.trials.length===0){ table.querySelector("thead").innerHTML=""; table.querySelector("tbody").innerHTML=""; return; }
+  const cols = getTrialColumns();
+  table.querySelector("thead").innerHTML = "<tr>"+cols.map(c=>`<th>${escapeHtmlCell(c)}</th>`).join("")+"</tr>";
+  table.querySelector("tbody").innerHTML = S.trials.map(row=> "<tr>"+cols.map(c=>`<td>${escapeHtmlCell(row[c]!==undefined?row[c]:"N/A")}</td>`).join("")+"</tr>").join("");
+}
+function csvCell(v){
+  const s = String(v ?? "N/A");
+  return `"${s.replaceAll('"','""')}"`;
+}
+function exportCsv(){
+  if(S.trials.length===0){ alert(LANG==="id"?"Belum ada data untuk diekspor.":"No data recorded yet."); return; }
+  const cols = getTrialColumns();
+  const lines = [cols.map(csvCell).join(",")].concat(S.trials.map(r=>cols.map(c=>csvCell(r[c]!==undefined?r[c]:"N/A")).join(",")));
+  const blob = new Blob(["\uFEFF"+lines.join("\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const systems = [...new Set(S.trials.map(r=>r.system))];
+  a.href = url;
+  a.download = systems.length>1 ? "experiment_data_all_systems.csv" : "experiment_data_"+(systems[0]||S.systemType)+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function updateWorksheetNote(){
+  const n = S.trials.length;
+  $("trialCountNote").textContent = (LANG==="id"
+    ? `Trial tercatat: ${n} (disarankan minimal 5 trial sebelum menarik kesimpulan).`
+    : `Recorded trials: ${n} (at least 5 trials recommended before concluding).`);
+}
+
+/* =====================================================================
+   16. CONCEPT QUIZ
+   ===================================================================== */
+const QUIZ = [
+  {q:{id:"Jika diameter pin digandakan (d → 2d) pada single shear, luas geser A menjadi?",en:"If pin diameter is doubled (d → 2d) for single shear, the shear area A becomes?"},
+   opts:[{id:"2×",en:"2×"},{id:"4×",en:"4×"},{id:"8×",en:"8×"},{id:"tetap",en:"unchanged"}], correct:1,
+   exp:{id:"A ∝ d², sehingga menggandakan d membuat A menjadi 4×.",en:"A ∝ d², so doubling d makes A become 4×."}},
+  {q:{id:"Dengan diameter tetap, jika pitch radius r digandakan, torsi kegagalan T_fail menjadi?",en:"With diameter fixed, if pitch radius r is doubled, the failure torque T_fail becomes?"},
+   opts:[{id:"tetap",en:"unchanged"},{id:"2×",en:"2×"},{id:"4×",en:"4×"},{id:"1/2×",en:"1/2×"}], correct:1,
+   exp:{id:"T_fail = τu·A·r bersifat linear terhadap r.",en:"T_fail = τu·A·r is linear in r."}},
+  {q:{id:"Pin dengan double shear dibanding single shear pada diameter sama memiliki kapasitas torsi?",en:"A double-shear pin compared to single-shear at the same diameter has torque capacity?"},
+   opts:[{id:"sama",en:"the same"},{id:"setengah",en:"half"},{id:"dua kali",en:"twice"},{id:"empat kali",en:"four times"}], correct:2,
+   exp:{id:"Double shear menggandakan luas geser sehingga T_fail dua kali lipat.",en:"Double shear doubles the shear area so T_fail doubles."}},
+  {q:{id:"Pada relief valve, cracking pressure ditentukan oleh?",en:"For a relief valve, the cracking pressure is determined by?"},
+   opts:[{id:"luas valve saja",en:"seat area alone"},{id:"preload spring dibagi luas seat",en:"spring preload divided by seat area"},{id:"viskositas fluida",en:"fluid viscosity"},{id:"kecepatan aliran",en:"flow velocity"}], correct:1,
+   exp:{id:"P_crack = F0/A.",en:"P_crack = F0/A."}},
+  {q:{id:"Bila spring constant k dinaikkan pada preload F0 tetap, overpressure untuk mencapai lift tertentu menjadi?",en:"If spring constant k increases at fixed preload F0, the overpressure needed for a given lift becomes?"},
+   opts:[{id:"menurun",en:"decreases"},{id:"meningkat",en:"increases"},{id:"tetap",en:"unchanged"},{id:"nol",en:"zero"}], correct:1,
+   exp:{id:"Pegas lebih kaku memerlukan gaya (dan tekanan) lebih besar untuk lift yang sama.",en:"A stiffer spring requires more force (and pressure) for the same lift."}},
+  {q:{id:"Perbedaan mendasar shear pin dan relief valve setelah aktivasi adalah?",en:"The fundamental difference between shear pin and relief valve after activation is?"},
+   opts:[{id:"keduanya reset otomatis",en:"both reset automatically"},{id:"shear pin harus diganti, relief valve dapat reset otomatis",en:"shear pin must be replaced, relief valve can reset automatically"},{id:"keduanya harus diganti",en:"both must be replaced"},{id:"keduanya tidak dapat direset",en:"neither can be reset"}], correct:1,
+   exp:{id:"Shear pin bersifat non-resettable; relief valve dasar bersifat resettable otomatis.",en:"Shear pin is non-resettable; the basic relief valve is auto-resettable."}},
+  {q:{id:"Blowdown pada relief valve menggambarkan?",en:"Blowdown in a relief valve describes?"},
+   opts:[{id:"selisih antara cracking pressure dan reseat pressure",en:"the difference between cracking pressure and reseat pressure"},{id:"luas orifice",en:"orifice area"},{id:"diameter pin",en:"pin diameter"},{id:"torsi maksimum",en:"maximum torque"}], correct:0,
+   exp:{id:"Blowdown = P_crack − P_reseat, indikator kualitas reseating.",en:"Blowdown = P_crack − P_reseat, an indicator of reseating quality."}},
+];
+function renderQuiz(){
+  const wrap = $("quizWrap");
+  wrap.innerHTML = "";
+  QUIZ.forEach((item,qi)=>{
+    const div = document.createElement("div");
+    div.className="quiz-q";
+    div.innerHTML = `
+      <p class="qtext">Q${qi+1}. ${item.q[LANG]}</p>
+      ${item.opts.map((o,oi)=>`<label class="quiz-opt"><input type="radio" name="quiz${qi}" value="${oi}"> ${String.fromCharCode(65+oi)}. ${o[LANG]}</label>`).join("")}
+      <div class="btn-row"><button class="btn small" data-qi="${qi}">${LANG==="id"?"Periksa Jawaban":"Check Answer"}</button></div>
+      <div class="quiz-feedback" id="qfb${qi}"></div>
+    `;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll("button[data-qi]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qi = parseInt(btn.getAttribute("data-qi"),10);
+      const sel = wrap.querySelector(`input[name=quiz${qi}]:checked`);
+      const fb = document.getElementById("qfb"+qi);
+      if(!sel){ fb.className="quiz-feedback incorrect"; fb.textContent = LANG==="id"?"Pilih salah satu jawaban dahulu.":"Please select an answer first."; return; }
+      const val = parseInt(sel.value,10);
+      const correct = val===QUIZ[qi].correct;
+      fb.className = "quiz-feedback "+(correct?"correct":"incorrect");
+      fb.textContent = (correct? (LANG==="id"?"Benar. ":"Correct. ") : (LANG==="id"?"Belum tepat. ":"Not quite. ")) + QUIZ[qi].exp[LANG];
+    });
+  });
+}
+
+/* =====================================================================
+   17. CHALLENGE MODE
+   ===================================================================== */
+function renderChallenge(){
+  const wrap = $("challengeWrap");
+  wrap.innerHTML = "";
+  const c1 = document.createElement("div");
+  c1.className="challenge-card";
+  c1.innerHTML = `
+    <h3>${LANG==="id"?"Tantangan 1 — Shear Pin":"Challenge 1 — Shear Pin"}</h3>
+    <p style="font-size:12.5px;color:var(--text-muted);">${LANG==="id"?
+      "T_rated = 150 N·m, r = 25 mm, τu = 250 MPa, overload factor 1.25. Tentukan diameter pin minimum d (mm)."
+      :"T_rated = 150 N·m, r = 25 mm, τu = 250 MPa, overload factor 1.25. Determine the minimum pin diameter d (mm)."}</p>
+    <input type="number" step="0.01" id="chal1Input" placeholder="d (mm)" style="padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--bg-panel);color:var(--text-primary);width:140px;">
+    <div class="btn-row">
+      <button class="btn small" id="chal1Hint1">${LANG==="id"?"Hint 1":"Hint 1"}</button>
+      <button class="btn small" id="chal1Hint2">${LANG==="id"?"Hint 2":"Hint 2"}</button>
+      <button class="btn small" id="chal1Hint3">${LANG==="id"?"Hint 3":"Hint 3"}</button>
+      <button class="btn small" id="chal1Check">${LANG==="id"?"Periksa":"Check"}</button>
+      <button class="btn small" id="chal1Sol" disabled>${LANG==="id"?"Tampilkan Solusi":"Show Solution"}</button>
+    </div>
+    <div id="chal1Feedback" class="hint-box" style="display:none;"></div>
+  `;
+  wrap.appendChild(c1);
+  let chal1Attempted=false;
+  const dAns = Math.sqrt(4*(187.5/0.025/250e6)/Math.PI)*1000;
+  c1.querySelector("#chal1Hint1").addEventListener("click",()=>showHint(c1,LANG==="id"?"T_fail target = T_rated × overload factor.":"T_fail target = T_rated × overload factor."));
+  c1.querySelector("#chal1Hint2").addEventListener("click",()=>showHint(c1,LANG==="id"?"F = T_fail / r, lalu A = F/τu.":"F = T_fail / r, then A = F/τu."));
+  c1.querySelector("#chal1Hint3").addEventListener("click",()=>showHint(c1,"d = √(4A/π)"));
+  c1.querySelector("#chal1Check").addEventListener("click",()=>{
+    chal1Attempted = true;
+    c1.querySelector("#chal1Sol").disabled=false;
+    const val = parseFloat(c1.querySelector("#chal1Input").value);
+    const ok = !isNaN(val) && (Math.abs(val-dAns)<=0.15 || Math.abs(val-dAns)/dAns<=0.03);
+    showHint(c1, ok? (LANG==="id"?"Benar! d ≈ "+dAns.toFixed(2)+" mm.":"Correct! d ≈ "+dAns.toFixed(2)+" mm.") : (LANG==="id"?"Belum tepat, coba lagi atau gunakan hint.":"Not quite, try again or use a hint."));
+  });
+  c1.querySelector("#chal1Sol").addEventListener("click",()=>{
+    showHint(c1, (LANG==="id"?"Solusi: T_fail=187.5 N·m → F=7500 N → A=30 mm² → d≈":"Solution: T_fail=187.5 N·m → F=7500 N → A=30 mm² → d≈")+dAns.toFixed(2)+" mm.");
+  });
+
+  const c2 = document.createElement("div");
+  c2.className="challenge-card";
+  c2.innerHTML = `
+    <h3>${LANG==="id"?"Tantangan 2 — Relief Valve":"Challenge 2 — Relief Valve"}</h3>
+    <p style="font-size:12.5px;color:var(--text-muted);">${LANG==="id"?
+      "Seat diameter 8 mm, target cracking pressure 150 bar. Tentukan preload spring F0 (N) yang dibutuhkan."
+      :"Seat diameter 8 mm, target cracking pressure 150 bar. Determine the required spring preload F0 (N)."}</p>
+    <input type="number" step="0.1" id="chal2Input" placeholder="F0 (N)" style="padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--bg-panel);color:var(--text-primary);width:140px;">
+    <div class="btn-row">
+      <button class="btn small" id="chal2Hint1">${LANG==="id"?"Hint 1":"Hint 1"}</button>
+      <button class="btn small" id="chal2Hint2">${LANG==="id"?"Hint 2":"Hint 2"}</button>
+      <button class="btn small" id="chal2Check">${LANG==="id"?"Periksa":"Check"}</button>
+      <button class="btn small" id="chal2Sol" disabled>${LANG==="id"?"Tampilkan Solusi":"Show Solution"}</button>
+    </div>
+    <div id="chal2Feedback" class="hint-box" style="display:none;"></div>
+  `;
+  wrap.appendChild(c2);
+  const A2 = valveSeatArea(8);
+  const F0Ans = preloadFromCrackingPressure(150, A2);
+  c2.querySelector("#chal2Hint1").addEventListener("click",()=>showHint(c2, "A = (π/4)·ds²"));
+  c2.querySelector("#chal2Hint2").addEventListener("click",()=>showHint(c2, "F0 = P_crack × A"));
+  c2.querySelector("#chal2Check").addEventListener("click",()=>{
+    c2.querySelector("#chal2Sol").disabled=false;
+    const val = parseFloat(c2.querySelector("#chal2Input").value);
+    const ok = !isNaN(val) && (Math.abs(val-F0Ans)<=5 || Math.abs(val-F0Ans)/F0Ans<=0.03);
+    showHint(c2, ok? (LANG==="id"?"Benar! F0 ≈ "+F0Ans.toFixed(1)+" N.":"Correct! F0 ≈ "+F0Ans.toFixed(1)+" N.") : (LANG==="id"?"Belum tepat, coba lagi atau gunakan hint.":"Not quite, try again or use a hint."));
+  });
+  c2.querySelector("#chal2Sol").addEventListener("click",()=>{
+    showHint(c2, (LANG==="id"?"Solusi: A≈50.27 mm² → F0 = 150bar×50.27mm² ≈ ":"Solution: A≈50.27 mm² → F0 = 150bar×50.27mm² ≈ ")+F0Ans.toFixed(1)+" N.");
+  });
+}
+function showHint(card, text){
+  const box = card.querySelector(".hint-box");
+  box.style.display="block";
+  box.textContent = text;
+}
+
+/* =====================================================================
+   18. COMPARE MODE
+   ===================================================================== */
+function renderCompare(){
+  const grid = $("compareGrid");
+  grid.innerHTML = "";
+  if(S.systemType==="pin"){
+    grid.appendChild(buildComparePinCol("A"));
+    grid.appendChild(buildComparePinCol("B"));
+  } else {
+    grid.appendChild(buildCompareValveCol("A"));
+    grid.appendChild(buildCompareValveCol("B"));
+  }
+  updateCompareTable();
+}
+function buildComparePinCol(tag){
+  const col = document.createElement("div");
+  col.className="compare-col";
+  const dDefault = tag==="A"? S.pin.d : Math.max(2,S.pin.d*1.3);
+  const rDefault = S.pin.r;
+  const matDefault = S.pin.material;
+  col.innerHTML = `
+    <h4>${LANG==="id"?"Konfigurasi":"Config"} ${tag}</h4>
+    <div class="field"><label>d (mm)</label><input type="number" step="0.1" id="cmp${tag}_d" value="${dDefault.toFixed(1)}"></div>
+    <div class="field"><label>r (mm)</label><input type="number" step="1" id="cmp${tag}_r" value="${rDefault}"></div>
+    <div class="field"><label>${LANG==="id"?"Mode":"Mode"}</label>
+      <select id="cmp${tag}_mode"><option value="single" ${S.pin.mode==="single"?"selected":""}>Single</option><option value="double" ${S.pin.mode==="double"?"selected":""}>Double</option></select>
+    </div>
+    <div class="field"><label>${LANG==="id"?"Material":"Material"}</label>
+      <select id="cmp${tag}_mat">${MATERIALS.map(m=>`<option value="${m.id}" ${m.id===matDefault?"selected":""}>${LANG==="id"?m.nameID:m.nameEN}</option>`).join("")}</select>
+    </div>
+  `;
+  col.querySelectorAll("input,select").forEach(el=> el.addEventListener("input", updateCompareTable));
+  return col;
+}
+function buildCompareValveCol(tag){
+  const col = document.createElement("div");
+  col.className="compare-col";
+  const dsDefault = tag==="A"? S.valve.ds : S.valve.ds*1.25;
+  const kDefault = tag==="A"? S.valve.k : S.valve.k*2;
+  col.innerHTML = `
+    <h4>${LANG==="id"?"Konfigurasi":"Config"} ${tag}</h4>
+    <div class="field"><label>ds (mm)</label><input type="number" step="0.1" id="cmp${tag}_ds" value="${dsDefault.toFixed(1)}"></div>
+    <div class="field"><label>k (N/mm)</label><input type="number" step="1" id="cmp${tag}_k" value="${kDefault.toFixed(0)}"></div>
+    <div class="field"><label>P_crack (bar)</label><input type="number" step="1" id="cmp${tag}_pc" value="${S.valve.pcrackSet}"></div>
+  `;
+  col.querySelectorAll("input,select").forEach(el=> el.addEventListener("input", updateCompareTable));
+  return col;
+}
+function updateCompareTable(){
+  const table = $("compareTable");
+  if(S.systemType==="pin"){
+    const A_ = ["A","B"].map(tag=>{
+      const d = parseFloat(document.getElementById("cmp"+tag+"_d")?.value)||S.pin.d;
+      const r = parseFloat(document.getElementById("cmp"+tag+"_r")?.value)||S.pin.r;
+      const mode = document.getElementById("cmp"+tag+"_mode")?.value||S.pin.mode;
+      const mat = document.getElementById("cmp"+tag+"_mat")?.value||S.pin.material;
+      const tauU = MATERIALS.find(m=>m.id===mat).tauU;
+      const st = shearPinFullState(S.pin.appliedT, d, mode, r, tauU);
+      return {d,r,mode,mat,tauU,st};
+    });
+    table.querySelector("thead").innerHTML = `<tr><th></th><th>Config A</th><th>Config B</th></tr>`;
+    const rows = [
+      ["d (mm)", A_[0].d.toFixed(1), A_[1].d.toFixed(1)],
+      ["r (mm)", A_[0].r.toFixed(0), A_[1].r.toFixed(0)],
+      ["mode", A_[0].mode, A_[1].mode],
+      ["τu (MPa)", A_[0].tauU, A_[1].tauU],
+      ["T_fail (N·m)", A_[0].st.T_fail.toFixed(1), A_[1].st.T_fail.toFixed(1)],
+      ["τ @ applied T (MPa)", (A_[0].st.tau/1e6).toFixed(1), (A_[1].st.tau/1e6).toFixed(1)],
+      ["status", A_[0].st.status, A_[1].st.status],
+    ];
+    table.querySelector("tbody").innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+  } else {
+    const B_ = ["A","B"].map(tag=>{
+      const ds = parseFloat(document.getElementById("cmp"+tag+"_ds")?.value)||S.valve.ds;
+      const k = parseFloat(document.getElementById("cmp"+tag+"_k")?.value)||S.valve.k;
+      const pc = parseFloat(document.getElementById("cmp"+tag+"_pc")?.value)||S.valve.pcrackSet;
+      const A = valveSeatArea(ds);
+      const F0 = preloadFromCrackingPressure(pc,A);
+      const st = valveFullState(S.valve.sysP, {ds_mm:ds,F0_N:F0,k_Nmm:k,xmax_mm:S.valve.xmax,Cd:S.valve.cd,Pdown_bar:S.valve.pdown,rho:S.valve.rho,blowdownPct:S.valve.blowdown,trend:"rising"});
+      return {ds,k,pc,st};
+    });
+    table.querySelector("thead").innerHTML = `<tr><th></th><th>Config A</th><th>Config B</th></tr>`;
+    const rows = [
+      ["ds (mm)", B_[0].ds.toFixed(1), B_[1].ds.toFixed(1)],
+      ["k (N/mm)", B_[0].k.toFixed(0), B_[1].k.toFixed(0)],
+      ["P_crack (bar)", B_[0].pc.toFixed(1), B_[1].pc.toFixed(1)],
+      ["x @ sysP (mm)", B_[0].st.x.toFixed(2), B_[1].st.x.toFixed(2)],
+      ["Q @ sysP (L/min)", (B_[0].st.Q*60000).toFixed(1), (B_[1].st.Q*60000).toFixed(1)],
+      ["status", B_[0].st.status, B_[1].st.status],
+    ];
+    table.querySelector("tbody").innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+  }
+}
+
+/* =====================================================================
+   19. AUTO CONVERT sequence
+   ===================================================================== */
+function autoConvert(){
+  if(S.autoConverting) return;
+  S.autoConverting = true;
+  const seq = [1,2,3];
+  let i=0;
+  const step = ()=>{
+    document.querySelectorAll(".stage-btn").forEach(b=>b.classList.toggle("active", parseInt(b.getAttribute("data-stage"))===seq[i]));
+    S.stage = seq[i];
+    drawScene();
+    i++;
+    if(i<seq.length) setTimeout(step, 900);
+    else S.autoConverting=false;
+  };
+  step();
+}
+
+/* =====================================================================
+   20. PRINT REPORT
+   ===================================================================== */
+function preparePrintAndPrint(){
+  const snapshot = canvas.toDataURL("image/png");
+  const preset = PRESETS.find(p=>p.id===S.activePreset);
+  const st = S.systemType==="pin" ? computePinState() : computeValveState();
+  const html = `
+    <h2>${LANG==="id"?"Laporan Praktikum — Virtual Lab Pengaman":"Lab Report — Protective Devices Virtual Lab"}</h2>
+    <p><b>${LANG==="id"?"Preset/Sistem":"Preset/System"}:</b> ${preset?(LANG==="id"?preset.nameID:preset.nameEN):"-"} (${S.systemType})</p>
+    <p><b>${LANG==="id"?"Waktu simulasi":"Simulation time"}:</b> ${S.simTime.toFixed(1)} s</p>
+    <img src="${snapshot}" style="max-width:100%;border:1px solid #999;margin:10px 0;">
+    <p><b>Status:</b> ${st.status}</p>
+    <p><b>${LANG==="id"?"Tujuan":"Objective"}:</b> ${$("wsObjective").value||"-"}</p>
+    <p><b>${LANG==="id"?"Variabel":"Variables"}:</b> ${$("wsVariables").value||"-"}</p>
+    <p><b>${LANG==="id"?"Prediksi":"Prediction"}:</b> ${$("wsPrediction").value||"-"}</p>
+    <p><b>${LANG==="id"?"Observasi":"Observation"}:</b> ${$("wsObservation").value||"-"}</p>
+    <p><b>${LANG==="id"?"Batas Model":"Model Limits"}:</b> ${$("wsLimits").value||"-"}</p>
+    <p><b>${LANG==="id"?"Kesimpulan":"Conclusion"}:</b> ${$("wsConclusion").value||"-"}</p>
+    <p style="font-size:11px;color:#666;">${new Date().toLocaleString()}</p>
+  `;
+  $("printOnly").innerHTML = html;
+  window.print();
+}
+
+function updateRunIndicator(){
+  const dot = $("runDot");
+  dot.classList.toggle("running", S.running);
+  $("runLabel").textContent = S.running ? t("runIndicatorRunning") : t("runIndicatorPaused");
+  $("playBtn").disabled = S.running;
+  $("pauseBtn").disabled = !S.running;
+}
+function updateIdleHint(){
+  const hintEl = $("idleHint");
+  let show = false, text = "";
+  if(S.systemType==="valve"){
+    const st = computeValveState();
+    if(st.status==="CLOSED"){ show = true; text = t("idleHintValve"); }
+  } else {
+    if(S.pin.appliedT<=0.01){ show = true; text = t("idleHintPin"); }
+  }
+  hintEl.style.display = show ? "block" : "none";
+  hintEl.textContent = text;
+}
+
+/* =====================================================================
+   21. FULL UPDATE PIPELINE
+   ===================================================================== */
+function fullUpdate(){
+  resizeCanvas();
+  drawScene();
+  updateCards();
+  updateStatusBar();
+  updateCalcSteps();
+  updateGlossary();
+  updateCharts();
+  updateRunIndicator();
+  updateIdleHint();
+}
+
+/* =====================================================================
+   22. INITIALIZATION
+   ===================================================================== */
+function init(){
+  refreshPresetSelect();
+  refreshMaterialSelect();
+  refreshFluidSelect();
+  updateSystemVisibility();
+  initControlBindings();
+  applyStaticI18n();
+  // Initial demonstration per spec section 37: start on the Relief Valve preset
+  // (P_crack=150 bar, ds=8mm, k=15 N/mm) — preset p4.
+  loadPreset("p4");
+  renderQuiz();
+  renderChallenge();
+  fullUpdate();
+  updateWorksheetNote();
+
+  document.querySelectorAll("#bottomTabs button").forEach(b=>{
+    b.addEventListener("click", ()=>{ if(b.getAttribute("data-tab")==="compare") renderCompare(); });
+  });
+}
+document.addEventListener("DOMContentLoaded", init);
+
+})();
+</script>
+</body>
+</html>
