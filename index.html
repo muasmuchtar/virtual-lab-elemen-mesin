@@ -59,7 +59,8 @@
 <script>
   const LABS = [
     ["🔩","Sambungan Elemen Mesin","Simulasi sambungan baut, paku keling, las, dan sejenisnya, lengkap dengan data eksperimen dan peringatan kondisi tidak stabil.","01-sambungan.html"],
-    ["🏗️","Jenis-Jenis Tumpuan","Tumpuan sendi, rol, dan jepit pada balok: reaksi tumpuan, momen, dan defleksi (Mekanika Teknik).","02-tumpuan.html"],
+    ["🏗️","Jenis-Jenis Tumpuan","Tumpuan sendi, rol, dan jepit pada balok: reaksi tumpuan, momen, dan defleksi (Mekanika Teknik). Ada juga versi ringkas \"Support Studio\" dalam bahasa Indonesia dan Inggris.","02-tumpuan.html",
+      [["Buka versi lengkap →","02-tumpuan.html"],["Versi ringkas (Indonesia) →","02-tumpuan-ringkas-id.html"],["Simple version (English) →","02-tumpuan-ringkas-en.html","en"]]],
     ["⚙️","Transmisi Daya","Transmisi daya mekanik dengan parameter yang bisa diatur, animasi, dan data eksperimen.","03-transmisi-daya.html"],
     ["🛑","Pengereman","Sistem rem: gaya pedal, tekanan hidrolik, gesekan, dan konversi energi menjadi panas.","04-pengereman.html"],
     ["🌀","Penyimpan Energi: Pegas & Roda Gila","Energi pegas dan roda gila, mode belajar, kartu rekayasa, dan status keselamatan.","05-penyimpan-energi.html"],
@@ -68,19 +69,19 @@
     ["📏","Toleransi & Suaian","Interpretasi suaian (fits), metrologi permukaan, proses dan inspeksi, plus soal latihan.","08-toleransi-suaian.html"],
     ["↔️","Panduan Gerak Linear","Linear guideway dan linear bearing: grafik, perhitungan teknik, dan kartu rekayasa.","09-gerak-linear.html"],
     ["🛡️","Pengaman: Shear Pin & Relief Valve","Sistem nyata, model proteksi, dan model kuantitatif perangkat pengaman beban lebih, lengkap dengan laporan lab.","10-shear-pin-relief-valve.html"],
-    ["🚜","Excavator","Kinematika sendi, sistem hidrolik, skenario kerja, telemetri, serta grafik tekanan dan torsi boom. Tersedia dalam bahasa Indonesia dan Inggris.","11-excavator.html","11-excavator-en.html"]
+    ["🚜","Excavator","Kinematika sendi, sistem hidrolik, skenario kerja, telemetri, serta grafik tekanan dan torsi boom. Tersedia dalam bahasa Indonesia dan Inggris.","11-excavator.html",
+      [["Buka (Indonesia) →","11-excavator.html"],["Open (English) →","11-excavator-en.html","en"]]]
   ];
   const grid = document.getElementById("grid");
-  LABS.forEach(([ico,title,desc,file,fileEn],i)=>{
+  LABS.forEach(([ico,title,desc,file,links],i)=>{
     const head = `<div class="top"><span class="ico">${ico}</span><span class="num">LAB ${String(i+1).padStart(2,"0")}</span></div>
       <h2>${title}</h2><p>${desc}</p>`;
     let el;
-    if(fileEn){
+    if(links){
       el = document.createElement("div");
       el.className = "card";
-      el.innerHTML = head + `<div class="langs">
-        <a class="open" href="lab/${file}">Buka (Indonesia) →</a>
-        <a class="open" href="lab/${fileEn}" lang="en">Open (English) →</a></div>`;
+      el.innerHTML = head + `<div class="langs">${links.map(([label,f,lang])=>
+        `<a class="open" href="lab/${f}"${lang?` lang="${lang}"`:""}>${label}</a>`).join("")}</div>`;
     } else {
       el = document.createElement("a");
       el.className = "card";
